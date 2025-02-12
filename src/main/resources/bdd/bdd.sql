@@ -1,6 +1,5 @@
 CREATE SCHEMA IF NOT EXISTS dev;
-SET
-    search_path TO dev;
+SET search_path TO dev;
 
 ---------------------------------------------------
 -- Créer la table des utilisateurs
@@ -76,8 +75,8 @@ CREATE TABLE difficulty_levels
 ---------------------------------------------------
 CREATE TABLE statuses
 (
-    id   SERIAL PRIMARY KEY,
-    name VARCHAR(20) NOT NULL UNIQUE
+    id    SERIAL PRIMARY KEY,
+    label VARCHAR(20) NOT NULL UNIQUE
 );
 
 ---------------------------------------------------
@@ -97,9 +96,9 @@ CREATE TABLE quizzes
 ---------------------------------------------------
 CREATE TABLE questions
 (
-    id   SERIAL PRIMARY KEY,
-    text VARCHAR(300) NOT NULL,
-    id_quiz INTEGER NOT NULL REFERENCES quizzes (id) ON DELETE CASCADE
+    id      SERIAL PRIMARY KEY,
+    text    VARCHAR(300) NOT NULL,
+    id_quiz INTEGER      NOT NULL REFERENCES quizzes (id) ON DELETE CASCADE
 );
 
 ---------------------------------------------------
