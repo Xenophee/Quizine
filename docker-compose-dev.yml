@@ -1,0 +1,40 @@
+services:
+
+    database:
+        container_name: db
+        image: postgres:16
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: quizine
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            TZ: Europe/Paris
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
+
+    api:
+        container_name: api
+        build:
+            context: ./api
+            dockerfile: Dockerfile-dev
+        depends_on:
+            -   database
+        volumes:
+            - ./api:/app  # Monte le code source dans le conteneur
+            - ./api/.gradle:/home/gradle/.gradle:delegated  # Partage le cache Gradle pour éviter de tout retélécharger
+        ports:
+            - "8080:8080"
+        environment:
+            SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/quizine
+            SPRING_DATASOURCE_USERNAME: postgres
+            SPRING_DATASOURCE_PASSWORD: postgres
+            SPRING_PROFILES_ACTIVE: dev
+            TZ: Europe/Paris
+            WATCHPACK_POLLING: true
+        command: ./gradlew bootRun --continuous
+
+
+volumes:
+    postgres_data:

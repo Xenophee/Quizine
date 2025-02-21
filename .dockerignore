@@ -1,0 +1,17 @@
+.idea/
+
+build/
+out/
+.gradle/
+
+*.iml
+*.md
+
+.gitignore
+.gitattributes
+.env
+.env.example
+# env.local ?
+
+
+# Dockerfile ?

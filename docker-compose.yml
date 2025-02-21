@@ -1,0 +1,38 @@
+services:
+
+    database:
+        image: postgres:16
+        restart: unless-stopped
+        env_file: ./api/.env
+        networks:
+            - backend
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            TZ: Europe/Paris
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+    api:
+        build:
+            context: ./api
+            dockerfile: Dockerfile
+        depends_on:
+            - database
+        restart: unless-stopped
+        env_file: ./api/.env
+        networks:
+            - backend
+        environment:
+            SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB}
+            SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+            SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+            TZ: Europe/Paris
+
+
+    networks:
+        backend:
+
+    volumes:
+        postgres-data:
