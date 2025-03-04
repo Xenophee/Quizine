@@ -1,4 +1,4 @@
-SET search_path TO dev;
+
 
 ---------------------------------------------------
 -- Création de la fonction pour mettre à jour la date de modification
