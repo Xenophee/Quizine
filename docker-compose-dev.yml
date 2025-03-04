@@ -2,7 +2,7 @@ services:
 
     database:
         container_name: db
-        image: postgres:16
+        image: postgres:17-alpine
         restart: unless-stopped
         environment:
             POSTGRES_DB: quizine
@@ -12,20 +12,22 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data
         ports:
-            - "5432:5432"
+            - "5433:5432"
 
     api:
         container_name: api
         build:
             context: ./api
             dockerfile: Dockerfile-dev
+        restart: unless-stopped
         depends_on:
             -   database
         volumes:
-            - ./api:/app  # Monte le code source dans le conteneur
-            - ./api/.gradle:/home/gradle/.gradle:delegated  # Partage le cache Gradle pour éviter de tout retélécharger
+            - ./api:/app
+            - gradle_cache:/root/.gradle
         ports:
             - "8080:8080"
+            - "35729:35729"
         environment:
             SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/quizine
             SPRING_DATASOURCE_USERNAME: postgres
@@ -33,8 +35,28 @@ services:
             SPRING_PROFILES_ACTIVE: dev
             TZ: Europe/Paris
             WATCHPACK_POLLING: true
-        command: ./gradlew bootRun --continuous
+
+
+    client:
+        container_name: client
+        build:
+            context: ./client
+            dockerfile: Dockerfile-dev
+        restart: unless-stopped
+        depends_on:
+            - api
+        volumes:
+            - ./client:/app
+            - node_cache:/app/node_modules
+        ports:
+            - "4200:4200"
+        environment:
+            CHOKIDAR_INTERVAL: 1000
+            CHOKIDAR_USEPOLLING: true
+            TZ: Europe/Paris
 
 
 volumes:
     postgres_data:
+    gradle_cache:
+    node_cache:

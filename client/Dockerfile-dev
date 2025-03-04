@@ -1,0 +1,20 @@
+# Utilise une image Node.js légère
+FROM node:22-alpine
+
+# Définit le répertoire de travail
+WORKDIR /app
+
+# Copie package.json et package-lock.json pour installer les dépendances
+COPY package*.json ./
+
+# Installe les dépendances du projet
+RUN npm install
+
+# Copie tous les fichiers du projet dans le conteneur
+COPY . .
+
+# Expose le port 4200 pour Angular
+EXPOSE 4200
+
+# Lance Angular avec les bonnes options
+ENTRYPOINT ["npx", "ng", "serve", "--host", "0.0.0.0", "--poll", "1000"]

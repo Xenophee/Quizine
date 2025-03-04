@@ -1,5 +1,5 @@
-# Étape 1: Build avec JDK et Gradle
-FROM eclipse-temurin:21-jdk-alpine AS builder
+# Build avec JDK et Gradle
+FROM eclipse-temurin:21-jdk-alpine
 
 # Définit le répertoire de travail
 WORKDIR /app
@@ -14,13 +14,10 @@ COPY gradlew .
 RUN ./gradlew dependencies --no-daemon  # ajouter || true si on veut passer les erreurs
 
 # Copie le reste du code source
-COPY . .
+COPY src/ src/
 
-# Compile l’application
-RUN ./gradlew build -x test --no-daemon
-
-# Port de l'application
-EXPOSE 8080
+# Port de l'application (application + LiveReload)
+EXPOSE 8080 35729
 
 # Commande par défaut en mode développement (mode watch)
-CMD ["./gradlew", "bootRun"]
+ENTRYPOINT ["./gradlew", "bootRun"]

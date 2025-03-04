@@ -1,0 +1,14 @@
+../.idea/
+
+
+.gradle/
+
+*.iml
+*.md
+
+.gitignore
+.gitattributes
+
+Dockerfile
+Dockerfile-dev
+.dockerignore
