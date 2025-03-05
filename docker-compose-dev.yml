@@ -23,8 +23,8 @@ services:
         depends_on:
             -   database
         volumes:
-            - ./api:/app
-            - gradle_cache:/root/.gradle
+            - ./api:/app # Monte le code source pour un développement en live
+            - gradle_cache:/root/.gradle # Préserve le cache des dépendances pour accélérer les builds
         ports:
             - "8080:8080"
             - "35729:35729"
@@ -46,8 +46,8 @@ services:
         depends_on:
             - api
         volumes:
-            - ./client:/app
-            - node_cache:/app/node_modules
+            - ./client:/app # Monte le code source pour un développement en live
+            - node_cache:/app/node_modules # Préserve le cache des dépendances pour accélérer les builds
         ports:
             - "4200:4200"
         environment:
