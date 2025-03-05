@@ -1,0 +1,20 @@
+# Image avec JDK pour exécuter les tests
+FROM eclipse-temurin:21-jdk-alpine
+
+# Définit le répertoire de travail
+WORKDIR /app
+
+# Copie uniquement les fichiers liés à la configuration Gradle (pour utiliser le cache Docker)
+COPY gradle/ gradle/
+COPY settings.gradle.kts .
+COPY build.gradle.kts .
+COPY gradlew .
+
+# Télécharge les dépendances sans compiler le code source
+RUN ./gradlew dependencies --no-daemon || true
+
+# Copie le reste du code source
+COPY src/ src/
+
+# Exécute les tests uniquement
+ENTRYPOINT ["./gradlew", "test", "--no-daemon"]
