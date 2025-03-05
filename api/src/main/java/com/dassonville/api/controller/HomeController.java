@@ -9,6 +9,6 @@ public class HomeController {
 
     @GetMapping("/")
     public String home() {
-        return "Hello World! " + System.getenv("SPRING_PROFILES_ACTIVE");
+        return "Hello World today! " + System.getenv("SPRING_PROFILES_ACTIVE");
     }
 }
