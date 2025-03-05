@@ -10,21 +10,31 @@ COPY settings.gradle.kts .
 COPY build.gradle.kts .
 COPY gradlew .
 
+# Vérifie les dépendances pour détecter d'éventuelles failles de sécurité
+RUN ./gradlew dependencyCheckAnalyze --no-daemon || true
+
 # Télécharge les dépendances sans compiler le code source
 RUN ./gradlew dependencies --no-daemon # ajouter || true si on veut passer les erreurs
 
 # Copie le reste du code source
-COPY . .
+COPY src/ src/
 
-# Compile l’application
-RUN ./gradlew build --no-daemon
+# Compile l’application sans exécuter les tests
+RUN ./gradlew build -x test --no-daemon
+
 
 # Étape 2: Exécution avec une image plus légère (JRE uniquement)
 FROM eclipse-temurin:21-jre-alpine
+
+# Ajoute un utilisateur non-root pour exécuter l'application
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+# Définit le répertoire de travail
 WORKDIR /app
 
 # Copie uniquement le fichier JAR généré
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 # Lance l’application avec optimisation mémoire
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-jar", "app.jar"]

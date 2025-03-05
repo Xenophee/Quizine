@@ -1,9 +1,9 @@
 services:
 
     database:
-        image: postgres:16
+        image: postgres:17-alpine
         restart: unless-stopped
-        env_file: ./api/.env
+        env_file: .env
         networks:
             - backend
         environment:
@@ -13,26 +13,60 @@ services:
             TZ: Europe/Paris
         volumes:
             - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+            retries: 5
+            interval: 3s
+            timeout: 30s
 
     api:
         build:
             context: ./api
             dockerfile: Dockerfile
+        read_only: true # Rend le système de fichiers du conteneur en lecture seule
+        cap_drop:
+            -   ALL # Supprime toutes les capacités Linux non nécessaires
+        security_opt:
+            -   no-new-privileges  # Empêche l’application d’obtenir plus de permissions après démarrage
         depends_on:
-            - database
+            database:
+                condition: service_healthy
         restart: unless-stopped
-        env_file: ./api/.env
+        env_file: .env
         networks:
+            - frontend
             - backend
         environment:
             SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB}
             SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
             SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+            SPRING_PROFILES_ACTIVE: prod
             TZ: Europe/Paris
 
 
-    networks:
-        backend:
+    client:
+        build:
+            context: ./client
+            dockerfile: Dockerfile
+        read_only: true
+        security_opt:
+            - no-new-privileges
+        tmpfs:
+            - /tmp # Montage en mémoire pour les fichiers temporaires
+            - /var/cache/nginx # Cache Nginx en mémoire pour accélérer les requêtes et éviter une persistance inutile
+        depends_on:
+            -   api
+        restart: unless-stopped
+        networks:
+            - frontend
+        ports:
+            - "80:80"
+            - "443:443"
 
-    volumes:
-        postgres-data:
+
+networks:
+    frontend:
+    backend:
+
+volumes:
+    postgres_data:
