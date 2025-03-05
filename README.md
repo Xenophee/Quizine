@@ -11,7 +11,7 @@ Quizine est une application qui permet de tester sa culture générale à traver
 > [!CAUTION]
 > La plateforme est surtout destinée à un usage personnel (pour des raisons de droit d'auteur), et sera entièrement accessible uniquement pour les personnes de mon entourage qui le souhaitent grâce au statut VIP. Toutefois, un rôle invité sera disponible pour permettre à tout visiteur de découvrir l'application.
 
-[//]: # (Pour en savoir plus, vous pouvez consulter la page de mon [portfolio]&#40;https://perrine-dassonville.dev/portfolio/projet/quizine&#41; dédiée au projet.)
+Pour en savoir plus, vous pouvez consulter la page de mon [portfolio](https://perrine-dassonville.dev/portfolio/projet/quizine) dédiée au projet.
 
 
 ## Fonctionnalités
