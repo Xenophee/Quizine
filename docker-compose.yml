@@ -23,7 +23,6 @@ services:
         build:
             context: ./api
             dockerfile: Dockerfile
-        read_only: true # Rend le système de fichiers du conteneur en lecture seule
         cap_drop:
             -   ALL # Supprime toutes les capacités Linux non nécessaires
         security_opt:
@@ -43,12 +42,11 @@ services:
             SPRING_PROFILES_ACTIVE: prod
             TZ: Europe/Paris
 
-
+# ! La configuration pour le client n'est pas fonctionnelle en l'état
     client:
         build:
             context: ./client
             dockerfile: Dockerfile
-        read_only: true
         security_opt:
             - no-new-privileges
         tmpfs:

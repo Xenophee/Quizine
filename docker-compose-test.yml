@@ -35,6 +35,7 @@ services:
         tmpfs:
             - /tmp # Stocke les fichiers temporaires en RAM pour améliorer les performances et éviter l'écriture sur disque
 
+# ! La configuration pour le client n'est pas fonctionnelle en l'état
     client:
         container_name: client_test
         build:
