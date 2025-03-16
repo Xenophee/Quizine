@@ -138,6 +138,7 @@ public class ThemeServiceTest {
             assertThrows(AlreadyExistException.class, () -> themeService.create(theme));
 
             verify(themeRepository).existsByName(any(String.class));
+            verify(themeRepository, never()).save(any(Theme.class));
         }
 
     }
@@ -202,6 +203,10 @@ public class ThemeServiceTest {
 
             // When & Then
             assertThrows(MismatchedIdException.class, () -> themeService.update(theme.getId(), themeToUpdate));
+
+            verify(themeRepository, never()).findById(any(Long.class));
+            verify(themeRepository, never()).existsByName(any(String.class));
+            verify(themeRepository, never()).save(any(Theme.class));
         }
 
         @Test
@@ -215,6 +220,8 @@ public class ThemeServiceTest {
             assertThrows(NotFoundException.class, () -> themeService.update(theme.getId(), theme));
 
             verify(themeRepository).findById(any(Long.class));
+            verify(themeRepository, never()).existsByName(any(String.class));
+            verify(themeRepository, never()).save(any(Theme.class));
         }
 
         @Test
@@ -233,6 +240,7 @@ public class ThemeServiceTest {
 
             verify(themeRepository).findById(any(Long.class));
             verify(themeRepository).existsByName(any(String.class));
+            verify(themeRepository, never()).save(any(Theme.class));
         }
 
     }
@@ -268,6 +276,7 @@ public class ThemeServiceTest {
             assertThrows(NotFoundException.class, () -> themeService.delete(theme.getId()));
 
             verify(themeRepository).existsById(any(Long.class));
+            verify(themeRepository, never()).deleteById(any(Long.class));
         }
 
     }
