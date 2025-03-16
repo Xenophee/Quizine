@@ -4,9 +4,11 @@ package com.dassonville.api.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
 
 @Entity
 @Table(name = "themes")
+@Data
 public class Theme {
 
     @Id
