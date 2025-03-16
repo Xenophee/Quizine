@@ -1,5 +1,7 @@
 package com.dassonville.api.exception;
 
+import io.swagger.v3.oas.annotations.Hidden;
+import org.apache.coyote.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -13,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-
+@Hidden
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -45,4 +47,8 @@ public class GlobalExceptionHandler {
     public Error handleAlreadyExistException(AlreadyExistException ex) {
         return new Error(ex.getMessage());
     }
+
+    @ExceptionHandler(MismatchedIdException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Error handleMismatchedIdException(MismatchedIdException ex) { return new Error(ex.getMessage()); }
 }
