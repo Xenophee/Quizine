@@ -12,6 +12,4 @@ public interface ThemeRepository extends JpaRepository<Theme, Long> {
 
     boolean existsByName(String name);
 
-    Optional<Theme> findByName(String name);
-
 }
