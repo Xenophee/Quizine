@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - dev
+#      - dev
   pull_request:
     branches:
       - main
@@ -29,3 +29,6 @@ jobs:
         with:
           name: test-reports-api
           path: ./tests/reports/api/
+
+
+# ! Ce workflow nécessite encore une mise en cache pour accélérer les builds suivants
