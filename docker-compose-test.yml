@@ -30,10 +30,12 @@ services:
             SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/quizine_test
             SPRING_DATASOURCE_USERNAME: postgres
             SPRING_DATASOURCE_PASSWORD: postgres
-            SPRING_PROFILES_ACTIVE: test
+            SERVER_PORT: 8081
             TZ: Europe/Paris
         tmpfs:
             - /tmp # Stocke les fichiers temporaires en RAM pour améliorer les performances et éviter l'écriture sur disque
+        volumes:
+            - ./tests/reports/api:/app/build/reports # Monte le dossier des rapports sur l'hôte
 
 # ! La configuration pour le client n'est pas fonctionnelle en l'état
     client:
