@@ -16,7 +16,8 @@ public class HomeController {
     }
 
     @GetMapping("/doc")
-    public RedirectView redirectWithRedirectView() {
+    public RedirectView redirectForSwaggerDoc() {
         return new RedirectView("/swagger-ui/index.html");
     }
+
 }
