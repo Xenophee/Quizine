@@ -12,7 +12,7 @@ public class HomeController {
 
     @GetMapping("/")
     public String home() {
-        return "Hello World! " + System.getenv("SPRING_PROFILES_ACTIVE");
+        return "Hello World! You are currently running with the profil: " + System.getenv("SPRING_PROFILES_ACTIVE");
     }
 
     @GetMapping("/doc")
