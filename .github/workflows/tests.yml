@@ -18,15 +18,11 @@ jobs:
       - name: 🛠️ Checkout du repo
         uses: actions/checkout@v4
 
-      - name: 📦 Installer Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
+      - name: Set up Docker Compose
+        uses: docker/setup-compose-action@v1
 
       - name: 🚀 Lancer l'API et la BDD avec Docker Compose
-        run: |
-          cd $GITHUB_WORKSPACE
-          docker compose -f docker-compose.test.yml up
+        run: docker compose -f docker-compose.test.yml up
 
       - name: 📂 Sauvegarder les rapports de tests de l'api en cas d'échec
         if: failure()
