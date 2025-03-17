@@ -70,6 +70,20 @@ public class ThemeControllerTest {
         }
 
         @Test
+        @DisplayName("Récupérer tous les thèmes actifs")
+        public void getAllActiveThemes_shouldReturn200() throws Exception {
+            // Given
+            when(themeService.getAllActiveThemes())
+                    .thenReturn(List.of(theme));
+
+            // When & Then
+            mockMvc.perform(get("/api/themes/active"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(1)))
+                    .andExpect(jsonPath("$[0].name", is(theme.getName())));
+        }
+
+        @Test
         @DisplayName("Récupérer un thème par son ID")
         public void getThemeById_shouldReturn200() throws Exception {
             // Given

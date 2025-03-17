@@ -53,18 +53,36 @@ public class ThemeServiceTest {
     }
 
 
-    @Test
-    @DisplayName("Récupérer tous les thèmes")
-    public void getAllThemes() {
-        // Given
-        when(themeRepository.findAll())
-                .thenReturn(List.of(theme));
+    @Nested
+    @DisplayName("Tests pour getAllThemes")
+    class getAllThemesTest {
+        @Test
+        @DisplayName("Récupérer tous les thèmes")
+        public void getAllThemes() {
+            // Given
+            when(themeRepository.findAll())
+                    .thenReturn(List.of(theme));
 
-        // When
-        themeService.getAllThemes();
+            // When
+            themeService.getAllThemes();
 
-        // Then
-        verify(themeRepository).findAll();
+            // Then
+            verify(themeRepository).findAll();
+        }
+
+        @Test
+        @DisplayName("Récupérer tous les thèmes actifs")
+        public void getAllActiveThemes() {
+            // Given
+            when(themeRepository.findByPublishedAtIsNotNullAndDisabledAtIsNull())
+                    .thenReturn(List.of(theme));
+
+            // When
+            themeService.getAllActiveThemes();
+
+            // Then
+            verify(themeRepository).findByPublishedAtIsNotNullAndDisabledAtIsNull();
+        }
     }
 
 

@@ -55,6 +55,16 @@ public class ThemeServiceIT {
         }
 
         @Test
+        @DisplayName("Récupérer tous les thèmes actifs")
+        public void shouldGetAllActiveThemes() {
+            // When
+            List<Theme> themes = themeService.getAllActiveThemes();
+
+            // Then
+            assertThat(themes.size()).isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("Récupérer un thème par son ID")
         public void shouldGetTheme_WhenExistingId() {
             // Given
@@ -93,11 +103,11 @@ public class ThemeServiceIT {
             themeToCreate.setDescription("description");
 
             // When
-            Theme savedTheme = themeService.create(themeToCreate);
-            Theme createdTheme = themeService.findById(savedTheme.getId());
+            Theme createdTheme = themeService.create(themeToCreate);
 
             // Then
             assertThat(createdTheme.getName()).isEqualTo(capitalize(themeToCreate.getName()));
+            assertThat(createdTheme.getCreatedAt()).isNotNull();
         }
 
         @Test
@@ -133,6 +143,7 @@ public class ThemeServiceIT {
 
             // Then
             assertThat(updatedTheme.getName()).isEqualTo(capitalize(themeToUpdate.getName()));
+            assertThat(updatedTheme.getUpdatedAt()).isNotNull();
         }
 
         @Test
