@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - dev
+#      - dev
   pull_request:
     branches:
       - main
@@ -18,7 +18,7 @@ jobs:
       - name: 🛠️ Checkout du repo
         uses: actions/checkout@v4
 
-      - name: Set up Docker Compose
+      - name: 🐳 Set up Docker Compose
         uses: docker/setup-compose-action@v1
 
       - name: 🚀 Lancer l'API et la BDD avec Docker Compose
