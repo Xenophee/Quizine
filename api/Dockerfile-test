@@ -10,6 +10,9 @@ COPY settings.gradle.kts .
 COPY build.gradle.kts .
 COPY gradlew .
 
+# Ajoute les permissions d'exécution pour gradlew
+RUN chmod +x gradlew
+
 # Télécharge les dépendances sans compiler le code source
 RUN ./gradlew dependencies --no-daemon || true
 
