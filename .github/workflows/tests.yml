@@ -22,7 +22,7 @@ jobs:
         uses: docker/setup-compose-action@v1
 
       - name: 🚀 Lancer l'API et la BDD avec Docker Compose
-        run: docker compose -f docker-compose-test.yml up -d --abort-on-container-exit
+        run: docker compose -f docker-compose-test.yml up --abort-on-container-exit
 
       - name: 📂 Sauvegarder les rapports de tests de l'api en cas d'échec
 #        if: failure()
