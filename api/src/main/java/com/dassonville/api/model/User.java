@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -40,13 +42,15 @@ public class User {
     @Column(nullable = false)
     private Boolean public_profile;
 
-    @Column(name = "registered_at", insertable = false, updatable = false)
+    @Column(name = "registered_at", updatable = false)
+    @CreationTimestamp
     private LocalDateTime registeredAt;
 
     @Column(name = "validated_at")
     private LocalDateTime validatedAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @Column(name = "updated_at")
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
     @Column(name = "connected_at")
