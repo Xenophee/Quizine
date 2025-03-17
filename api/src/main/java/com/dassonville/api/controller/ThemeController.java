@@ -47,6 +47,19 @@ public class ThemeController {
     }
 
 
+    @Operation(summary = "Obtenir la liste des thèmes actifs", description = "Obtient la liste des thèmes actifs")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "La liste des thèmes actifs a été trouvée.")
+    })
+    @GetMapping("/active")
+    public ResponseEntity<List<Theme>> getAllActiveThemes() {
+        logger.info("Requête pour obtenir la liste des thèmes actifs.");
+        List<Theme> themes = themeService.getAllActiveThemes();
+        logger.info("Liste des thèmes actifs récupérée.");
+        return ResponseEntity.ok(themes);
+    }
+
+
     @Operation(summary = "Obtenir un thème", description = "Obtient un thème par son ID")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Le thème a été trouvé."),

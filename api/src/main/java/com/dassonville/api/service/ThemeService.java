@@ -30,6 +30,10 @@ public class ThemeService {
         return themeRepository.findAll();
     }
 
+    public List<Theme> getAllActiveThemes() {
+        return themeRepository.findByPublishedAtIsNotNullAndDisabledAtIsNull();
+    }
+
 
     public Theme findById(Long id) {
         return themeRepository.findById(id)
