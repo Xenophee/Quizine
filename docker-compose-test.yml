@@ -3,7 +3,7 @@ services:
     database:
         container_name: db_test
         image: postgres:17-alpine
-        restart: on-failure
+        restart: no
         environment:
             POSTGRES_DB: quizine_test
             POSTGRES_USER: postgres
@@ -22,7 +22,7 @@ services:
         build:
             context: ./api
             dockerfile: Dockerfile-test
-        restart: on-failure
+        restart: no
         depends_on:
             database:
                 condition: service_healthy
