@@ -8,7 +8,7 @@
 
 Quizine est une application qui permet de tester sa culture générale à travers des quiz qui couvrent différents domaines de connaissance.
 
-> [!IMPORTANT]]
+> [!IMPORTANT]
 > Pour en savoir plus, vous pouvez consulter la [documentation complète](https://quizine-documentation.vercel.app/) du projet.
 
 
