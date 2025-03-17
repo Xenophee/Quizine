@@ -24,6 +24,14 @@ jobs:
       - name: 🚀 Lancer l'API et la BDD avec Docker Compose
         run: docker compose -f docker-compose-test.yml up -d
 
+      - name: ⏳ Attendre que l'API soit prête
+        run: |
+          echo "En attente de l'API..."
+          until curl -sSf http://localhost:8081/actuator/health | grep '"status":"UP"'; do
+            sleep 5
+          done
+          echo "✅ L'API est prête !"
+
       - name: 📂 Sauvegarder les rapports de tests de l'api en cas d'échec
 #        if: failure()
         uses: actions/upload-artifact@v4
@@ -32,4 +40,5 @@ jobs:
           path: ./tests/reports/api/
 
       - name: 🧹 Nettoyer les conteneurs Docker
+        if: always()
         run: docker compose -f docker-compose.test.yml down
