@@ -24,13 +24,8 @@ jobs:
       - name: 🚀 Lancer l'API et la BDD avec Docker Compose
         run: docker compose -f docker-compose-test.yml up --abort-on-container-exit
 
-      - name: 📂 Sauvegarder les rapports de tests de l'api en cas d'échec
-#        if: failure()
+      - name: 📂 Sauvegarder les rapports de tests de l'api
         uses: actions/upload-artifact@v4
         with:
           name: test-reports-api
           path: ./tests/reports/api/
-
-      - name: 🧹 Nettoyer les conteneurs Docker
-        if: always()
-        run: docker compose -f docker-compose.test.yml down
