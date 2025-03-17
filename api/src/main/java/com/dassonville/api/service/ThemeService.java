@@ -6,12 +6,13 @@ import com.dassonville.api.exception.MismatchedIdException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.Theme;
 import com.dassonville.api.repository.ThemeRepository;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static org.springframework.util.StringUtils.capitalize;
 
 
 @Service
@@ -45,7 +46,7 @@ public class ThemeService {
 
 
     public Theme create(Theme themeToCreate) {
-        themeToCreate.setName(StringUtils.capitalize(themeToCreate.getName()));
+        themeToCreate.setName(capitalize(themeToCreate.getName()));
 
         if (themeRepository.existsByName(themeToCreate.getName())) {
             logger.warn("Un thème existe déjà avec le même nom : {}", themeToCreate.getName());
@@ -68,7 +69,7 @@ public class ThemeService {
             return new NotFoundException("Le thème à modifier n'a pas été trouvé.");
         });
 
-        themeToUpdate.setName(StringUtils.capitalize(themeToUpdate.getName()));
+        themeToUpdate.setName(capitalize(themeToUpdate.getName()));
 
         if (!existingTheme.getName().equals(themeToUpdate.getName()) && themeRepository.existsByName(themeToUpdate.getName())) {
             logger.warn("Un thème existe déjà avec le même nom : {}", themeToUpdate.getName());
