@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - dev
+#      - dev
   pull_request:
     branches:
       - main
@@ -49,24 +49,6 @@ jobs:
 
       - name: 🚀 Lancer l'API (sans la BDD)
         run: docker compose -f docker-compose-test.yml up -d api
-
-      - name: ⏳ Attendre que l'API soit prête
-        run: |
-          echo "En attente de l'API..."
-          for i in {1..30}; do
-            if curl -sSf http://localhost:8081/actuator/health | grep '"status":"UP"'; then
-              echo "✅ L'API est prête !"
-              exit 0
-            fi
-            echo "⏳ En attente de l'API... (tentative $i/30)"
-            sleep 5
-          done
-          echo "❌ L'API n'est pas prête après 30 tentatives"
-          exit 1
-
-      - name: 📜 Afficher les logs du conteneur API en cas d'échec
-        if: failure()
-        run: docker logs $(docker ps -q -f name=api_test)
 
   collect-results:
     needs: test-api
