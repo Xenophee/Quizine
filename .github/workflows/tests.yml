@@ -24,8 +24,9 @@ jobs:
           sudo apt-get install -y docker-compose
 
       - name: 🚀 Lancer l'API et la BDD avec Docker Compose
-        run: docker compose -f docker-compose.test.yml up
-        working-directory: ./
+        run: |
+          cd $GITHUB_WORKSPACE
+          docker compose -f docker-compose.test.yml up
 
       - name: 📂 Sauvegarder les rapports de tests de l'api en cas d'échec
         if: failure()
@@ -33,8 +34,6 @@ jobs:
         with:
           name: test-reports-api
           path: ./tests/reports/api/
-        working-directory: ./
 
       - name: 🧹 Nettoyer les conteneurs Docker
         run: docker compose -f docker-compose.test.yml down
-        working-directory: ./
