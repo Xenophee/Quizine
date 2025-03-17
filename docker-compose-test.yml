@@ -48,3 +48,5 @@ services:
             - api
         environment:
             TZ: Europe/Paris
+        profiles:
+            - client
