@@ -1,4 +1,4 @@
-name: CI - Tests avec Docker Compose
+name: CI - Tests
 
 on:
   push:
