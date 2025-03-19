@@ -46,8 +46,4 @@ public class GlobalExceptionHandler {
     public Error handleAlreadyExistException(AlreadyExistException ex) {
         return new Error(ex.getMessage());
     }
-
-    @ExceptionHandler(MismatchedIdException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Error handleMismatchedIdException(MismatchedIdException ex) { return new Error(ex.getMessage()); }
 }
