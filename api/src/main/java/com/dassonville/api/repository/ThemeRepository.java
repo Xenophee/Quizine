@@ -12,6 +12,6 @@ public interface ThemeRepository extends JpaRepository<Theme, Long> {
 
     boolean existsByName(String name);
 
-    List<Theme> findByPublishedAtIsNotNullAndDisabledAtIsNull();
+    List<Theme> findByDisabledAtIsNull();
 
 }
