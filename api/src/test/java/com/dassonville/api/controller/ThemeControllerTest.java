@@ -1,10 +1,10 @@
 package com.dassonville.api.controller;
 
 
+import com.dassonville.api.dto.ThemeDTO;
+import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.exception.AlreadyExistException;
-import com.dassonville.api.exception.MismatchedIdException;
 import com.dassonville.api.exception.NotFoundException;
-import com.dassonville.api.model.Theme;
 import com.dassonville.api.service.ThemeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,8 +21,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -40,14 +39,15 @@ public class ThemeControllerTest {
     @MockitoBean
     private ThemeService themeService;
 
-    private Theme theme;
+    private long endpointId;
+    private ThemeDTO themeDTO;
+    private ThemeUpsertDTO themeUpsertDTO;
 
     @BeforeEach
     void setUp() {
-        theme = new Theme();
-        theme.setId(1);
-        theme.setName("Informatique");
-        theme.setDescription("");
+        endpointId = 1L;
+        themeDTO = new ThemeDTO(1L, "Informatique", "", null, null, null);
+        themeUpsertDTO = new ThemeUpsertDTO("Informatique", "");
     }
 
 
@@ -60,13 +60,13 @@ public class ThemeControllerTest {
         public void getAllThemes_shouldReturn200() throws Exception {
             // Given
             when(themeService.getAllThemes())
-                    .thenReturn(List.of(theme));
+                    .thenReturn(List.of(themeDTO));
 
             // When & Then
             mockMvc.perform(get("/api/themes"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$", hasSize(1)))
-                    .andExpect(jsonPath("$[0].name", is(theme.getName())));
+                    .andExpect(jsonPath("$[0].name", is(themeDTO.name())));
         }
 
         @Test
@@ -74,37 +74,37 @@ public class ThemeControllerTest {
         public void getAllActiveThemes_shouldReturn200() throws Exception {
             // Given
             when(themeService.getAllActiveThemes())
-                    .thenReturn(List.of(theme));
+                    .thenReturn(List.of(themeDTO));
 
             // When & Then
             mockMvc.perform(get("/api/themes/active"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$", hasSize(1)))
-                    .andExpect(jsonPath("$[0].name", is(theme.getName())));
+                    .andExpect(jsonPath("$[0].name", is(themeDTO.name())));
         }
 
         @Test
         @DisplayName("Récupérer un thème par son ID")
         public void getThemeById_shouldReturn200() throws Exception {
             // Given
-            when(themeService.findById(any(Long.class)))
-                    .thenReturn(theme);
+            when(themeService.findById(anyLong()))
+                    .thenReturn(themeDTO);
 
             // When & Then
-            mockMvc.perform(get("/api/themes/{id}", theme.getId()))
+            mockMvc.perform(get("/api/themes/{id}", endpointId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name", is(theme.getName())));
+                    .andExpect(jsonPath("$.name", is(themeDTO.name())));
         }
 
         @Test
         @DisplayName("Récupérer un thème inexistant par son ID")
         public void getThemeById_shouldReturn404() throws Exception {
             // Given
-            when(themeService.findById(any(Long.class)))
+            when(themeService.findById(anyLong()))
                     .thenThrow(NotFoundException.class);
 
             // When & Then
-            mockMvc.perform(get("/api/themes/{id}", theme.getId()))
+            mockMvc.perform(get("/api/themes/{id}", endpointId))
                     .andExpect(status().isNotFound());
         }
 
@@ -119,29 +119,29 @@ public class ThemeControllerTest {
         @DisplayName("Créer un thème")
         public void createTheme_shouldReturn201() throws Exception {
             // Given
-            when(themeService.create(any(Theme.class)))
-                    .thenReturn(theme);
+            when(themeService.create(any(ThemeUpsertDTO.class)))
+                    .thenReturn(themeDTO);
 
             // When & Then
             mockMvc.perform(post("/api/themes")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(theme)))
+                            .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isCreated())
-                    .andExpect(header().string("Location", containsString("/themes/" + theme.getId())))
-                    .andExpect(jsonPath("$.name", is(theme.getName())));
+                    .andExpect(header().string("Location", containsString("/themes/" + themeDTO.id())))
+                    .andExpect(jsonPath("$.name", is(themeDTO.name())));
         }
 
         @Test
         @DisplayName("Créer un thème avec un nom déjà existant")
         public void createTheme_shouldReturn409() throws Exception {
             // Given
-            when(themeService.create(any(Theme.class)))
+            when(themeService.create(any(ThemeUpsertDTO.class)))
                     .thenThrow(AlreadyExistException.class);
 
             // When & Then
             mockMvc.perform(post("/api/themes")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(theme)))
+                            .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isConflict());
         }
 
@@ -149,12 +149,12 @@ public class ThemeControllerTest {
         @DisplayName("Créer un thème avec un nom vide")
         public void createTheme_shouldReturn400() throws Exception {
             // Given
-            theme.setName("");
+            themeUpsertDTO = new ThemeUpsertDTO("", "");
 
             // When & Then
             mockMvc.perform(post("/api/themes")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(theme)))
+                            .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -169,28 +169,28 @@ public class ThemeControllerTest {
         @DisplayName("Modifier un thème")
         public void updateTheme_shouldReturn200() throws Exception {
             // Given
-            when(themeService.update(any(Long.class), any(Theme.class)))
-                    .thenReturn(theme);
+            when(themeService.update(anyLong(), any(ThemeUpsertDTO.class)))
+                    .thenReturn(themeDTO);
 
             // When & Then
-            mockMvc.perform(put("/api/themes/{id}", theme.getId())
+            mockMvc.perform(put("/api/themes/{id}", endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(theme)))
+                            .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name", is(theme.getName())));
+                    .andExpect(jsonPath("$.name", is(themeDTO.name())));
         }
 
         @Test
         @DisplayName("Modifier un thème avec un nom déjà existant")
         public void updateTheme_shouldReturn409() throws Exception {
             // Given
-            when(themeService.update(any(Long.class), any(Theme.class)))
+            when(themeService.update(anyLong(), any(ThemeUpsertDTO.class)))
                     .thenThrow(AlreadyExistException.class);
 
             // When & Then
-            mockMvc.perform(put("/api/themes/{id}", theme.getId())
+            mockMvc.perform(put("/api/themes/{id}", endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(theme)))
+                            .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isConflict());
         }
 
@@ -198,26 +198,12 @@ public class ThemeControllerTest {
         @DisplayName("Modifier un thème avec un nom vide")
         public void updateTheme_shouldReturn400_invalidData() throws Exception {
             // Given
-            theme.setName("");
+            themeUpsertDTO = new ThemeUpsertDTO("", "");
 
             // When & Then
-            mockMvc.perform(put("/api/themes/{id}", theme.getId())
+            mockMvc.perform(put("/api/themes/{id}", endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(theme)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        @DisplayName("Modifier un thème avec un ID discordant")
-        public void updateTheme_shouldReturn400_mismatchedId() throws Exception {
-            // Given
-            when(themeService.update(any(Long.class), any(Theme.class)))
-                    .thenThrow(MismatchedIdException.class);
-
-            // When & Then
-            mockMvc.perform(put("/api/themes/{id}", theme.getId())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(theme)))
+                            .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -225,13 +211,13 @@ public class ThemeControllerTest {
         @DisplayName("Modifier un thème inexistant")
         public void updateTheme_shouldReturn404() throws Exception {
             // Given
-            when(themeService.update(any(Long.class), any(Theme.class)))
+            when(themeService.update(anyLong(), any(ThemeUpsertDTO.class)))
                     .thenThrow(NotFoundException.class);
 
             // When & Then
-            mockMvc.perform(put("/api/themes/{id}", theme.getId())
+            mockMvc.perform(put("/api/themes/{id}", endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(theme)))
+                            .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isNotFound());
         }
 
@@ -247,7 +233,7 @@ public class ThemeControllerTest {
         public void deleteTheme_shouldReturn204() throws Exception {
             // Given
             // When & Then
-            mockMvc.perform(delete("/api/themes/{id}", theme.getId()))
+            mockMvc.perform(delete("/api/themes/{id}", endpointId))
                     .andExpect(status().isNoContent());
         }
 
@@ -255,11 +241,28 @@ public class ThemeControllerTest {
         @DisplayName("Supprimer un thème inexistant")
         public void deleteTheme_shouldReturn404() throws Exception {
             // Given
-            doThrow(NotFoundException.class).when(themeService).delete(any(Long.class));
+            doThrow(NotFoundException.class).when(themeService).delete(anyLong());
 
             // When & Then
-            mockMvc.perform(delete("/api/themes/{id}", theme.getId()))
+            mockMvc.perform(delete("/api/themes/{id}", endpointId))
                     .andExpect(status().isNotFound());
+        }
+
+    }
+
+
+    @Nested
+    @DisplayName("Tests pour les méthodes PATCH")
+    class PatchTests {
+
+        @Test
+        @DisplayName("Désactiver un thème")
+        public void disableTheme_shouldReturn204() throws Exception {
+            // Given
+            doNothing().when(themeService).toggleDisable(anyLong());
+            // When & Then
+            mockMvc.perform(patch("/api/themes/{id}/toggle-disable", endpointId))
+                    .andExpect(status().isNoContent());
         }
 
     }

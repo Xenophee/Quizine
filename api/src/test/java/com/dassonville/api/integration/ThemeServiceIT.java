@@ -1,5 +1,7 @@
 package com.dassonville.api.integration;
 
+import com.dassonville.api.dto.ThemeDTO;
+import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.Theme;
@@ -39,7 +41,6 @@ public class ThemeServiceIT {
 
 
 
-
     @Nested
     @DisplayName("Récupération de thèmes")
     class GettingThemes {
@@ -48,7 +49,7 @@ public class ThemeServiceIT {
         @DisplayName("Récupérer tous les thèmes")
         public void shouldGetAllThemes() {
             // When
-            List<Theme> themes = themeService.getAllThemes();
+            List<ThemeDTO> themes = themeService.getAllThemes();
 
             // Then
             assertThat(themes.size()).isEqualTo(6);
@@ -58,30 +59,30 @@ public class ThemeServiceIT {
         @DisplayName("Récupérer tous les thèmes actifs")
         public void shouldGetAllActiveThemes() {
             // When
-            List<Theme> themes = themeService.getAllActiveThemes();
+            List<ThemeDTO> themes = themeService.getAllActiveThemes();
 
             // Then
-            assertThat(themes.size()).isEqualTo(2);
+            assertThat(themes.size()).isEqualTo(3);
         }
 
         @Test
         @DisplayName("Récupérer un thème par son ID")
         public void shouldGetTheme_WhenExistingId() {
             // Given
-            Long idToFind = 1L;
+            long idToFind = 1L;
 
             // When
-            Theme theme = themeService.findById(idToFind);
+            ThemeDTO theme = themeService.findById(idToFind);
 
             // Then
-            assertThat(theme.getName()).isEqualTo("Art");
+            assertThat(theme.name()).isEqualTo("Art");
         }
 
         @Test
         @DisplayName("Récupérer un thème par un ID inexistant")
         public void shouldFailToGetTheme_WhenNonExistingId() {
             // Given
-            Long idToFind = 9L;
+            long idToFind = 9L;
 
             // When / Then
             assertThrows(NotFoundException.class, () -> themeService.findById(idToFind));
@@ -98,25 +99,21 @@ public class ThemeServiceIT {
         @DisplayName("Créer un thème inexistant")
         public void shouldCreate_WhenNonExistingTheme() {
             // Given
-            Theme themeToCreate = new Theme();
-            themeToCreate.setName("theme");
-            themeToCreate.setDescription("description");
+            ThemeUpsertDTO themeToCreate = new ThemeUpsertDTO("theme", "description");
 
             // When
-            Theme createdTheme = themeService.create(themeToCreate);
+            ThemeDTO createdTheme = themeService.create(themeToCreate);
 
             // Then
-            assertThat(createdTheme.getName()).isEqualTo(capitalize(themeToCreate.getName()));
-            assertThat(createdTheme.getCreatedAt()).isNotNull();
+            assertThat(createdTheme.name()).isEqualTo(capitalize(themeToCreate.name()));
+            assertThat(createdTheme.createdAt()).isNotNull();
         }
 
         @Test
         @DisplayName("Créer un thème déjà existant")
         public void shouldFailToCreate_WhenExistingTheme() {
             // Given
-            Theme themeToCreate = new Theme();
-            themeToCreate.setName("Art");
-            themeToCreate.setDescription("");
+            ThemeUpsertDTO themeToCreate = new ThemeUpsertDTO("Art", "");
 
             // When / Then
             assertThrows(AlreadyExistException.class, () -> themeService.create(themeToCreate));
@@ -133,43 +130,34 @@ public class ThemeServiceIT {
         @DisplayName("Mettre à jour un thème existant")
         public void shouldUpdate_WhenExistingTheme() {
             // Given
-            Theme themeToUpdate = new Theme();
-            themeToUpdate.setId(1L);
-            themeToUpdate.setName("nouveau nom différent");
-            themeToUpdate.setDescription("");
+            ThemeUpsertDTO themeToUpdate = new ThemeUpsertDTO("nouveau nom", "");
 
             // When
-            Theme updatedTheme = themeService.update(themeToUpdate.getId(), themeToUpdate);
+            ThemeDTO updatedTheme = themeService.update(1L, themeToUpdate);
 
             // Then
-            assertThat(updatedTheme.getName()).isEqualTo(capitalize(themeToUpdate.getName()));
-            assertThat(updatedTheme.getUpdatedAt()).isNotNull();
+            assertThat(updatedTheme.name()).isEqualTo(capitalize(themeToUpdate.name()));
+            assertThat(updatedTheme.updatedAt()).isNotNull();
         }
 
         @Test
         @DisplayName("Mettre à jour un thème inexistant")
         public void shouldFailToUpdate_WhenNonExistingTheme() {
             // Given
-            Theme themeToUpdate = new Theme();
-            themeToUpdate.setId(9L);
-            themeToUpdate.setName("nouveau nom");
-            themeToUpdate.setDescription("");
+            ThemeUpsertDTO themeToUpdate = new ThemeUpsertDTO("nouveau nom", "");
 
             // When / Then
-            assertThrows(NotFoundException.class, () -> themeService.update(themeToUpdate.getId(), themeToUpdate));
+            assertThrows(NotFoundException.class, () -> themeService.update(9L, themeToUpdate));
         }
 
         @Test
         @DisplayName("Mettre à jour un thème avec un nom déjà existant")
         public void shouldFailToUpdate_WhenThemeWithExistingName() {
             // Given
-            Theme themeToUpdate = new Theme();
-            themeToUpdate.setId(2L);
-            themeToUpdate.setName("Art");
-            themeToUpdate.setDescription("");
+            ThemeUpsertDTO themeToUpdate = new ThemeUpsertDTO("Art", "");
 
             // When / Then
-            assertThrows(AlreadyExistException.class, () -> themeService.update(themeToUpdate.getId(), themeToUpdate));
+            assertThrows(AlreadyExistException.class, () -> themeService.update(2L, themeToUpdate));
         }
 
     }
@@ -183,7 +171,7 @@ public class ThemeServiceIT {
         @DisplayName("Supprimer un thème existant")
         public void shouldDelete_WhenExistingTheme() {
             // Given
-            Long idToDelete = 1L;
+            long idToDelete = 1L;
 
             // When
             themeService.delete(idToDelete);
@@ -197,10 +185,55 @@ public class ThemeServiceIT {
         @DisplayName("Supprimer un thème inexistant")
         public void shouldFailToDelete_WhenNonExistingTheme() {
             // Given
-            Long idToDelete = 9L;
+            long idToDelete = 9L;
 
             // When / Then
             assertThrows(NotFoundException.class, () -> themeService.delete(idToDelete));
+        }
+
+    }
+
+
+    @Nested
+    @DisplayName("Désactiver / réactiver un thème")
+    class DisablingTheme {
+
+        @Test
+        @DisplayName("Désactiver un thème actif")
+        public void shouldDisable_WhenActiveTheme() {
+            // Given
+            long idToDisable = 4L;
+
+            // When
+            themeService.toggleDisable(idToDisable);
+
+            // Then
+            Theme theme = themeRepository.findById(idToDisable).get();
+            assertThat(theme.getDisabledAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Réactiver un thème désactivé")
+        public void shouldEnable_WhenDisabledTheme() {
+            // Given
+            long idToEnable = 2L;
+
+            // When
+            themeService.toggleDisable(idToEnable);
+
+            // Then
+            Theme theme = themeRepository.findById(idToEnable).get();
+            assertThat(theme.getDisabledAt()).isNull();
+        }
+
+        @Test
+        @DisplayName("Désactiver un thème inexistant")
+        public void shouldFailToDisable_WhenNonExistingTheme() {
+            // Given
+            long idToDisable = 9L;
+
+            // When / Then
+            assertThrows(NotFoundException.class, () -> themeService.toggleDisable(idToDisable));
         }
 
     }
