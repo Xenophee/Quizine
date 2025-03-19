@@ -42,9 +42,9 @@ CREATE TABLE themes
     id          SERIAL PRIMARY KEY,
     name        VARCHAR(50) NOT NULL UNIQUE,
     description VARCHAR(250),
-    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP,
-    disabled_at TIMESTAMP
+    created_at  DATE        NOT NULL DEFAULT CURRENT_DATE,
+    updated_at  DATE,
+    disabled_at DATE
 );
 
 ---------------------------------------------------

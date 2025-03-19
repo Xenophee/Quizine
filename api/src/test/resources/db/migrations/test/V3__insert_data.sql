@@ -9,9 +9,9 @@ VALUES
 
 INSERT INTO themes (name, disabled_at)
 VALUES
-    ('Art', CURRENT_TIMESTAMP),
-    ('Droit & Politique', CURRENT_TIMESTAMP),
-    ('Histoire & Géographie', CURRENT_TIMESTAMP),
+    ('Art', CURRENT_DATE),
+    ('Droit & Politique', CURRENT_DATE),
+    ('Histoire & Géographie', CURRENT_DATE),
     ('Littérature & Langue française', NULL),
     ('Sciences humaines', NULL),
     ('Sciences & Techniques', NULL);
