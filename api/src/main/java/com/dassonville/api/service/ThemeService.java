@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,7 +57,6 @@ public class ThemeService {
         Theme themeToCreate = themeMapper.toModel(dto);
 
         themeToCreate.setName(capitalize(themeToCreate.getName()));
-        themeToCreate.setDisabledAt(LocalDateTime.now());
 
         if (themeRepository.existsByName(themeToCreate.getName())) {
             logger.warn("Un thème existe déjà avec le même nom : {}", themeToCreate.getName());
@@ -71,24 +70,23 @@ public class ThemeService {
 
 
     public ThemeDTO update(long id, ThemeUpsertDTO dto) {
-        Theme themeToUpdate = themeMapper.toModel(dto);
-
         Theme existingTheme = themeRepository.findById(id).orElseThrow(() -> {
             logger.warn("Le thème à modifier avec l'ID {}, n'a pas été trouvé.", id);
             return new NotFoundException("Le thème à modifier n'a pas été trouvé.");
         });
 
-        themeToUpdate.setName(capitalize(themeToUpdate.getName()));
-
-        if (!existingTheme.getName().equals(themeToUpdate.getName()) && themeRepository.existsByName(themeToUpdate.getName())) {
-            logger.warn("Un thème existe déjà avec le même nom : {}", themeToUpdate.getName());
+        if (!existingTheme.getName().equals(dto.name()) && themeRepository.existsByName(dto.name())) {
+            logger.warn("Un thème existe déjà avec le même nom : {}", dto.name());
             throw new AlreadyExistException("Un thème existe déjà avec le même nom.");
         }
 
-        Theme themeUpdated = themeRepository.save(themeToUpdate);
+        existingTheme.setName(capitalize(dto.name()));
+        existingTheme.setDescription(dto.description());
 
+        Theme themeUpdated = themeRepository.save(existingTheme);
         return themeMapper.toDTO(themeUpdated);
     }
+
 
 
     public void delete(long id) {
@@ -110,7 +108,7 @@ public class ThemeService {
                 });
 
         if (theme.getDisabledAt() == null) {
-            theme.setDisabledAt(LocalDateTime.now()); // Désactiver
+            theme.setDisabledAt(LocalDate.now()); // Désactiver
         } else {
             theme.setDisabledAt(null); // Réactiver
         }
