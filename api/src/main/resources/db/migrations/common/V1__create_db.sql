@@ -39,13 +39,12 @@ CREATE TABLE users_roles
 ---------------------------------------------------
 CREATE TABLE themes
 (
-    id           SERIAL PRIMARY KEY,
-    name         VARCHAR(50) NOT NULL UNIQUE,
-    description  VARCHAR(250),
-    created_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    published_at TIMESTAMP,
-    updated_at   TIMESTAMP,
-    disabled_at  TIMESTAMP
+    id          SERIAL PRIMARY KEY,
+    name        VARCHAR(50) NOT NULL UNIQUE,
+    description VARCHAR(250),
+    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP,
+    disabled_at TIMESTAMP
 );
 
 ---------------------------------------------------

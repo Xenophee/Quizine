@@ -7,14 +7,14 @@ VALUES
     ('bob', 'bob@example.com', 'password456');
 
 
-INSERT INTO themes (name, published_at, disabled_at)
+INSERT INTO themes (name, disabled_at)
 VALUES
-    ('Art', CURRENT_TIMESTAMP, NULL),
-    ('Droit & Politique', CURRENT_TIMESTAMP, (CURRENT_TIMESTAMP + INTERVAL '2 hours')),
-    ('Histoire & Géographie', CURRENT_TIMESTAMP, NULL),
-    ('Littérature & Langue française', NULL, NULL),
-    ('Sciences humaines', NULL, NULL),
-    ('Sciences & Techniques', NULL, NULL);
+    ('Art', CURRENT_TIMESTAMP),
+    ('Droit & Politique', CURRENT_TIMESTAMP),
+    ('Histoire & Géographie', CURRENT_TIMESTAMP),
+    ('Littérature & Langue française', NULL),
+    ('Sciences humaines', NULL),
+    ('Sciences & Techniques', NULL);
 
 
 
