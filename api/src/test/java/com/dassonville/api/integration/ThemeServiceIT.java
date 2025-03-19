@@ -34,7 +34,7 @@ public class ThemeServiceIT {
     private ThemeRepository themeRepository;
 
     @BeforeEach
-    void clearDatabase(@Autowired Flyway flyway) {
+    public void clearDatabase(@Autowired Flyway flyway) {
         flyway.clean();
         flyway.migrate();
     }
@@ -105,8 +105,10 @@ public class ThemeServiceIT {
             ThemeDTO createdTheme = themeService.create(themeToCreate);
 
             // Then
-            assertThat(createdTheme.name()).isEqualTo(capitalize(themeToCreate.name()));
-            assertThat(createdTheme.createdAt()).isNotNull();
+            Theme theme = themeRepository.findById(createdTheme.id()).get();
+            assertThat(theme.getName()).isEqualTo(capitalize(themeToCreate.name()));
+            assertThat(theme.getCreatedAt()).isNotNull();
+            assertThat(theme.getDisabledAt()).isNotNull();
         }
 
         @Test
@@ -136,8 +138,9 @@ public class ThemeServiceIT {
             ThemeDTO updatedTheme = themeService.update(1L, themeToUpdate);
 
             // Then
-            assertThat(updatedTheme.name()).isEqualTo(capitalize(themeToUpdate.name()));
-            assertThat(updatedTheme.updatedAt()).isNotNull();
+            Theme theme = themeRepository.findById(updatedTheme.id()).get();
+            assertThat(theme.getName()).isEqualTo(capitalize(themeToUpdate.name()));
+            assertThat(theme.getUpdatedAt()).isNotNull();
         }
 
         @Test
