@@ -44,7 +44,7 @@ public class ThemeControllerTest {
     private ThemeUpsertDTO themeUpsertDTO;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         endpointId = 1L;
         themeDTO = new ThemeDTO(1L, "Informatique", "", null, null, null);
         themeUpsertDTO = new ThemeUpsertDTO("Informatique", "");
@@ -101,11 +101,12 @@ public class ThemeControllerTest {
         public void getThemeById_shouldReturn404() throws Exception {
             // Given
             when(themeService.findById(anyLong()))
-                    .thenThrow(NotFoundException.class);
+                    .thenThrow(new NotFoundException());
 
             // When & Then
             mockMvc.perform(get("/api/themes/{id}", endpointId))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists());
         }
 
     }
@@ -136,13 +137,14 @@ public class ThemeControllerTest {
         public void createTheme_shouldReturn409() throws Exception {
             // Given
             when(themeService.create(any(ThemeUpsertDTO.class)))
-                    .thenThrow(AlreadyExistException.class);
+                    .thenThrow(new AlreadyExistException());
 
             // When & Then
             mockMvc.perform(post("/api/themes")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
-                    .andExpect(status().isConflict());
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.message").exists());
         }
 
         @Test
@@ -155,7 +157,8 @@ public class ThemeControllerTest {
             mockMvc.perform(post("/api/themes")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.name").exists());
         }
 
     }
@@ -185,18 +188,19 @@ public class ThemeControllerTest {
         public void updateTheme_shouldReturn409() throws Exception {
             // Given
             when(themeService.update(anyLong(), any(ThemeUpsertDTO.class)))
-                    .thenThrow(AlreadyExistException.class);
+                    .thenThrow(new AlreadyExistException());
 
             // When & Then
             mockMvc.perform(put("/api/themes/{id}", endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
-                    .andExpect(status().isConflict());
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.message").exists());
         }
 
         @Test
         @DisplayName("Modifier un thème avec un nom vide")
-        public void updateTheme_shouldReturn400_invalidData() throws Exception {
+        public void updateTheme_shouldReturn400() throws Exception {
             // Given
             themeUpsertDTO = new ThemeUpsertDTO("", "");
 
@@ -212,13 +216,14 @@ public class ThemeControllerTest {
         public void updateTheme_shouldReturn404() throws Exception {
             // Given
             when(themeService.update(anyLong(), any(ThemeUpsertDTO.class)))
-                    .thenThrow(NotFoundException.class);
+                    .thenThrow(new NotFoundException());
 
             // When & Then
             mockMvc.perform(put("/api/themes/{id}", endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists());
         }
 
     }
@@ -241,11 +246,12 @@ public class ThemeControllerTest {
         @DisplayName("Supprimer un thème inexistant")
         public void deleteTheme_shouldReturn404() throws Exception {
             // Given
-            doThrow(NotFoundException.class).when(themeService).delete(anyLong());
+            doThrow(new NotFoundException()).when(themeService).delete(anyLong());
 
             // When & Then
             mockMvc.perform(delete("/api/themes/{id}", endpointId))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists());
         }
 
     }
@@ -263,6 +269,17 @@ public class ThemeControllerTest {
             // When & Then
             mockMvc.perform(patch("/api/themes/{id}/toggle-disable", endpointId))
                     .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("Désactiver un thème inexistant")
+        public void disableTheme_shouldReturn404() throws Exception {
+            // Given
+            doThrow(new NotFoundException()).when(themeService).toggleDisable(anyLong());
+            // When & Then
+            mockMvc.perform(patch("/api/themes/{id}/toggle-disable", endpointId))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists());
         }
 
     }
