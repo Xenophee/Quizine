@@ -110,7 +110,7 @@ public class ThemeController {
                 content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PutMapping("/{id}")
-    public ResponseEntity<ThemeDTO> updateTheme(@PathVariable("id") long id, @RequestBody @Valid ThemeUpsertDTO theme) {
+    public ResponseEntity<ThemeDTO> updateTheme(@PathVariable long id, @RequestBody @Valid ThemeUpsertDTO theme) {
         logger.info("Requête pour mettre à jour le thème avec l'ID: {}", id);
         ThemeDTO themeUpdated = themeService.update(id, theme);
         logger.info("Thème mis à jour avec l'ID: {}", id);
@@ -125,7 +125,7 @@ public class ThemeController {
             content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTheme(@PathVariable("id") long id) {
+    public ResponseEntity<Void> deleteTheme(@PathVariable long id) {
         logger.info("Requête pour supprimer le thème avec l'ID: {}", id);
         themeService.delete(id);
         logger.info("Thème supprimé avec l'ID: {}", id);
