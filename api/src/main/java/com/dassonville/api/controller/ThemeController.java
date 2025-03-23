@@ -120,7 +120,7 @@ public class ThemeController {
 
     @Operation(summary = "Supprimer un thème", description = "Supprime un thème par son ID")
     @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Le thème a été supprimé"),
+        @ApiResponse(responseCode = "204", description = "Le thème a été supprimé."),
         @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
             content = {@Content(schema = @Schema(implementation = Error.class))})
     })
@@ -135,7 +135,7 @@ public class ThemeController {
 
     @Operation(summary = "Activer / désactiver un thème", description = "Active / désactive un thème par son ID")
     @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Le thème a été activé / désactivé"),
+        @ApiResponse(responseCode = "204", description = "Le thème a été activé / désactivé."),
         @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
                 content = {@Content(schema = @Schema(implementation = Error.class))})
     })
