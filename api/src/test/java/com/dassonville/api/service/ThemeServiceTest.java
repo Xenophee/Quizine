@@ -70,7 +70,7 @@ public class ThemeServiceTest {
 
 
     @Nested
-    @DisplayName("Tests pour getAllThemes")
+    @DisplayName("Tests de la méthode getAllThemes")
     class getAllThemesTest {
         @Test
         @DisplayName("Récupérer tous les thèmes")
@@ -103,7 +103,7 @@ public class ThemeServiceTest {
 
 
     @Nested
-    @DisplayName("Tests pour findById")
+    @DisplayName("Tests de la méthode findById")
     class FindByIdTests {
 
         @Test
@@ -139,7 +139,7 @@ public class ThemeServiceTest {
 
 
     @Nested
-    @DisplayName("Tests pour create")
+    @DisplayName("Tests de la méthode create")
     class CreateTests {
 
         @Test
@@ -179,7 +179,7 @@ public class ThemeServiceTest {
 
 
     @Nested
-    @DisplayName("Tests pour update")
+    @DisplayName("Tests de la méthode update")
     class UpdateTests {
 
         @Test
@@ -260,7 +260,7 @@ public class ThemeServiceTest {
 
 
     @Nested
-    @DisplayName("Tests pour delete")
+    @DisplayName("Tests de la méthode delete")
     class DeleteTests {
 
         @Test
@@ -296,7 +296,7 @@ public class ThemeServiceTest {
 
 
     @Nested
-    @DisplayName("Tests pour toggleDisable")
+    @DisplayName("Tests de la méthode toggleDisable")
     class ToggleDisableTests {
 
         @Test

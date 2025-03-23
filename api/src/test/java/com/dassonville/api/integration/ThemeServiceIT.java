@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -92,7 +91,7 @@ public class ThemeServiceIT {
 
 
     @Nested
-    @DisplayName("Créer un thème")
+    @DisplayName("Création de thèmes")
     class CreatingTheme {
 
         @Test
@@ -125,7 +124,7 @@ public class ThemeServiceIT {
 
 
     @Nested
-    @DisplayName("Mettre à jour un thème")
+    @DisplayName("Mise à jour de thèmes")
     class UpdatingTheme {
 
         @Test
@@ -167,7 +166,7 @@ public class ThemeServiceIT {
 
 
     @Nested
-    @DisplayName("Supprimer un thème")
+    @DisplayName("Suppression de thèmes")
     class DeletingTheme {
 
         @Test
@@ -180,8 +179,7 @@ public class ThemeServiceIT {
             themeService.delete(idToDelete);
 
             // Then
-            Optional<Theme> theme = themeRepository.findById(idToDelete);
-            assertThat(theme).isEmpty();
+            assertThat(themeRepository.existsById(idToDelete)).isFalse();
         }
 
         @Test
@@ -198,7 +196,7 @@ public class ThemeServiceIT {
 
 
     @Nested
-    @DisplayName("Désactiver / réactiver un thème")
+    @DisplayName("Désactivation / réactivation de thèmes")
     class DisablingTheme {
 
         @Test

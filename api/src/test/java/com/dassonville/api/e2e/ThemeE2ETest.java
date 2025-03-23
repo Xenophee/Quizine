@@ -59,7 +59,7 @@ public class ThemeE2ETest {
 
         // Vérifie que le thème est bien stocké en base
         boolean themeIsExists = themeRepository.existsByName(themeToCreate.name());
-        assertThat(themeIsExists).isEqualTo(true);
+        assertThat(themeIsExists).isTrue();
 
         // Vérifie qu'on peut récupérer le thème avec un GET
         ResponseEntity<ThemeDTO> getResponse = restTemplate.getForEntity(location, ThemeDTO.class);
