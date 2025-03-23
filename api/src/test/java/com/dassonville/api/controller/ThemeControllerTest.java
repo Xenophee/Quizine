@@ -208,7 +208,8 @@ public class ThemeControllerTest {
             mockMvc.perform(put("/api/themes/{id}", endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.name").exists());
         }
 
         @Test
@@ -237,6 +238,7 @@ public class ThemeControllerTest {
         @DisplayName("Supprimer un thème")
         public void deleteTheme_shouldReturn204() throws Exception {
             // Given
+            doNothing().when(themeService).delete(anyLong());
             // When & Then
             mockMvc.perform(delete("/api/themes/{id}", endpointId))
                     .andExpect(status().isNoContent());
