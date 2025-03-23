@@ -249,7 +249,6 @@ public class ThemeControllerTest {
         public void deleteTheme_shouldReturn404() throws Exception {
             // Given
             doThrow(new NotFoundException()).when(themeService).delete(anyLong());
-
             // When & Then
             mockMvc.perform(delete("/api/themes/{id}", endpointId))
                     .andExpect(status().isNotFound())
