@@ -258,12 +258,12 @@ public class ThemeControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour les méthodes PATCH")
+    @DisplayName("Tests pour la méthode PATCH")
     class PatchTests {
 
         @Test
         @DisplayName("Désactiver un thème")
-        public void disableTheme_shouldReturn204() throws Exception {
+        public void toggleDisableTheme_shouldReturn204() throws Exception {
             // Given
             doNothing().when(themeService).toggleDisable(anyLong());
             // When & Then
@@ -273,7 +273,7 @@ public class ThemeControllerTest {
 
         @Test
         @DisplayName("Désactiver un thème inexistant")
-        public void disableTheme_shouldReturn404() throws Exception {
+        public void toggleDisableTheme_shouldReturn404() throws Exception {
             // Given
             doThrow(new NotFoundException()).when(themeService).toggleDisable(anyLong());
             // When & Then
