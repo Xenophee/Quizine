@@ -14,4 +14,17 @@ VALUES
     ('Histoire & Géographie'),
     ('Littérature & Langue française'),
     ('Sciences humaines'),
-    ('Sciences & Techniques')
+    ('Sciences & Techniques');
+
+INSERT INTO categories (name, id_theme)
+VALUES
+    ('Cinéma', 1),
+    ('Droit privé', 2),
+    ('Droit public', 2),
+    ('Relations internationales', 2),
+    ('Économie', 2),
+    ('Géographie française', 3),
+    ('Expression & vocabulaire', 4),
+    ('Philosophie', 5),
+    ('Mythologie & religions', 5),
+    ('Biologie & santé', 6);

@@ -16,5 +16,20 @@ VALUES
     ('Sciences humaines', NULL),
     ('Sciences & Techniques', NULL);
 
+INSERT INTO categories (name, disabled_at, id_theme)
+VALUES
+    ('Peinture', CURRENT_DATE, 1),
+    ('Cinéma', NULL, 1),
+    ('Droit civil', CURRENT_DATE, 2),
+    ('Droit constitutionnel', NULL, 2),
+    ('Relations internationales', CURRENT_DATE, 2),
+    ('Histoire médiévale', CURRENT_DATE, 3),
+    ('Géographie française', NULL, 3),
+    ('Littérature du XIXe', NULL, 4),
+    ('Philosophie', NULL, 5),
+    ('Sociologie', NULL, 5),
+    ('Informatique', NULL, 6),
+    ('Biologie', CURRENT_DATE, 6);
+
 
 

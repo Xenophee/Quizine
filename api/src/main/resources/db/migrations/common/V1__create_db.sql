@@ -53,8 +53,11 @@ CREATE TABLE themes
 CREATE TABLE categories
 (
     id          SERIAL PRIMARY KEY,
-    name        VARCHAR(70) NOT NULL UNIQUE,
+    name        VARCHAR(50) NOT NULL UNIQUE,
     description VARCHAR(250),
+    created_at  DATE        NOT NULL DEFAULT CURRENT_DATE,
+    updated_at  DATE,
+    disabled_at DATE,
     id_theme    INTEGER     NOT NULL REFERENCES themes (id) ON DELETE CASCADE
 );
 
