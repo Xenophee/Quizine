@@ -6,9 +6,7 @@ WORKDIR /app
 
 # Copie uniquement les fichiers liés à la configuration Gradle (pour utiliser le cache Docker)
 COPY gradle/ gradle/
-COPY settings.gradle.kts .
-COPY build.gradle.kts .
-COPY gradlew .
+COPY settings.gradle.kts build.gradle.kts gradlew ./
 
 # Vérifie les dépendances pour détecter d'éventuelles failles de sécurité
 RUN ./gradlew dependencyCheckAnalyze --no-daemon || true

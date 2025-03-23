@@ -6,9 +6,7 @@ WORKDIR /app
 
 # Copie uniquement les fichiers liés à la configuration Gradle (pour utiliser le cache Docker)
 COPY gradle/ gradle/
-COPY settings.gradle.kts .
-COPY build.gradle.kts .
-COPY gradlew .
+COPY settings.gradle.kts build.gradle.kts gradlew ./
 
 # Télécharge les dépendances sans compiler le code source
 RUN ./gradlew dependencies --no-daemon  # ajouter || true si on veut passer les erreurs
@@ -19,5 +17,5 @@ COPY src/ src/
 # Port de l'application (application + LiveReload)
 EXPOSE 8080 35729
 
-# Commande par défaut en mode développement (mode watch)
+# Commande par défaut en mode développement
 ENTRYPOINT ["./gradlew", "bootRun"]

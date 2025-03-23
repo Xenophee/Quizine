@@ -11,7 +11,7 @@ COPY package*.json ./
 RUN npm audit --audit-level=critical || true
 
 # Installe les dépendances du projet
-RUN npm install
+RUN npm ci
 
 # Copie le reste des fichiers du projet dans le conteneur
 COPY . .
