@@ -1,8 +1,9 @@
 package com.dassonville.api.controller;
 
 
-import com.dassonville.api.dto.CategoryDTO;
+import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,16 +22,16 @@ import java.net.URI;
 import java.util.Map;
 
 
-@Tag(name = "Gestion de catégories")
+@Tag(name = "Gestion de catégories - admin")
 @RestController
-@RequestMapping("/api/categories")
-public class CategoryController {
+@RequestMapping("/api/admin/categories")
+public class CategoryAdminController {
 
-    private static final Logger logger = LoggerFactory.getLogger(CategoryController.class);
+    private static final Logger logger = LoggerFactory.getLogger(CategoryAdminController.class);
 
     private final CategoryService categoryService;
 
-    public CategoryController(CategoryService categoryService) {
+    public CategoryAdminController(CategoryService categoryService) {
         this.categoryService = categoryService;
     }
 
@@ -42,9 +43,9 @@ public class CategoryController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable long id) {
+    public ResponseEntity<CategoryAdminDTO> getCategoryById(@PathVariable long id) {
         logger.info("Requête pour obtenir la catégorie avec l'ID: {}", id);
-        CategoryDTO category = categoryService.findById(id);
+        CategoryAdminDTO category = categoryService.findById(id);
         logger.info("Catégorie récupérée avec l'ID: {}", id);
         return ResponseEntity.ok(category);
     }
@@ -59,9 +60,9 @@ public class CategoryController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PostMapping
-    public ResponseEntity<CategoryDTO> createCategory(@RequestBody @Valid CategoryUpsertDTO category) {
+    public ResponseEntity<CategoryAdminDTO> createCategory(@RequestBody @Valid CategoryUpsertDTO category) {
         logger.info("Requête pour créer une catégorie.");
-        CategoryDTO createdCategory = categoryService.create(category);
+        CategoryAdminDTO createdCategory = categoryService.create(category);
         logger.info("Catégorie créée avec l'ID: {}", createdCategory.id());
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -84,9 +85,9 @@ public class CategoryController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryDTO> updateCategory(@PathVariable long id, @RequestBody @Valid CategoryUpsertDTO category) {
+    public ResponseEntity<CategoryAdminDTO> updateCategory(@PathVariable long id, @RequestBody @Valid CategoryUpsertDTO category) {
         logger.info("Requête pour mettre à jour une catégorie.");
-        CategoryDTO categoryUpdated = categoryService.update(id, category);
+        CategoryAdminDTO categoryUpdated = categoryService.update(id, category);
         logger.info("Catégorie mise à jour avec l'ID: {}", id);
         return ResponseEntity.ok(categoryUpdated);
     }
@@ -110,13 +111,15 @@ public class CategoryController {
     @Operation(summary = "Activer / désactiver une catégorie", description = "Active / désactive une catégorie par son ID")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "La catégorie a été activée / désactivée."),
+            @ApiResponse(responseCode = "400", description = "La donnée spécifiée n'est pas valide.",
+                    content = {@Content(schema = @Schema(implementation = Map.class))}),
             @ApiResponse(responseCode = "404", description = "La catégorie avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @PatchMapping("/{id}/toggle-disable")
-    public ResponseEntity<Void> disableCategory(@PathVariable long id) {
+    @PatchMapping("/{id}")
+    public ResponseEntity<Void> disableCategory(@PathVariable long id, @RequestBody @Valid ToggleDisableRequestDTO toggleDisableRequestDTO) {
         logger.info("Requête pour activer / désactiver la catégorie avec l'ID: {}", id);
-        categoryService.toggleDisable(id);
+        categoryService.toggleDisable(id, toggleDisableRequestDTO);
         logger.info("Catégorie activée / désactivée avec l'ID: {}", id);
         return ResponseEntity.noContent().build();
     }
