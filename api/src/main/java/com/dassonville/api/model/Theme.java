@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "themes")
@@ -33,4 +34,7 @@ public class Theme {
     @Column(name = "disabled_at")
     @CreationTimestamp
     private LocalDate disabledAt;
+
+    @OneToMany(mappedBy = "theme", fetch = FetchType.LAZY)
+    private List<Category> categories;
 }
