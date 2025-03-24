@@ -1,13 +1,16 @@
 package com.dassonville.api.service;
 
 
+import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemeDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
+import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.ThemeMapper;
 import com.dassonville.api.model.Theme;
 import com.dassonville.api.repository.ThemeRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +33,9 @@ public class ThemeService {
     private final ThemeMapper themeMapper;
 
 
-    public List<ThemeDTO> getAllThemes() {
+    public List<ThemeAdminDTO> getAllThemes() {
         List<Theme> themes = themeRepository.findAll();
-        return themes.stream().map(themeMapper::toDTO).collect(Collectors.toList());
+        return themes.stream().map(themeMapper::toAdminDTO).collect(Collectors.toList());
     }
 
     public List<ThemeDTO> getAllActiveThemes() {
@@ -41,7 +44,7 @@ public class ThemeService {
     }
 
 
-    public ThemeDTO findById(long id) {
+    public ThemeDTO findByIdForUser(long id) {
 
         Theme theme = themeRepository.findById(id)
                 .orElseThrow(() -> {
@@ -53,7 +56,20 @@ public class ThemeService {
     }
 
 
-    public ThemeDTO create(ThemeUpsertDTO dto) {
+    @Transactional
+    public ThemeAdminDTO findByIdForAdmin(long id) {
+
+        Theme theme = themeRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", id);
+                    return new NotFoundException("Le thème n'a pas été trouvé.");
+                });
+
+        return themeMapper.toAdminDTO(theme);
+    }
+
+
+    public ThemeAdminDTO create(ThemeUpsertDTO dto) {
         Theme themeToCreate = themeMapper.toModel(dto);
 
         themeToCreate.setName(capitalize(themeToCreate.getName()));
@@ -65,11 +81,12 @@ public class ThemeService {
 
         Theme themeCreated = themeRepository.save(themeToCreate);
 
-        return themeMapper.toDTO(themeCreated);
+        return themeMapper.toAdminDTO(themeCreated);
     }
 
 
-    public ThemeDTO update(long id, ThemeUpsertDTO dto) {
+    @Transactional
+    public ThemeAdminDTO update(long id, ThemeUpsertDTO dto) {
         Theme existingTheme = themeRepository.findById(id).orElseThrow(() -> {
             logger.warn("Le thème à modifier avec l'ID {}, n'a pas été trouvé.", id);
             return new NotFoundException("Le thème à modifier n'a pas été trouvé.");
@@ -84,7 +101,7 @@ public class ThemeService {
         existingTheme.setDescription(dto.description());
 
         Theme themeUpdated = themeRepository.save(existingTheme);
-        return themeMapper.toDTO(themeUpdated);
+        return themeMapper.toAdminDTO(themeUpdated);
     }
 
 
@@ -100,18 +117,14 @@ public class ThemeService {
     }
 
 
-    public void toggleDisable(long id) {
+    public void toggleDisable(long id, ToggleDisableRequestDTO toggleDisableRequestDTO) {
         Theme theme = themeRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", id);
                     return new NotFoundException("Le thème n'a pas été trouvé.");
                 });
 
-        if (theme.getDisabledAt() == null) {
-            theme.setDisabledAt(LocalDate.now()); // Désactiver
-        } else {
-            theme.setDisabledAt(null); // Réactiver
-        }
+        theme.setDisabledAt((toggleDisableRequestDTO.isDisabled()) ? LocalDate.now() : null);
 
         themeRepository.save(theme);
     }

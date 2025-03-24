@@ -1,7 +1,8 @@
 package com.dassonville.api.service;
 
-import com.dassonville.api.dto.CategoryDTO;
+import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.CategoryMapper;
@@ -26,7 +27,7 @@ public class CategoryService {
     private final CategoryMapper categoryMapper;
 
 
-    public CategoryDTO findById(long id) {
+    public CategoryAdminDTO findById(long id) {
 
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> {
@@ -34,10 +35,10 @@ public class CategoryService {
                     return new NotFoundException("La catégorie n'a pas été trouvée.");
                 });
 
-        return categoryMapper.toDTO(category);
+        return categoryMapper.toAdminDTO(category);
     }
 
-    public CategoryDTO create(CategoryUpsertDTO dto) {
+    public CategoryAdminDTO create(CategoryUpsertDTO dto) {
         Category categoryToCreate = categoryMapper.toModel(dto);
 
         categoryToCreate.setName(capitalize(categoryToCreate.getName()));
@@ -49,11 +50,11 @@ public class CategoryService {
 
         Category categoryCreated = categoryRepository.save(categoryToCreate);
 
-        return categoryMapper.toDTO(categoryCreated);
+        return categoryMapper.toAdminDTO(categoryCreated);
     }
 
 
-    public CategoryDTO update(long id, CategoryUpsertDTO dto) {
+    public CategoryAdminDTO update(long id, CategoryUpsertDTO dto) {
         Category existingCategory = categoryRepository.findById(id).orElseThrow(() -> {
             logger.warn("La catégorie à modifier avec l'ID {}, n'a pas été trouvée.", id);
             return new NotFoundException("La catégorie à modifier n'a pas été trouvée.");
@@ -68,7 +69,7 @@ public class CategoryService {
         existingCategory.setDescription(dto.description());
 
         Category categoryUpdated = categoryRepository.save(existingCategory);
-        return categoryMapper.toDTO(categoryUpdated);
+        return categoryMapper.toAdminDTO(categoryUpdated);
     }
 
 
@@ -83,18 +84,14 @@ public class CategoryService {
     }
 
 
-    public void toggleDisable(long id) {
+    public void toggleDisable(long id, ToggleDisableRequestDTO toggleDisableRequestDTO) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.warn("La catégorie avec l'ID {}, n'a pas été trouvée.", id);
                     return new NotFoundException("La catégorie n'a pas été trouvée.");
                 });
 
-        if (category.getDisabledAt() == null) {
-            category.setDisabledAt(LocalDate.now()); // Désactiver
-        } else {
-            category.setDisabledAt(null); // Réactiver
-        }
+        category.setDisabledAt((toggleDisableRequestDTO.isDisabled()) ? LocalDate.now() : null);
 
         categoryRepository.save(category);
     }
