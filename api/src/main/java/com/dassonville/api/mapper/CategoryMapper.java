@@ -1,7 +1,7 @@
 package com.dassonville.api.mapper;
 
 
-import com.dassonville.api.dto.CategoryDTO;
+import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
 import com.dassonville.api.model.Category;
 import org.mapstruct.Mapper;
@@ -23,7 +23,7 @@ public interface CategoryMapper {
     @Mappings({
             @Mapping(target = "themeId", source = "theme.id")
     })
-    CategoryDTO toDTO(Category category);
+    CategoryAdminDTO toAdminDTO(Category category);
 
     @Mappings({
             @Mapping(target = "themeId", source = "theme.id")

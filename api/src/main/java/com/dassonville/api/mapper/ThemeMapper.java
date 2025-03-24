@@ -1,6 +1,7 @@
 package com.dassonville.api.mapper;
 
 
+import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemeDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.model.Theme;
@@ -17,11 +18,14 @@ public interface ThemeMapper {
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "createdAt", ignore = true),
             @Mapping(target = "updatedAt", ignore = true),
-            @Mapping(target = "disabledAt", ignore = true)
+            @Mapping(target = "disabledAt", ignore = true),
+            @Mapping(target = "categories", ignore = true)
     })
     Theme toModel(ThemeUpsertDTO dto);
 
     ThemeDTO toDTO(Theme theme);
+
+    ThemeAdminDTO toAdminDTO(Theme theme);
 
     ThemeUpsertDTO toUpsertDTO(Theme theme);
 }
