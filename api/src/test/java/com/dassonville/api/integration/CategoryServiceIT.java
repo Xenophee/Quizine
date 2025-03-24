@@ -1,8 +1,9 @@
 package com.dassonville.api.integration;
 
 
-import com.dassonville.api.dto.CategoryDTO;
+import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.Category;
@@ -22,7 +23,7 @@ import static org.springframework.util.StringUtils.capitalize;
 
 
 @SpringBootTest
-@DisplayName("Tests d'intégration de la classe CategoryService")
+@DisplayName("IT - CategoryService")
 public class CategoryServiceIT {
 
     @Autowired
@@ -48,7 +49,7 @@ public class CategoryServiceIT {
             long idToFind = 1L;
 
             // When
-            CategoryDTO category = categoryService.findById(idToFind);
+            CategoryAdminDTO category = categoryService.findById(idToFind);
 
             // Then
             assertThat(category.name()).isEqualTo("Peinture");
@@ -77,7 +78,7 @@ public class CategoryServiceIT {
             CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO("catégorie", "description", 1);
 
             // When
-            CategoryDTO createdCategory = categoryService.create(categoryToCreate);
+            CategoryAdminDTO createdCategory = categoryService.create(categoryToCreate);
 
             // Then
             Category category = categoryRepository.findById(createdCategory.id()).get();
@@ -111,7 +112,7 @@ public class CategoryServiceIT {
             CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO("catégorie", "description", 1);
 
             // When
-            CategoryDTO updatedCategory = categoryService.update(idToUpdate, categoryToUpdate);
+            CategoryAdminDTO updatedCategory = categoryService.update(idToUpdate, categoryToUpdate);
 
             // Then
             Category category = categoryRepository.findById(updatedCategory.id()).get();
@@ -182,9 +183,10 @@ public class CategoryServiceIT {
         public void shouldDisable_WhenExistingCategory() {
             // Given
             long idToDisable = 2L;
+            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
 
             // When
-            categoryService.toggleDisable(idToDisable);
+            categoryService.toggleDisable(idToDisable, toggleDisableRequestDTO);
 
             // Then
             Category category = categoryRepository.findById(idToDisable).get();
@@ -196,9 +198,10 @@ public class CategoryServiceIT {
         public void shouldEnable_WhenDisabledCategory() {
             // Given
             long idToEnable = 1L;
+            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(false);
 
             // When
-            categoryService.toggleDisable(idToEnable);
+            categoryService.toggleDisable(idToEnable, toggleDisableRequestDTO);
 
             // Then
             Category category = categoryRepository.findById(idToEnable).get();
@@ -210,9 +213,10 @@ public class CategoryServiceIT {
         public void shouldFailToDisable_WhenNonExistingCategory() {
             // Given
             long idToDisable = 13L;
+            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
 
             // When / Then
-            assertThrows(NotFoundException.class, () -> categoryService.toggleDisable(idToDisable));
+            assertThrows(NotFoundException.class, () -> categoryService.toggleDisable(idToDisable, toggleDisableRequestDTO));
         }
     }
 }

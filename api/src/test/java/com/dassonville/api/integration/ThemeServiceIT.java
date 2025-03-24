@@ -1,7 +1,9 @@
 package com.dassonville.api.integration;
 
+import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemeDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
+import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.Theme;
@@ -23,7 +25,7 @@ import static org.springframework.util.StringUtils.capitalize;
 
 
 @SpringBootTest
-@DisplayName("Tests d'intégration de la classe ThemeService")
+@DisplayName("IT - ThemeService")
 public class ThemeServiceIT {
 
     @Autowired
@@ -48,7 +50,7 @@ public class ThemeServiceIT {
         @DisplayName("Récupérer tous les thèmes")
         public void shouldGetAllThemes() {
             // When
-            List<ThemeDTO> themes = themeService.getAllThemes();
+            List<ThemeAdminDTO> themes = themeService.getAllThemes();
 
             // Then
             assertThat(themes.size()).isEqualTo(6);
@@ -71,7 +73,7 @@ public class ThemeServiceIT {
             long idToFind = 1L;
 
             // When
-            ThemeDTO theme = themeService.findById(idToFind);
+            ThemeDTO theme = themeService.findByIdForUser(idToFind);
 
             // Then
             assertThat(theme.name()).isEqualTo("Art");
@@ -84,7 +86,7 @@ public class ThemeServiceIT {
             long idToFind = 9L;
 
             // When / Then
-            assertThrows(NotFoundException.class, () -> themeService.findById(idToFind));
+            assertThrows(NotFoundException.class, () -> themeService.findByIdForUser(idToFind));
         }
 
     }
@@ -101,7 +103,7 @@ public class ThemeServiceIT {
             ThemeUpsertDTO themeToCreate = new ThemeUpsertDTO("theme", "description");
 
             // When
-            ThemeDTO createdTheme = themeService.create(themeToCreate);
+            ThemeAdminDTO createdTheme = themeService.create(themeToCreate);
 
             // Then
             Theme theme = themeRepository.findById(createdTheme.id()).get();
@@ -134,7 +136,7 @@ public class ThemeServiceIT {
             ThemeUpsertDTO themeToUpdate = new ThemeUpsertDTO("nouveau nom", "");
 
             // When
-            ThemeDTO updatedTheme = themeService.update(1L, themeToUpdate);
+            ThemeAdminDTO updatedTheme = themeService.update(1L, themeToUpdate);
 
             // Then
             Theme theme = themeRepository.findById(updatedTheme.id()).get();
@@ -204,9 +206,10 @@ public class ThemeServiceIT {
         public void shouldDisable_WhenActiveTheme() {
             // Given
             long idToDisable = 4L;
+            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
 
             // When
-            themeService.toggleDisable(idToDisable);
+            themeService.toggleDisable(idToDisable, toggleDisableRequestDTO);
 
             // Then
             Theme theme = themeRepository.findById(idToDisable).get();
@@ -218,9 +221,10 @@ public class ThemeServiceIT {
         public void shouldEnable_WhenDisabledTheme() {
             // Given
             long idToEnable = 2L;
+            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(false);
 
             // When
-            themeService.toggleDisable(idToEnable);
+            themeService.toggleDisable(idToEnable, toggleDisableRequestDTO);
 
             // Then
             Theme theme = themeRepository.findById(idToEnable).get();
@@ -232,9 +236,10 @@ public class ThemeServiceIT {
         public void shouldFailToDisable_WhenNonExistingTheme() {
             // Given
             long idToDisable = 9L;
+            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
 
             // When / Then
-            assertThrows(NotFoundException.class, () -> themeService.toggleDisable(idToDisable));
+            assertThrows(NotFoundException.class, () -> themeService.toggleDisable(idToDisable, toggleDisableRequestDTO));
         }
 
     }

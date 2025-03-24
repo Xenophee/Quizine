@@ -1,7 +1,7 @@
 package com.dassonville.api.e2e;
 
 
-import com.dassonville.api.dto.CategoryDTO;
+import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
 import com.dassonville.api.model.Category;
 import com.dassonville.api.repository.CategoryRepository;
@@ -24,6 +24,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DisplayName("E2E - Catégorie")
 public class CategoryE2ETest {
 
     @LocalServerPort
@@ -47,11 +48,11 @@ public class CategoryE2ETest {
     public void shouldCreateAndRetrieveCategory() {
         // Given
         CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO("Droit européen", "Pour les juristes en herbe", 2);
-        String url = "http://localhost:" + port + "/api/categories";
+        String url = "http://localhost:" + port + "/api/admin/categories";
 
         // When - Envoi de la requête HTTP pour créer la catégorie
         HttpEntity<CategoryUpsertDTO> request = new HttpEntity<>(categoryToCreate);
-        ResponseEntity<CategoryDTO> response = restTemplate.exchange(url, HttpMethod.POST, request, CategoryDTO.class);
+        ResponseEntity<CategoryAdminDTO> response = restTemplate.exchange(url, HttpMethod.POST, request, CategoryAdminDTO.class);
 
         // Then - Vérifie la réponse HTTP
         URI location = response.getHeaders().getLocation();
@@ -64,7 +65,7 @@ public class CategoryE2ETest {
         assertThat(categoryIsExists).isTrue();
 
         // Vérifie qu'on peut récupérer la catégorie avec un GET
-        ResponseEntity<CategoryDTO> getResponse = restTemplate.getForEntity(location, CategoryDTO.class);
+        ResponseEntity<CategoryAdminDTO> getResponse = restTemplate.getForEntity(location, CategoryAdminDTO.class);
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(getResponse.getBody().name()).isEqualTo(categoryToCreate.name());
     }
@@ -74,7 +75,7 @@ public class CategoryE2ETest {
     public void shouldNotCreateCategoryWithSameName() {
         // Given
         CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO("Cinéma", "Pour les cinéphiles", 1);
-        String url = "http://localhost:" + port + "/api/categories";
+        String url = "http://localhost:" + port + "/api/admin/categories";
 
         // When - Envoi de la requête HTTP pour créer la catégorie
         HttpEntity<CategoryUpsertDTO> request = new HttpEntity<>(categoryToCreate);
@@ -93,11 +94,11 @@ public class CategoryE2ETest {
         // Given
         long id = 4;
         CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO("Droit européen", "Pour les juristes en herbe", 2);
-        String url = "http://localhost:" + port + "/api/categories/" + id;
+        String url = "http://localhost:" + port + "/api/admin/categories/" + id;
 
         // When - Envoi de la requête HTTP pour mettre à jour la catégorie
         HttpEntity<CategoryUpsertDTO> requestUpdate = new HttpEntity<>(categoryToUpdate);
-        ResponseEntity<CategoryDTO> responseUpdate = restTemplate.exchange(url, HttpMethod.PUT, requestUpdate, CategoryDTO.class);
+        ResponseEntity<CategoryAdminDTO> responseUpdate = restTemplate.exchange(url, HttpMethod.PUT, requestUpdate, CategoryAdminDTO.class);
 
         // Then - Vérifie la réponse HTTP
         assertThat(responseUpdate.getStatusCode()).isEqualTo(HttpStatus.OK);

@@ -1,8 +1,9 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.CategoryDTO;
+import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.CategoryMapper;
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Tests unitaires de la classe CategoryService")
+@DisplayName("UNI - CategoryService")
 public class CategoryServiceTest {
 
     @Mock
@@ -39,9 +40,10 @@ public class CategoryServiceTest {
     private final CategoryMapper categoryMapper = Mappers.getMapper(CategoryMapper.class);
 
     private long id;
+    private ToggleDisableRequestDTO toggleDisableRequestDTO;
     private Category category;
     private Category categoryToUpdate;
-    private CategoryDTO categoryDTO;
+    private CategoryAdminDTO categoryAdminDTO;
     private CategoryUpsertDTO categoryToCreateDTO;
     private CategoryUpsertDTO categoryToUpdateDTO;
 
@@ -51,6 +53,7 @@ public class CategoryServiceTest {
         categoryService = new CategoryService(categoryRepository, categoryMapper);
 
         id = 1L;
+        toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
         Theme theme = new Theme();
         theme.setId(1);
 
@@ -66,7 +69,7 @@ public class CategoryServiceTest {
         categoryToUpdate.setDescription("Nouvelle description");
         categoryToUpdate.setTheme(theme);
 
-        categoryDTO = categoryMapper.toDTO(category);
+        categoryAdminDTO = categoryMapper.toAdminDTO(category);
         categoryToCreateDTO = categoryMapper.toUpsertDTO(category);
         categoryToUpdateDTO = categoryMapper.toUpsertDTO(categoryToUpdate);
     }
@@ -84,12 +87,12 @@ public class CategoryServiceTest {
                     .thenReturn(Optional.of(category));
 
             // When
-            CategoryDTO result = categoryService.findById(id);
+            CategoryAdminDTO result = categoryService.findById(id);
 
             // Then
             verify(categoryRepository).findById(any(Long.class));
             assertThat(result).isNotNull();
-            assertThat(result).isEqualTo(categoryDTO);
+            assertThat(result).isEqualTo(categoryAdminDTO);
         }
 
         @Test
@@ -122,7 +125,7 @@ public class CategoryServiceTest {
                     .thenReturn(category);
 
             // When
-            CategoryDTO result = categoryService.create(categoryToCreateDTO);
+            CategoryAdminDTO result = categoryService.create(categoryToCreateDTO);
 
             // Then
             verify(categoryRepository).existsByName(any(String.class));
@@ -164,7 +167,7 @@ public class CategoryServiceTest {
                     .thenReturn(categoryToUpdate);
 
             // When
-            CategoryDTO result = categoryService.update(id, categoryToUpdateDTO);
+            CategoryAdminDTO result = categoryService.update(id, categoryToUpdateDTO);
 
             // Then
             verify(categoryRepository).findById(any(Long.class));
@@ -184,7 +187,7 @@ public class CategoryServiceTest {
                     .thenReturn(categoryToUpdate);
 
             // When
-            CategoryDTO result = categoryService.update(id, categoryToUpdateDTO);
+            CategoryAdminDTO result = categoryService.update(id, categoryToUpdateDTO);
 
             // Then
             verify(categoryRepository).findById(any(Long.class));
@@ -278,7 +281,7 @@ public class CategoryServiceTest {
                     .thenReturn(Optional.of(category));
 
             // When
-            categoryService.toggleDisable(id);
+            categoryService.toggleDisable(id, toggleDisableRequestDTO);
 
             // Then
             verify(categoryRepository).findById(any(Long.class));
@@ -289,12 +292,13 @@ public class CategoryServiceTest {
         @DisplayName("Réactiver une catégorie désactivée")
         void enable_disabledCategory() {
             // Given
+            toggleDisableRequestDTO = new ToggleDisableRequestDTO(false);
             category.setDisabledAt(category.getCreatedAt());
             when(categoryRepository.findById(any(Long.class)))
                     .thenReturn(Optional.of(category));
 
             // When
-            categoryService.toggleDisable(id);
+            categoryService.toggleDisable(id, toggleDisableRequestDTO);
 
             // Then
             verify(categoryRepository).findById(any(Long.class));
@@ -309,7 +313,7 @@ public class CategoryServiceTest {
                     .thenReturn(Optional.empty());
 
             // When
-            assertThrows(NotFoundException.class, () -> categoryService.toggleDisable(id));
+            assertThrows(NotFoundException.class, () -> categoryService.toggleDisable(id, toggleDisableRequestDTO));
 
             // Then
             verify(categoryRepository).findById(any(Long.class));

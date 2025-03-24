@@ -1,8 +1,9 @@
 package com.dassonville.api.controller;
 
 
-import com.dassonville.api.dto.CategoryDTO;
+import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.service.CategoryService;
@@ -26,9 +27,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
-@WebMvcTest(controllers = CategoryController.class)
-@DisplayName("Tests d'intégration de la classe CategoryController")
-public class CategoryControllerTest {
+@WebMvcTest(controllers = CategoryAdminController.class)
+@DisplayName("IT - CategoryController")
+public class CategoryAdminControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -40,13 +41,15 @@ public class CategoryControllerTest {
     private CategoryService categoryService;
 
     private long endpointId;
-    private CategoryDTO categoryDTO;
+    private ToggleDisableRequestDTO toggleDisableRequestDTO;
+    private CategoryAdminDTO categoryAdminDTO;
     private CategoryUpsertDTO categoryUpsertDTO;
 
     @BeforeEach
     public void setUp() {
         endpointId = 1L;
-        categoryDTO = new CategoryDTO(1L, "Code", "", null, null, null, 6);
+        toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+        categoryAdminDTO = new CategoryAdminDTO(1L, "Code", "", null, null, null, 6);
         categoryUpsertDTO = new CategoryUpsertDTO("Code", "", 6);
     }
 
@@ -60,12 +63,12 @@ public class CategoryControllerTest {
         public void getCategoryById_shouldReturn200() throws Exception {
             // Given
             when(categoryService.findById(anyLong()))
-                    .thenReturn(categoryDTO);
+                    .thenReturn(categoryAdminDTO);
 
             // When & Then
-            mockMvc.perform(get("/api/categories/{id}", endpointId))
+            mockMvc.perform(get("/api/admin/categories/{id}", endpointId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name", is(categoryDTO.name())));
+                    .andExpect(jsonPath("$.name", is(categoryAdminDTO.name())));
         }
 
         @Test
@@ -76,7 +79,7 @@ public class CategoryControllerTest {
                     .thenThrow(new NotFoundException());
 
             // When & Then
-            mockMvc.perform(get("/api/categories/{id}", endpointId))
+            mockMvc.perform(get("/api/admin/categories/{id}", endpointId))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }
@@ -92,15 +95,15 @@ public class CategoryControllerTest {
         public void createCategory_shouldReturn201() throws Exception {
             // Given
             when(categoryService.create(any(CategoryUpsertDTO.class)))
-                    .thenReturn(categoryDTO);
+                    .thenReturn(categoryAdminDTO);
 
             // When & Then
-            mockMvc.perform(post("/api/categories")
+            mockMvc.perform(post("/api/admin/categories")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isCreated())
-                    .andExpect(header().string("Location", containsString("/categories/" + categoryDTO.id())))
-                    .andExpect(jsonPath("$.name", is(categoryDTO.name())));
+                    .andExpect(header().string("Location", containsString("/categories/" + categoryAdminDTO.id())))
+                    .andExpect(jsonPath("$.name", is(categoryAdminDTO.name())));
         }
 
         @Test
@@ -111,7 +114,7 @@ public class CategoryControllerTest {
                     .thenThrow(new AlreadyExistException("Une catégorie existe déjà avec le même nom."));
 
             // When & Then
-            mockMvc.perform(post("/api/categories")
+            mockMvc.perform(post("/api/admin/categories")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isConflict())
@@ -125,7 +128,7 @@ public class CategoryControllerTest {
             categoryUpsertDTO = new CategoryUpsertDTO("", "", 1);
 
             // When & Then
-            mockMvc.perform(post("/api/categories")
+            mockMvc.perform(post("/api/admin/categories")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isBadRequest())
@@ -143,14 +146,14 @@ public class CategoryControllerTest {
         public void updateCategory_shouldReturn200() throws Exception {
             // Given
             when(categoryService.update(anyLong(), any(CategoryUpsertDTO.class)))
-                    .thenReturn(categoryDTO);
+                    .thenReturn(categoryAdminDTO);
 
             // When & Then
-            mockMvc.perform(put("/api/categories/{id}", endpointId)
+            mockMvc.perform(put("/api/admin/categories/{id}", endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name", is(categoryDTO.name())));
+                    .andExpect(jsonPath("$.name", is(categoryAdminDTO.name())));
         }
 
         @Test
@@ -161,7 +164,7 @@ public class CategoryControllerTest {
                     .thenThrow(new AlreadyExistException());
 
             // When & Then
-            mockMvc.perform(put("/api/categories/{id}", endpointId)
+            mockMvc.perform(put("/api/admin/categories/{id}", endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isConflict())
@@ -175,7 +178,7 @@ public class CategoryControllerTest {
             categoryUpsertDTO = new CategoryUpsertDTO("", "", 1);
 
             // When & Then
-            mockMvc.perform(put("/api/categories/{id}", endpointId)
+            mockMvc.perform(put("/api/admin/categories/{id}", endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isBadRequest())
@@ -190,7 +193,7 @@ public class CategoryControllerTest {
                     .thenThrow(new NotFoundException());
 
             // When & Then
-            mockMvc.perform(put("/api/categories/{id}", endpointId)
+            mockMvc.perform(put("/api/admin/categories/{id}", endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isNotFound())
@@ -210,7 +213,7 @@ public class CategoryControllerTest {
             doNothing().when(categoryService).delete(anyLong());
 
             // When & Then
-            mockMvc.perform(delete("/api/categories/{id}", endpointId))
+            mockMvc.perform(delete("/api/admin/categories/{id}", endpointId))
                     .andExpect(status().isNoContent());
         }
 
@@ -221,7 +224,7 @@ public class CategoryControllerTest {
             doThrow(new NotFoundException()).when(categoryService).delete(anyLong());
 
             // When & Then
-            mockMvc.perform(delete("/api/categories/{id}", endpointId))
+            mockMvc.perform(delete("/api/admin/categories/{id}", endpointId))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }
@@ -236,10 +239,12 @@ public class CategoryControllerTest {
         @DisplayName("Désactiver une catégorie")
         public void toggleDisableCategory_shouldReturn204() throws Exception {
             // Given
-            doNothing().when(categoryService).toggleDisable(anyLong());
+            doNothing().when(categoryService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
 
             // When & Then
-            mockMvc.perform(patch("/api/categories/{id}/toggle-disable", endpointId))
+            mockMvc.perform(patch("/api/admin/categories/{id}", endpointId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
                     .andExpect(status().isNoContent());
         }
 
@@ -247,10 +252,12 @@ public class CategoryControllerTest {
         @DisplayName("Désactiver une catégorie inexistante")
         public void toggleDisableCategory_shouldReturn404() throws Exception {
             // Given
-            doThrow(new NotFoundException()).when(categoryService).toggleDisable(anyLong());
+            doThrow(new NotFoundException()).when(categoryService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
 
             // When & Then
-            mockMvc.perform(patch("/api/categories/{id}/toggle-disable", endpointId))
+            mockMvc.perform(patch("/api/admin/categories/{id}", endpointId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }

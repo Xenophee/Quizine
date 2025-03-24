@@ -1,8 +1,10 @@
 package com.dassonville.api.service;
 
 
+import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemeDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
+import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.ThemeMapper;
@@ -27,7 +29,7 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Tests unitaires de la classe ThemeService")
+@DisplayName("UNI - ThemeService")
 public class ThemeServiceTest {
 
     @Mock
@@ -39,6 +41,7 @@ public class ThemeServiceTest {
 
 
     private long id;
+    private ToggleDisableRequestDTO toggleDisableRequestDTO;
     private Theme theme;
     private Theme themeToUpdate;
     private ThemeDTO themeDTO;
@@ -52,6 +55,7 @@ public class ThemeServiceTest {
         themeService = new ThemeService(themeRepository, themeMapper);
 
         id = 1L;
+        toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
 
         theme = new Theme();
         theme.setId(1);
@@ -114,7 +118,7 @@ public class ThemeServiceTest {
                     .thenReturn(Optional.of(theme));
 
             // When
-            ThemeDTO result = themeService.findById(id);
+            ThemeDTO result = themeService.findByIdForUser(id);
 
             // Then
             verify(themeRepository).findById(any(Long.class));
@@ -130,7 +134,7 @@ public class ThemeServiceTest {
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.findById(id));
+            assertThrows(NotFoundException.class, () -> themeService.findByIdForUser(id));
 
             verify(themeRepository).findById(any(Long.class));
         }
@@ -152,7 +156,7 @@ public class ThemeServiceTest {
                     .thenReturn(theme);
 
             // When
-            ThemeDTO result = themeService.create(themeToCreateDTO);
+            ThemeAdminDTO result = themeService.create(themeToCreateDTO);
 
             // Then
             verify(themeRepository).existsByName(any(String.class));
@@ -194,7 +198,7 @@ public class ThemeServiceTest {
                     .thenReturn(themeToUpdate);
 
             // When
-            ThemeDTO result = themeService.update(id, themeToUpdateDTO);
+            ThemeAdminDTO result = themeService.update(id, themeToUpdateDTO);
 
             // Then
             verify(themeRepository).findById(any(Long.class));
@@ -214,7 +218,7 @@ public class ThemeServiceTest {
                     .thenReturn(themeToUpdate);
 
             // When
-            ThemeDTO result = themeService.update(id, themeToUpdateDTO);
+            ThemeAdminDTO result = themeService.update(id, themeToUpdateDTO);
 
             // Then
             verify(themeRepository).findById(any(Long.class));
@@ -307,7 +311,7 @@ public class ThemeServiceTest {
                     .thenReturn(Optional.of(theme));
 
             // When
-            themeService.toggleDisable(id);
+            themeService.toggleDisable(id, toggleDisableRequestDTO);
 
             // Then
             verify(themeRepository).findById(any(Long.class));
@@ -318,12 +322,13 @@ public class ThemeServiceTest {
         @DisplayName("Réactiver un thème désactivé")
         public void enable_disabledTheme() {
             // Given
+            toggleDisableRequestDTO = new ToggleDisableRequestDTO(false);
             theme.setDisabledAt(theme.getCreatedAt());
             when(themeRepository.findById(any(Long.class)))
                     .thenReturn(Optional.of(theme));
 
             // When
-            themeService.toggleDisable(id);
+            themeService.toggleDisable(id, toggleDisableRequestDTO);
 
             // Then
             verify(themeRepository).findById(any(Long.class));
@@ -338,7 +343,7 @@ public class ThemeServiceTest {
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.toggleDisable(id));
+            assertThrows(NotFoundException.class, () -> themeService.toggleDisable(id, toggleDisableRequestDTO));
 
             verify(themeRepository).findById(any(Long.class));
             verify(themeRepository, never()).save(any(Theme.class));

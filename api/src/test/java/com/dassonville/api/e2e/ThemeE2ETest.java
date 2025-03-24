@@ -23,6 +23,7 @@ import java.util.Optional;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DisplayName("E2E - Thème")
 public class ThemeE2ETest {
 
     @LocalServerPort
@@ -45,7 +46,7 @@ public class ThemeE2ETest {
     public void shouldCreateAndRetrieveTheme() {
         // Given
         ThemeUpsertDTO themeToCreate = new ThemeUpsertDTO("Cinéma", "Pour les cinéphiles");
-        String url = "http://localhost:" + port + "/api/themes";
+        String url = "http://localhost:" + port + "/api/admin/themes";
 
         // When - Envoi de la requête HTTP pour créer le thème
         HttpEntity<ThemeUpsertDTO> request = new HttpEntity<>(themeToCreate);
@@ -73,7 +74,7 @@ public class ThemeE2ETest {
         // Given
         long id = 1;
         ThemeUpsertDTO themeToUpdate = new ThemeUpsertDTO("Cinéma", "Pour les cinéphiles");
-        String url = "http://localhost:" + port + "/api/themes/" + id;
+        String url = "http://localhost:" + port + "/api/admin/themes/" + id;
 
         // When - Envoi de la requête HTTP pour mettre à jour le thème
         HttpEntity<ThemeUpsertDTO> requestUpdate = new HttpEntity<>(themeToUpdate);
@@ -94,7 +95,7 @@ public class ThemeE2ETest {
         // Given
         long id = 9;
         ThemeUpsertDTO themeToUpdate = new ThemeUpsertDTO("Cinéma", "Pour les cinéphiles");
-        String url = "http://localhost:" + port + "/api/themes/" + id;
+        String url = "http://localhost:" + port + "/api/admin/themes/" + id;
 
         // When - Envoi de la requête HTTP pour mettre à jour le thème
         HttpEntity<ThemeUpsertDTO> requestUpdate = new HttpEntity<>(themeToUpdate);
