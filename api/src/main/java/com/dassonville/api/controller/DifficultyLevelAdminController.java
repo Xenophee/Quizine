@@ -1,6 +1,7 @@
 package com.dassonville.api.controller;
 
 
+import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.DifficultyLevelAdminDTO;
 import com.dassonville.api.dto.DifficultyLevelUpsertDTO;
 import com.dassonville.api.dto.ToggleDisableRequestDTO;
@@ -25,7 +26,7 @@ import java.util.Map;
 
 @Tag(name = "Gestion de niveau de difficulté - admin")
 @RestController
-@RequestMapping("/api/admin/difficulty-levels")
+@RequestMapping(ApiRoutes.DifficultyLevels.ADMIN_DIFFICULTY_LEVELS)
 public class DifficultyLevelAdminController {
 
     private static final Logger logger = LoggerFactory.getLogger(DifficultyLevelAdminController.class);
@@ -56,7 +57,7 @@ public class DifficultyLevelAdminController {
             @ApiResponse(responseCode = "404", description = "Le niveau de difficulté avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @GetMapping("/{id}")
+    @GetMapping(ApiRoutes.ID)
     public ResponseEntity<DifficultyLevelAdminDTO> getDifficultyLevelById(@PathVariable long id) {
         logger.info("Requête pour obtenir le niveau de difficulté avec l'ID: {}", id);
         DifficultyLevelAdminDTO difficultyLevel = difficultyLevelService.findById(id);
@@ -80,7 +81,7 @@ public class DifficultyLevelAdminController {
         logger.info("Niveau de difficulté créé avec l'ID: {}", createdDifficultyLevel.id());
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
+                .path(ApiRoutes.ID)
                 .buildAndExpand(createdDifficultyLevel.id())
                 .toUri();
 
@@ -98,7 +99,7 @@ public class DifficultyLevelAdminController {
             @ApiResponse(responseCode = "409", description = "Un niveau de difficulté existe déjà avec le même nom.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @PutMapping("/{id}")
+    @PutMapping(ApiRoutes.ID)
     public ResponseEntity<DifficultyLevelAdminDTO> updateDifficultyLevel(@PathVariable long id, @RequestBody DifficultyLevelUpsertDTO difficultyLevelUpsertDTO) {
         logger.info("Requête pour modifier le niveau de difficulté avec l'ID: {}", id);
         DifficultyLevelAdminDTO updatedDifficultyLevel = difficultyLevelService.update(id, difficultyLevelUpsertDTO);
@@ -113,7 +114,7 @@ public class DifficultyLevelAdminController {
             @ApiResponse(responseCode = "404", description = "Le niveau de difficulté avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @DeleteMapping("/{id}")
+    @DeleteMapping(ApiRoutes.ID)
     public ResponseEntity<Void> deleteDifficultyLevel(@PathVariable long id) {
         logger.info("Requête pour supprimer le niveau de difficulté avec l'ID: {}", id);
         difficultyLevelService.delete(id);
@@ -130,7 +131,7 @@ public class DifficultyLevelAdminController {
             @ApiResponse(responseCode = "404", description = "Le niveau de difficulté avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @PatchMapping("/{id}")
+    @PatchMapping(ApiRoutes.ID)
     public ResponseEntity<Void> disableDifficultyLevel(@PathVariable long id, @RequestBody @Valid ToggleDisableRequestDTO toggleDisableRequestDTO) {
         logger.info("Requête pour activer / désactiver le niveau de difficulté avec l'ID: {}", id);
         difficultyLevelService.toggleDisable(id, toggleDisableRequestDTO);

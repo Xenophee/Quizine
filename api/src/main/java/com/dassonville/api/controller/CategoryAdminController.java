@@ -1,6 +1,7 @@
 package com.dassonville.api.controller;
 
 
+import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
 import com.dassonville.api.dto.ToggleDisableRequestDTO;
@@ -24,7 +25,7 @@ import java.util.Map;
 
 @Tag(name = "Gestion de catégories - admin")
 @RestController
-@RequestMapping("/api/admin/categories")
+@RequestMapping(ApiRoutes.Categories.ADMIN_CATEGORIES)
 public class CategoryAdminController {
 
     private static final Logger logger = LoggerFactory.getLogger(CategoryAdminController.class);
@@ -42,7 +43,7 @@ public class CategoryAdminController {
             @ApiResponse(responseCode = "404", description = "La catégorie avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @GetMapping("/{id}")
+    @GetMapping(ApiRoutes.ID)
     public ResponseEntity<CategoryAdminDTO> getCategoryById(@PathVariable long id) {
         logger.info("Requête pour obtenir la catégorie avec l'ID: {}", id);
         CategoryAdminDTO category = categoryService.findById(id);
@@ -66,7 +67,7 @@ public class CategoryAdminController {
         logger.info("Catégorie créée avec l'ID: {}", createdCategory.id());
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
+                .path(ApiRoutes.ID)
                 .buildAndExpand(createdCategory.id())
                 .toUri();
 
@@ -84,7 +85,7 @@ public class CategoryAdminController {
             @ApiResponse(responseCode = "409", description = "La catégorie avec le nom spécifié existe déjà.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @PutMapping("/{id}")
+    @PutMapping(ApiRoutes.ID)
     public ResponseEntity<CategoryAdminDTO> updateCategory(@PathVariable long id, @RequestBody @Valid CategoryUpsertDTO category) {
         logger.info("Requête pour mettre à jour une catégorie.");
         CategoryAdminDTO categoryUpdated = categoryService.update(id, category);
@@ -99,7 +100,7 @@ public class CategoryAdminController {
             @ApiResponse(responseCode = "404", description = "La catégorie avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @DeleteMapping("/{id}")
+    @DeleteMapping(ApiRoutes.ID)
     public ResponseEntity<Void> deleteCategory(@PathVariable long id) {
         logger.info("Requête pour supprimer une catégorie.");
         categoryService.delete(id);
@@ -116,7 +117,7 @@ public class CategoryAdminController {
             @ApiResponse(responseCode = "404", description = "La catégorie avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @PatchMapping("/{id}")
+    @PatchMapping(ApiRoutes.ID)
     public ResponseEntity<Void> disableCategory(@PathVariable long id, @RequestBody @Valid ToggleDisableRequestDTO toggleDisableRequestDTO) {
         logger.info("Requête pour activer / désactiver la catégorie avec l'ID: {}", id);
         categoryService.toggleDisable(id, toggleDisableRequestDTO);

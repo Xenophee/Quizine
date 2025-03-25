@@ -1,6 +1,7 @@
 package com.dassonville.api.controller;
 
 
+import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
 import com.dassonville.api.dto.ToggleDisableRequestDTO;
@@ -66,7 +67,7 @@ public class CategoryAdminControllerTest {
                     .thenReturn(categoryAdminDTO);
 
             // When & Then
-            mockMvc.perform(get("/api/admin/categories/{id}", endpointId))
+            mockMvc.perform(get(ApiRoutes.Categories.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.name", is(categoryAdminDTO.name())));
         }
@@ -79,7 +80,7 @@ public class CategoryAdminControllerTest {
                     .thenThrow(new NotFoundException());
 
             // When & Then
-            mockMvc.perform(get("/api/admin/categories/{id}", endpointId))
+            mockMvc.perform(get(ApiRoutes.Categories.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }
@@ -98,11 +99,11 @@ public class CategoryAdminControllerTest {
                     .thenReturn(categoryAdminDTO);
 
             // When & Then
-            mockMvc.perform(post("/api/admin/categories")
+            mockMvc.perform(post(ApiRoutes.Categories.ADMIN_CATEGORIES)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isCreated())
-                    .andExpect(header().string("Location", containsString("/categories/" + categoryAdminDTO.id())))
+                    .andExpect(header().string("Location", containsString(ApiRoutes.Categories.STRING + "/" + categoryAdminDTO.id())))
                     .andExpect(jsonPath("$.name", is(categoryAdminDTO.name())));
         }
 
@@ -114,7 +115,7 @@ public class CategoryAdminControllerTest {
                     .thenThrow(new AlreadyExistException("Une catégorie existe déjà avec le même nom."));
 
             // When & Then
-            mockMvc.perform(post("/api/admin/categories")
+            mockMvc.perform(post(ApiRoutes.Categories.ADMIN_CATEGORIES)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isConflict())
@@ -128,7 +129,7 @@ public class CategoryAdminControllerTest {
             categoryUpsertDTO = new CategoryUpsertDTO("", "", 1);
 
             // When & Then
-            mockMvc.perform(post("/api/admin/categories")
+            mockMvc.perform(post(ApiRoutes.Categories.ADMIN_CATEGORIES)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isBadRequest())
@@ -149,7 +150,7 @@ public class CategoryAdminControllerTest {
                     .thenReturn(categoryAdminDTO);
 
             // When & Then
-            mockMvc.perform(put("/api/admin/categories/{id}", endpointId)
+            mockMvc.perform(put(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isOk())
@@ -164,7 +165,7 @@ public class CategoryAdminControllerTest {
                     .thenThrow(new AlreadyExistException());
 
             // When & Then
-            mockMvc.perform(put("/api/admin/categories/{id}", endpointId)
+            mockMvc.perform(put(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isConflict())
@@ -178,7 +179,7 @@ public class CategoryAdminControllerTest {
             categoryUpsertDTO = new CategoryUpsertDTO("", "", 1);
 
             // When & Then
-            mockMvc.perform(put("/api/admin/categories/{id}", endpointId)
+            mockMvc.perform(put(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isBadRequest())
@@ -193,7 +194,7 @@ public class CategoryAdminControllerTest {
                     .thenThrow(new NotFoundException());
 
             // When & Then
-            mockMvc.perform(put("/api/admin/categories/{id}", endpointId)
+            mockMvc.perform(put(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isNotFound())
@@ -213,7 +214,7 @@ public class CategoryAdminControllerTest {
             doNothing().when(categoryService).delete(anyLong());
 
             // When & Then
-            mockMvc.perform(delete("/api/admin/categories/{id}", endpointId))
+            mockMvc.perform(delete(ApiRoutes.Categories.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isNoContent());
         }
 
@@ -224,7 +225,7 @@ public class CategoryAdminControllerTest {
             doThrow(new NotFoundException()).when(categoryService).delete(anyLong());
 
             // When & Then
-            mockMvc.perform(delete("/api/admin/categories/{id}", endpointId))
+            mockMvc.perform(delete(ApiRoutes.Categories.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }
@@ -242,7 +243,7 @@ public class CategoryAdminControllerTest {
             doNothing().when(categoryService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
 
             // When & Then
-            mockMvc.perform(patch("/api/admin/categories/{id}", endpointId)
+            mockMvc.perform(patch(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
                     .andExpect(status().isNoContent());
@@ -255,7 +256,7 @@ public class CategoryAdminControllerTest {
             doThrow(new NotFoundException()).when(categoryService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
 
             // When & Then
-            mockMvc.perform(patch("/api/admin/categories/{id}", endpointId)
+            mockMvc.perform(patch(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
                     .andExpect(status().isNotFound())

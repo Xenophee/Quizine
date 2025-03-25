@@ -1,6 +1,7 @@
 package com.dassonville.api.controller;
 
 
+import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.DifficultyLevelPublicDTO;
 import com.dassonville.api.service.DifficultyLevelService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @Tag(name = "Public", description = "Endpoints accessibles publiquement")
 @RestController
-@RequestMapping("/api/difficulty-levels")
+@RequestMapping(ApiRoutes.DifficultyLevels.BASE)
 public class DifficultyLevelController {
 
     private static final Logger logger = LoggerFactory.getLogger(DifficultyLevelController.class);

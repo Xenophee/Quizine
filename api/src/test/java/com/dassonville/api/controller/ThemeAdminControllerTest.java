@@ -1,6 +1,7 @@
 package com.dassonville.api.controller;
 
 
+import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.dto.ToggleDisableRequestDTO;
@@ -66,7 +67,7 @@ public class ThemeAdminControllerTest {
                     .thenReturn(List.of(themeAdminDTO));
 
             // When & Then
-            mockMvc.perform(get("/api/admin/themes"))
+            mockMvc.perform(get(ApiRoutes.Themes.ADMIN_THEMES))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$", hasSize(1)))
                     .andExpect(jsonPath("$[0].name", is(themeAdminDTO.name())));
@@ -80,7 +81,7 @@ public class ThemeAdminControllerTest {
                     .thenReturn(themeAdminDTO);
 
             // When & Then
-            mockMvc.perform(get("/api/admin/themes/{id}", endpointId))
+            mockMvc.perform(get(ApiRoutes.Themes.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.name", is(themeAdminDTO.name())));
         }
@@ -93,7 +94,7 @@ public class ThemeAdminControllerTest {
                     .thenThrow(new NotFoundException());
 
             // When & Then
-            mockMvc.perform(get("/api/admin/themes/{id}", endpointId))
+            mockMvc.perform(get(ApiRoutes.Themes.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }
@@ -113,11 +114,11 @@ public class ThemeAdminControllerTest {
                     .thenReturn(themeAdminDTO);
 
             // When & Then
-            mockMvc.perform(post("/api/admin/themes")
+            mockMvc.perform(post(ApiRoutes.Themes.ADMIN_THEMES)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isCreated())
-                    .andExpect(header().string("Location", containsString("/themes/" + themeAdminDTO.id())))
+                    .andExpect(header().string("Location", containsString(ApiRoutes.Themes.STRING + "/" + themeAdminDTO.id())))
                     .andExpect(jsonPath("$.name", is(themeAdminDTO.name())));
         }
 
@@ -129,7 +130,7 @@ public class ThemeAdminControllerTest {
                     .thenThrow(new AlreadyExistException());
 
             // When & Then
-            mockMvc.perform(post("/api/admin/themes")
+            mockMvc.perform(post(ApiRoutes.Themes.ADMIN_THEMES)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isConflict())
@@ -143,7 +144,7 @@ public class ThemeAdminControllerTest {
             themeUpsertDTO = new ThemeUpsertDTO("", "");
 
             // When & Then
-            mockMvc.perform(post("/api/admin/themes")
+            mockMvc.perform(post(ApiRoutes.Themes.ADMIN_THEMES)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isBadRequest())
@@ -165,7 +166,7 @@ public class ThemeAdminControllerTest {
                     .thenReturn(themeAdminDTO);
 
             // When & Then
-            mockMvc.perform(put("/api/admin/themes/{id}", endpointId)
+            mockMvc.perform(put(ApiRoutes.Themes.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isOk())
@@ -180,7 +181,7 @@ public class ThemeAdminControllerTest {
                     .thenThrow(new AlreadyExistException());
 
             // When & Then
-            mockMvc.perform(put("/api/admin/themes/{id}", endpointId)
+            mockMvc.perform(put(ApiRoutes.Themes.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isConflict())
@@ -194,7 +195,7 @@ public class ThemeAdminControllerTest {
             themeUpsertDTO = new ThemeUpsertDTO("", "");
 
             // When & Then
-            mockMvc.perform(put("/api/admin/themes/{id}", endpointId)
+            mockMvc.perform(put(ApiRoutes.Themes.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isBadRequest())
@@ -209,7 +210,7 @@ public class ThemeAdminControllerTest {
                     .thenThrow(new NotFoundException());
 
             // When & Then
-            mockMvc.perform(put("/api/admin/themes/{id}", endpointId)
+            mockMvc.perform(put(ApiRoutes.Themes.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(themeUpsertDTO)))
                     .andExpect(status().isNotFound())
@@ -229,7 +230,7 @@ public class ThemeAdminControllerTest {
             // Given
             doNothing().when(themeService).delete(anyLong());
             // When & Then
-            mockMvc.perform(delete("/api/admin/themes/{id}", endpointId))
+            mockMvc.perform(delete(ApiRoutes.Themes.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isNoContent());
         }
 
@@ -239,7 +240,7 @@ public class ThemeAdminControllerTest {
             // Given
             doThrow(new NotFoundException()).when(themeService).delete(anyLong());
             // When & Then
-            mockMvc.perform(delete("/api/admin/themes/{id}", endpointId))
+            mockMvc.perform(delete(ApiRoutes.Themes.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }
@@ -257,7 +258,7 @@ public class ThemeAdminControllerTest {
             // Given
             doNothing().when(themeService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
             // When & Then
-            mockMvc.perform(patch("/api/admin/themes/{id}", endpointId)
+            mockMvc.perform(patch(ApiRoutes.Themes.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
                     .andExpect(status().isNoContent());
@@ -269,7 +270,7 @@ public class ThemeAdminControllerTest {
             // Given
             doThrow(new NotFoundException()).when(themeService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
             // When & Then
-            mockMvc.perform(patch("/api/admin/themes/{id}", endpointId)
+            mockMvc.perform(patch(ApiRoutes.Themes.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
                     .andExpect(status().isNotFound())

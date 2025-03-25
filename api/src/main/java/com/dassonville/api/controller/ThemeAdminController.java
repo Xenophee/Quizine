@@ -1,5 +1,6 @@
 package com.dassonville.api.controller;
 
+import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.dto.ToggleDisableRequestDTO;
@@ -24,7 +25,7 @@ import java.util.Map;
 
 @Tag(name = "Gestion de thèmes - admin")
 @RestController
-@RequestMapping("/api/admin/themes")
+@RequestMapping(ApiRoutes.Themes.ADMIN_THEMES)
 public class ThemeAdminController {
 
     private static final Logger logger = LoggerFactory.getLogger(ThemeAdminController.class);
@@ -55,7 +56,7 @@ public class ThemeAdminController {
             @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @GetMapping("/{id}")
+    @GetMapping(ApiRoutes.ID)
     public ResponseEntity<ThemeAdminDTO> getThemeById(@PathVariable long id) {
         logger.info("Requête pour obtenir le thème avec l'ID: {}", id);
         ThemeAdminDTO theme = themeService.findByIdForAdmin(id);
@@ -79,7 +80,7 @@ public class ThemeAdminController {
         logger.info("Nouveau thème créé avec l'ID: {}", createdTheme.id());
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
+                .path(ApiRoutes.ID)
                 .buildAndExpand(createdTheme.id())
                 .toUri();
 
@@ -97,7 +98,7 @@ public class ThemeAdminController {
             @ApiResponse(responseCode = "409", description = "Le thème avec le nom spécifié existe déjà.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @PutMapping("/{id}")
+    @PutMapping(ApiRoutes.ID)
     public ResponseEntity<ThemeAdminDTO> updateTheme(@PathVariable long id, @RequestBody @Valid ThemeUpsertDTO theme) {
         logger.info("Requête pour mettre à jour le thème avec l'ID: {}", id);
         ThemeAdminDTO themeUpdated = themeService.update(id, theme);
@@ -112,7 +113,7 @@ public class ThemeAdminController {
             @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @DeleteMapping("/{id}")
+    @DeleteMapping(ApiRoutes.ID)
     public ResponseEntity<Void> deleteTheme(@PathVariable long id) {
         logger.info("Requête pour supprimer le thème avec l'ID: {}", id);
         themeService.delete(id);
@@ -129,7 +130,7 @@ public class ThemeAdminController {
             @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @PatchMapping("/{id}")
+    @PatchMapping(ApiRoutes.ID)
     public ResponseEntity<Void> disableTheme(@PathVariable long id, @RequestBody @Valid ToggleDisableRequestDTO toggleDisableRequestDTO) {
         logger.info("Requête pour activer / désactiver le thème avec l'ID: {}", id);
         themeService.toggleDisable(id, toggleDisableRequestDTO);

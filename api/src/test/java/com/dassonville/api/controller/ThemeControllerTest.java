@@ -1,5 +1,6 @@
 package com.dassonville.api.controller;
 
+import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.service.ThemeService;
@@ -55,7 +56,7 @@ public class ThemeControllerTest {
                 .thenReturn(List.of(themePublicDTO));
 
         // When & Then
-        mockMvc.perform(get("/api/themes"))
+        mockMvc.perform(get(ApiRoutes.Themes.BASE))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name", is(themePublicDTO.name())));
@@ -69,7 +70,7 @@ public class ThemeControllerTest {
                 .thenReturn(themePublicDTO);
 
         // When & Then
-        mockMvc.perform(get("/api/themes/{id}", endpointId))
+        mockMvc.perform(get(ApiRoutes.Themes.BY_ID, endpointId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name", is(themePublicDTO.name())));
     }
@@ -82,7 +83,7 @@ public class ThemeControllerTest {
                 .thenThrow(new NotFoundException());
 
         // When & Then
-        mockMvc.perform(get("/api/themes/{id}", endpointId))
+        mockMvc.perform(get(ApiRoutes.Themes.BY_ID, endpointId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists());
     }

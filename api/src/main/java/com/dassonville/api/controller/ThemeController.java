@@ -1,6 +1,7 @@
 package com.dassonville.api.controller;
 
 
+import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.service.ThemeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +22,7 @@ import java.util.List;
 
 @Tag(name = "Public", description = "Endpoints accessibles publiquement")
 @RestController
-@RequestMapping("/api/themes")
+@RequestMapping(ApiRoutes.Themes.BASE)
 public class ThemeController {
 
     private static final Logger logger = LoggerFactory.getLogger(ThemeController.class);
@@ -51,7 +52,7 @@ public class ThemeController {
             @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @GetMapping("/{id}")
+    @GetMapping(ApiRoutes.ID)
     public ResponseEntity<ThemePublicDTO> getThemeById(@PathVariable long id) {
         logger.info("Requête pour obtenir le thème avec l'ID: {}", id);
         ThemePublicDTO theme = themeService.findByIdForUser(id);

@@ -1,6 +1,7 @@
 package com.dassonville.api.e2e;
 
 
+import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
 import com.dassonville.api.model.Category;
@@ -48,7 +49,7 @@ public class CategoryE2ETest {
     public void shouldCreateAndRetrieveCategory() {
         // Given
         CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO("Droit européen", "Pour les juristes en herbe", 2);
-        String url = "http://localhost:" + port + "/api/admin/categories";
+        String url = "http://localhost:" + port + ApiRoutes.Categories.ADMIN_CATEGORIES;
 
         // When - Envoi de la requête HTTP pour créer la catégorie
         HttpEntity<CategoryUpsertDTO> request = new HttpEntity<>(categoryToCreate);
@@ -75,7 +76,7 @@ public class CategoryE2ETest {
     public void shouldNotCreateCategoryWithSameName() {
         // Given
         CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO("Cinéma", "Pour les cinéphiles", 1);
-        String url = "http://localhost:" + port + "/api/admin/categories";
+        String url = "http://localhost:" + port + ApiRoutes.Categories.ADMIN_CATEGORIES;
 
         // When - Envoi de la requête HTTP pour créer la catégorie
         HttpEntity<CategoryUpsertDTO> request = new HttpEntity<>(categoryToCreate);
@@ -94,7 +95,7 @@ public class CategoryE2ETest {
         // Given
         long id = 4;
         CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO("Droit européen", "Pour les juristes en herbe", 2);
-        String url = "http://localhost:" + port + "/api/admin/categories/" + id;
+        String url = "http://localhost:" + port + ApiRoutes.Categories.ADMIN_CATEGORIES + "/" + id;
 
         // When - Envoi de la requête HTTP pour mettre à jour la catégorie
         HttpEntity<CategoryUpsertDTO> requestUpdate = new HttpEntity<>(categoryToUpdate);

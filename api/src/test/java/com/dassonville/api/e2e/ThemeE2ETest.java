@@ -1,5 +1,6 @@
 package com.dassonville.api.e2e;
 
+import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.model.Theme;
@@ -46,7 +47,7 @@ public class ThemeE2ETest {
     public void shouldCreateAndRetrieveTheme() {
         // Given
         ThemeUpsertDTO themeToCreate = new ThemeUpsertDTO("Cinéma", "Pour les cinéphiles");
-        String url = "http://localhost:" + port + "/api/admin/themes";
+        String url = "http://localhost:" + port + ApiRoutes.Themes.ADMIN_THEMES;
 
         // When - Envoi de la requête HTTP pour créer le thème
         HttpEntity<ThemeUpsertDTO> request = new HttpEntity<>(themeToCreate);
@@ -74,7 +75,7 @@ public class ThemeE2ETest {
         // Given
         long id = 1;
         ThemeUpsertDTO themeToUpdate = new ThemeUpsertDTO("Cinéma", "Pour les cinéphiles");
-        String url = "http://localhost:" + port + "/api/admin/themes/" + id;
+        String url = "http://localhost:" + port + ApiRoutes.Themes.ADMIN_THEMES + "/" + id;
 
         // When - Envoi de la requête HTTP pour mettre à jour le thème
         HttpEntity<ThemeUpsertDTO> requestUpdate = new HttpEntity<>(themeToUpdate);
@@ -95,7 +96,7 @@ public class ThemeE2ETest {
         // Given
         long id = 9;
         ThemeUpsertDTO themeToUpdate = new ThemeUpsertDTO("Cinéma", "Pour les cinéphiles");
-        String url = "http://localhost:" + port + "/api/admin/themes/" + id;
+        String url = "http://localhost:" + port + ApiRoutes.Themes.ADMIN_THEMES + "/" + id;
 
         // When - Envoi de la requête HTTP pour mettre à jour le thème
         HttpEntity<ThemeUpsertDTO> requestUpdate = new HttpEntity<>(themeToUpdate);
