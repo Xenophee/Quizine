@@ -31,5 +31,11 @@ VALUES
     ('Informatique', NULL, 6),
     ('Biologie', CURRENT_DATE, 6);
 
+INSERT INTO difficulty_levels (name, max_responses, timer_seconds, points_per_question, disabled_at)
+VALUES
+    ('Facile', 2, 0, 5, null),
+    ('Intermédiaire', 4, 0, 10, null),
+    ('Difficile', 6, 0, 15, CURRENT_DATE),
+    ('Expert', 0, 15, 20, CURRENT_DATE);
 
 

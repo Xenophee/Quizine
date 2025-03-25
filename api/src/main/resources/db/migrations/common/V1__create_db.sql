@@ -70,7 +70,10 @@ CREATE TABLE difficulty_levels
     name                VARCHAR(50) NOT NULL UNIQUE,
     max_responses       SMALLINT    NOT NULL,
     timer_seconds       SMALLINT    NOT NULL DEFAULT 0,
-    points_per_question SMALLINT    NOT NULL
+    points_per_question SMALLINT    NOT NULL,
+    created_at          DATE        NOT NULL DEFAULT CURRENT_DATE,
+    updated_at          DATE,
+    disabled_at         DATE
 );
 
 ---------------------------------------------------

@@ -28,3 +28,8 @@ VALUES
     ('Philosophie', 5),
     ('Mythologie & religions', 5),
     ('Biologie & santé', 6);
+
+INSERT INTO difficulty_levels (name, max_responses, timer_seconds, points_per_question)
+VALUES
+    ('Facile', 2, 0, 5),
+    ('Intermédiaire', 4, 0, 10);
