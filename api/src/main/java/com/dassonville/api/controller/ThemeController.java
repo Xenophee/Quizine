@@ -1,7 +1,7 @@
 package com.dassonville.api.controller;
 
 
-import com.dassonville.api.dto.ThemeDTO;
+import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.service.ThemeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Gestion de thèmes - public")
+@Tag(name = "Public", description = "Endpoints accessibles publiquement")
 @RestController
 @RequestMapping("/api/themes")
 public class ThemeController {
@@ -38,9 +38,9 @@ public class ThemeController {
             @ApiResponse(responseCode = "200", description = "La liste des thèmes actifs a été trouvée.")
     })
     @GetMapping
-    public ResponseEntity<List<ThemeDTO>> getAllActiveThemes() {
+    public ResponseEntity<List<ThemePublicDTO>> getAllActiveThemes() {
         logger.info("Requête pour obtenir la liste des thèmes actifs.");
-        List<ThemeDTO> themes = themeService.getAllActiveThemes();
+        List<ThemePublicDTO> themes = themeService.getAllActiveThemes();
         logger.info("Liste des thèmes actifs récupérée.");
         return ResponseEntity.ok(themes);
     }
@@ -52,9 +52,9 @@ public class ThemeController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @GetMapping("/{id}")
-    public ResponseEntity<ThemeDTO> getThemeById(@PathVariable long id) {
+    public ResponseEntity<ThemePublicDTO> getThemeById(@PathVariable long id) {
         logger.info("Requête pour obtenir le thème avec l'ID: {}", id);
-        ThemeDTO theme = themeService.findByIdForUser(id);
+        ThemePublicDTO theme = themeService.findByIdForUser(id);
         logger.info("Thème trouvé avec l'ID: {}", id);
         return ResponseEntity.ok(theme);
     }

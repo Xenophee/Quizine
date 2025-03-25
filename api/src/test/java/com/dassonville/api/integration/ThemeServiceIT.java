@@ -1,7 +1,7 @@
 package com.dassonville.api.integration;
 
 import com.dassonville.api.dto.ThemeAdminDTO;
-import com.dassonville.api.dto.ThemeDTO;
+import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
@@ -60,7 +60,7 @@ public class ThemeServiceIT {
         @DisplayName("Récupérer tous les thèmes actifs")
         public void shouldGetAllActiveThemes() {
             // When
-            List<ThemeDTO> themes = themeService.getAllActiveThemes();
+            List<ThemePublicDTO> themes = themeService.getAllActiveThemes();
 
             // Then
             assertThat(themes.size()).isEqualTo(3);
@@ -73,7 +73,7 @@ public class ThemeServiceIT {
             long idToFind = 1L;
 
             // When
-            ThemeDTO theme = themeService.findByIdForUser(idToFind);
+            ThemeAdminDTO theme = themeService.findByIdForAdmin(idToFind);
 
             // Then
             assertThat(theme.name()).isEqualTo("Art");
@@ -86,7 +86,7 @@ public class ThemeServiceIT {
             long idToFind = 9L;
 
             // When / Then
-            assertThrows(NotFoundException.class, () -> themeService.findByIdForUser(idToFind));
+            assertThrows(NotFoundException.class, () -> themeService.findByIdForAdmin(idToFind));
         }
 
     }

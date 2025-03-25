@@ -1,6 +1,6 @@
 package com.dassonville.api.controller;
 
-import com.dassonville.api.dto.ThemeDTO;
+import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.service.ThemeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,12 +38,12 @@ public class ThemeControllerTest {
     private ThemeService themeService;
 
     private long endpointId;
-    private ThemeDTO themeDTO;
+    private ThemePublicDTO themePublicDTO;
 
     @BeforeEach
     public void setUp() {
         endpointId = 1L;
-        themeDTO = new ThemeDTO(1L, "Informatique", "", null);
+        themePublicDTO = new ThemePublicDTO(1L, "Informatique", "", false);
     }
 
 
@@ -52,13 +52,13 @@ public class ThemeControllerTest {
     public void getAllActiveThemes_shouldReturn200() throws Exception {
         // Given
         when(themeService.getAllActiveThemes())
-                .thenReturn(List.of(themeDTO));
+                .thenReturn(List.of(themePublicDTO));
 
         // When & Then
         mockMvc.perform(get("/api/themes"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name", is(themeDTO.name())));
+                .andExpect(jsonPath("$[0].name", is(themePublicDTO.name())));
     }
 
     @Test
@@ -66,12 +66,12 @@ public class ThemeControllerTest {
     public void getThemeById_shouldReturn200() throws Exception {
         // Given
         when(themeService.findByIdForUser(anyLong()))
-                .thenReturn(themeDTO);
+                .thenReturn(themePublicDTO);
 
         // When & Then
         mockMvc.perform(get("/api/themes/{id}", endpointId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name", is(themeDTO.name())));
+                .andExpect(jsonPath("$.name", is(themePublicDTO.name())));
     }
 
     @Test

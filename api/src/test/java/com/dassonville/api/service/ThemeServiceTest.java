@@ -2,13 +2,14 @@ package com.dassonville.api.service;
 
 
 import com.dassonville.api.dto.ThemeAdminDTO;
-import com.dassonville.api.dto.ThemeDTO;
+import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.ThemeMapper;
 import com.dassonville.api.model.Theme;
+import com.dassonville.api.projection.PublicThemeProjection;
 import com.dassonville.api.repository.ThemeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +20,7 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,8 +45,9 @@ public class ThemeServiceTest {
     private long id;
     private ToggleDisableRequestDTO toggleDisableRequestDTO;
     private Theme theme;
+    private PublicThemeProjection publicThemeProjection;
     private Theme themeToUpdate;
-    private ThemeDTO themeDTO;
+    private ThemePublicDTO themePublicDTO;
     private ThemeUpsertDTO themeToCreateDTO;
     private ThemeUpsertDTO themeToUpdateDTO;
 
@@ -61,13 +64,20 @@ public class ThemeServiceTest {
         theme.setId(1);
         theme.setName("informatique");
         theme.setDescription("");
+        theme.setCreatedAt(LocalDate.now());
+
+        publicThemeProjection = mock(PublicThemeProjection.class);
+        when(publicThemeProjection.getId()).thenReturn(1L);
+        when(publicThemeProjection.getName()).thenReturn("informatique");
+        when(publicThemeProjection.getDescription()).thenReturn("");
+        when(publicThemeProjection.getCreatedAt()).thenReturn(LocalDate.now());
 
         themeToUpdate = new Theme();
         themeToUpdate.setId(1);
         themeToUpdate.setName("Nouveau nom");
         themeToUpdate.setDescription("Nouvelle description");
 
-        themeDTO = themeMapper.toDTO(theme);
+        themePublicDTO = themeMapper.toPublicDTO(publicThemeProjection);
         themeToCreateDTO = themeMapper.toUpsertDTO(theme);
         themeToUpdateDTO = themeMapper.toUpsertDTO(themeToUpdate);
     }
@@ -95,7 +105,7 @@ public class ThemeServiceTest {
         public void getAllActiveThemes() {
             // Given
             when(themeRepository.findByDisabledAtIsNull())
-                    .thenReturn(List.of(theme));
+                    .thenReturn(List.of(publicThemeProjection));
 
             // When
             themeService.getAllActiveThemes();
@@ -114,16 +124,16 @@ public class ThemeServiceTest {
         @DisplayName("Récupérer un thème par son ID")
         public void findById_existingId() {
             // Given
-            when(themeRepository.findById(any(Long.class)))
-                    .thenReturn(Optional.of(theme));
+            when(themeRepository.findByIdAndDisabledAtIsNull(any(Long.class)))
+                    .thenReturn(Optional.of(publicThemeProjection));
 
             // When
-            ThemeDTO result = themeService.findByIdForUser(id);
+            ThemePublicDTO result = themeService.findByIdForUser(id);
 
             // Then
-            verify(themeRepository).findById(any(Long.class));
+            verify(themeRepository).findByIdAndDisabledAtIsNull(any(Long.class));
             assertThat(result).isNotNull();
-            assertThat(result).isEqualTo(themeDTO);
+            assertThat(result).isEqualTo(themePublicDTO);
         }
 
         @Test
@@ -134,7 +144,7 @@ public class ThemeServiceTest {
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.findByIdForUser(id));
+            assertThrows(NotFoundException.class, () -> themeService.findByIdForAdmin(id));
 
             verify(themeRepository).findById(any(Long.class));
         }

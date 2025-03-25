@@ -2,13 +2,14 @@ package com.dassonville.api.service;
 
 
 import com.dassonville.api.dto.ThemeAdminDTO;
-import com.dassonville.api.dto.ThemeDTO;
+import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.ThemeMapper;
 import com.dassonville.api.model.Theme;
+import com.dassonville.api.projection.PublicThemeProjection;
 import com.dassonville.api.repository.ThemeRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.springframework.util.StringUtils.capitalize;
 
@@ -35,24 +35,24 @@ public class ThemeService {
 
     public List<ThemeAdminDTO> getAllThemes() {
         List<Theme> themes = themeRepository.findAll();
-        return themes.stream().map(themeMapper::toAdminDTO).collect(Collectors.toList());
+        return themeMapper.toAdminDTOList(themes);
     }
 
-    public List<ThemeDTO> getAllActiveThemes() {
-        List<Theme> themes = themeRepository.findByDisabledAtIsNull();
-        return themes.stream().map(themeMapper::toDTO).collect(Collectors.toList());
+    public List<ThemePublicDTO> getAllActiveThemes() {
+        List<PublicThemeProjection> themes = themeRepository.findByDisabledAtIsNull();
+        return themeMapper.toPublicDTOList(themes);
     }
 
 
-    public ThemeDTO findByIdForUser(long id) {
+    public ThemePublicDTO findByIdForUser(long id) {
 
-        Theme theme = themeRepository.findById(id)
+        PublicThemeProjection theme = themeRepository.findByIdAndDisabledAtIsNull(id)
                 .orElseThrow(() -> {
                     logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", id);
                     return new NotFoundException("Le thème n'a pas été trouvé.");
                 });
 
-        return themeMapper.toDTO(theme);
+        return themeMapper.toPublicDTO(theme);
     }
 
 

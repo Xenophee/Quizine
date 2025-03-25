@@ -1,11 +1,9 @@
 package com.dassonville.api.dto;
 
-import java.time.LocalDate;
-
-public record ThemeDTO(
+public record ThemePublicDTO(
         long id,
         String name,
         String description,
-        LocalDate createdAt
+        boolean isNew
 ) {
 }
