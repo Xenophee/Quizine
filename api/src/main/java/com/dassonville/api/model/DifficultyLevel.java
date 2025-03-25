@@ -2,17 +2,16 @@ package com.dassonville.api.model;
 
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDate;
 
 
 @Entity
 @Table(name = "difficulty_levels")
-@Getter
-@Setter
+@Data
 public class DifficultyLevel {
 
     @Id
@@ -20,17 +19,26 @@ public class DifficultyLevel {
     private long id;
 
     @Column(nullable = false, unique = true)
-    @NotEmpty(message = "Veuillez saisir un nom de difficulté.")
-    @Size(max = 50, message = "Le nom de la difficulté ne doit pas dépasser 50 caractères.")
     private String name;
 
-    @Column(nullable = false)
-    @Min(value = 2, message = "Le nombre de réponses minimum doit être supérieur à 1.")
+    @Column(name = "max_responses", nullable = false)
     private byte maxResponses;
 
-    private short timer_seconds;
+    @Column(name = "timer_seconds")
+    private short timerSeconds;
 
-    @Column(nullable = false)
-    @Min(value = 1, message = "Le nombre de points doit être supérieur à 0.")
+    @Column(name = "points_per_question", nullable = false)
     private int pointsPerQuestion;
+
+    @Column(name = "created_at", updatable = false)
+    @CreationTimestamp
+    private LocalDate createdAt;
+
+    @Column(name = "updated_at")
+    @UpdateTimestamp
+    private LocalDate updatedAt;
+
+    @Column(name = "disabled_at")
+    @CreationTimestamp
+    private LocalDate disabledAt;
 }
