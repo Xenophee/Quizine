@@ -111,7 +111,7 @@ public class CategoryAdminController {
     @Operation(summary = "Activer / désactiver une catégorie", description = "Active / désactive une catégorie par son ID")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "La catégorie a été activée / désactivée."),
-            @ApiResponse(responseCode = "400", description = "La donnée spécifiée n'est pas valide.",
+            @ApiResponse(responseCode = "400", description = "Les données fournies pour activer / désactiver la catégorie sont invalides.",
                     content = {@Content(schema = @Schema(implementation = Map.class))}),
             @ApiResponse(responseCode = "404", description = "La catégorie avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})

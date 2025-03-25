@@ -124,7 +124,7 @@ public class ThemeAdminController {
     @Operation(summary = "Activer / désactiver un thème", description = "Active / désactive un thème par son ID")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Le thème a été activé / désactivé."),
-            @ApiResponse(responseCode = "400", description = "La donnée spécifiée n'est pas valide.",
+            @ApiResponse(responseCode = "400", description = "Les données fournies pour activer / désactiver le thème sont invalides.",
                     content = {@Content(schema = @Schema(implementation = Map.class))}),
             @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
