@@ -14,7 +14,7 @@ import org.mapstruct.Mappings;
 import java.time.LocalDate;
 import java.util.List;
 
-import static com.dassonville.api.config.Constant.NEWNESS_THRESHOLD_DAYS;
+import static com.dassonville.api.constant.AppConstants.NEWNESS_THRESHOLD_DAYS;
 
 @Mapper(componentModel = "spring")
 public interface DifficultyLevelMapper {
