@@ -75,7 +75,7 @@ public class DifficultyLevelAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PostMapping
-    public ResponseEntity<DifficultyLevelAdminDTO> createDifficultyLevel(@RequestBody DifficultyLevelUpsertDTO difficultyLevelUpsertDTO) {
+    public ResponseEntity<DifficultyLevelAdminDTO> createDifficultyLevel(@RequestBody @Valid DifficultyLevelUpsertDTO difficultyLevelUpsertDTO) {
         logger.info("Requête pour créer un niveau de difficulté.");
         DifficultyLevelAdminDTO createdDifficultyLevel = difficultyLevelService.create(difficultyLevelUpsertDTO);
         logger.info("Niveau de difficulté créé avec l'ID: {}", createdDifficultyLevel.id());
@@ -100,7 +100,7 @@ public class DifficultyLevelAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PutMapping(ApiRoutes.ID)
-    public ResponseEntity<DifficultyLevelAdminDTO> updateDifficultyLevel(@PathVariable long id, @RequestBody DifficultyLevelUpsertDTO difficultyLevelUpsertDTO) {
+    public ResponseEntity<DifficultyLevelAdminDTO> updateDifficultyLevel(@PathVariable long id, @RequestBody @Valid DifficultyLevelUpsertDTO difficultyLevelUpsertDTO) {
         logger.info("Requête pour modifier le niveau de difficulté avec l'ID: {}", id);
         DifficultyLevelAdminDTO updatedDifficultyLevel = difficultyLevelService.update(id, difficultyLevelUpsertDTO);
         logger.info("Niveau de difficulté modifié avec l'ID: {}", id);
