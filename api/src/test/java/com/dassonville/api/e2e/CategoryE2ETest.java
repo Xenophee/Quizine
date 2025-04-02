@@ -62,7 +62,7 @@ public class CategoryE2ETest {
         assertThat(response.getBody().name()).isEqualTo(categoryToCreate.name());
 
         // Vérifie que la catégorie est bien stockée en base
-        boolean categoryIsExists = categoryRepository.existsByName(categoryToCreate.name());
+        boolean categoryIsExists = categoryRepository.existsByNameIgnoreCase(categoryToCreate.name());
         assertThat(categoryIsExists).isTrue();
 
         // Vérifie qu'on peut récupérer la catégorie avec un GET

@@ -119,7 +119,7 @@ public class CategoryServiceTest {
         @DisplayName("Créer une nouvelle catégorie")
         void create_newCategory() {
             // Given
-            when(categoryRepository.existsByName(any(String.class)))
+            when(categoryRepository.existsByNameIgnoreCase(any(String.class)))
                     .thenReturn(false);
             when(categoryRepository.save(any(Category.class)))
                     .thenReturn(category);
@@ -128,7 +128,7 @@ public class CategoryServiceTest {
             CategoryAdminDTO result = categoryService.create(categoryToCreateDTO);
 
             // Then
-            verify(categoryRepository).existsByName(any(String.class));
+            verify(categoryRepository).existsByNameIgnoreCase(any(String.class));
             verify(categoryRepository).save(any(Category.class));
             assertThat(result).isNotNull();
             assertThat(result.name()).isEqualTo(categoryToCreateDTO.name());
@@ -138,14 +138,14 @@ public class CategoryServiceTest {
         @DisplayName("Créer une catégorie avec un nom déjà existant")
         void create_existingCategory() {
             // Given
-            when(categoryRepository.existsByName(any(String.class)))
+            when(categoryRepository.existsByNameIgnoreCase(any(String.class)))
                     .thenReturn(true);
 
             // When
             assertThrows(AlreadyExistException.class, () -> categoryService.create(categoryToCreateDTO));
 
             // Then
-            verify(categoryRepository).existsByName(any(String.class));
+            verify(categoryRepository).existsByNameIgnoreCase(any(String.class));
             verify(categoryRepository, never()).save(any(Category.class));
         }
     }
@@ -161,7 +161,7 @@ public class CategoryServiceTest {
             // Given
             when(categoryRepository.findById(any(Long.class)))
                     .thenReturn(Optional.of(category));
-            when(categoryRepository.existsByName(any(String.class)))
+            when(categoryRepository.existsByNameIgnoreCase(any(String.class)))
                     .thenReturn(false);
             when(categoryRepository.save(any(Category.class)))
                     .thenReturn(categoryToUpdate);
@@ -171,7 +171,7 @@ public class CategoryServiceTest {
 
             // Then
             verify(categoryRepository).findById(any(Long.class));
-            verify(categoryRepository).existsByName(any(String.class));
+            verify(categoryRepository).existsByNameIgnoreCase(any(String.class));
             verify(categoryRepository).save(any(Category.class));
             assertThat(result).isNotNull();
             assertThat(result.name()).isEqualTo(categoryToUpdateDTO.name());
@@ -179,7 +179,7 @@ public class CategoryServiceTest {
 
         @Test
         @DisplayName("Mettre à jour une catégorie sans changer le nom")
-        void update_existingCategoryWithSameName() {
+        void update_existingCategoryWithoutChangingName() {
             // Given
             when(categoryRepository.findById(any(Long.class)))
                     .thenReturn(Optional.of(categoryToUpdate));
@@ -191,7 +191,7 @@ public class CategoryServiceTest {
 
             // Then
             verify(categoryRepository).findById(any(Long.class));
-            verify(categoryRepository, never()).existsByName(any(String.class));
+            verify(categoryRepository, never()).existsByNameIgnoreCase(any(String.class));
             verify(categoryRepository).save(any(Category.class));
             assertThat(result).isNotNull();
             assertThat(result.name()).isEqualTo(categoryToUpdateDTO.name());
@@ -209,7 +209,7 @@ public class CategoryServiceTest {
 
             // Then
             verify(categoryRepository).findById(any(Long.class));
-            verify(categoryRepository, never()).existsByName(any(String.class));
+            verify(categoryRepository, never()).existsByNameIgnoreCase(any(String.class));
             verify(categoryRepository, never()).save(any(Category.class));
         }
 
@@ -219,7 +219,7 @@ public class CategoryServiceTest {
             // Given
             when(categoryRepository.findById(any(Long.class)))
                     .thenReturn(Optional.of(category));
-            when(categoryRepository.existsByName(any(String.class)))
+            when(categoryRepository.existsByNameIgnoreCase(any(String.class)))
                     .thenReturn(true);
 
             // When
@@ -227,7 +227,7 @@ public class CategoryServiceTest {
 
             // Then
             verify(categoryRepository).findById(any(Long.class));
-            verify(categoryRepository).existsByName(any(String.class));
+            verify(categoryRepository).existsByNameIgnoreCase(any(String.class));
             verify(categoryRepository, never()).save(any(Category.class));
         }
     }

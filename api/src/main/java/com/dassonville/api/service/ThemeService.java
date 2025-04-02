@@ -74,7 +74,7 @@ public class ThemeService {
 
         themeToCreate.setName(capitalize(themeToCreate.getName()));
 
-        if (themeRepository.existsByName(themeToCreate.getName())) {
+        if (themeRepository.existsByNameIgnoreCase(themeToCreate.getName())) {
             logger.warn("Un thème existe déjà avec le même nom : {}", themeToCreate.getName());
             throw new AlreadyExistException("Un thème existe déjà avec le même nom.");
         }
@@ -92,7 +92,7 @@ public class ThemeService {
             return new NotFoundException("Le thème à modifier n'a pas été trouvé.");
         });
 
-        if (!existingTheme.getName().equals(dto.name()) && themeRepository.existsByName(dto.name())) {
+        if (!existingTheme.getName().equalsIgnoreCase(dto.name()) && themeRepository.existsByNameIgnoreCase(dto.name())) {
             logger.warn("Un thème existe déjà avec le même nom : {}", dto.name());
             throw new AlreadyExistException("Un thème existe déjà avec le même nom.");
         }

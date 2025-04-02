@@ -43,7 +43,7 @@ public class CategoryService {
 
         categoryToCreate.setName(capitalize(categoryToCreate.getName()));
 
-        if (categoryRepository.existsByName(categoryToCreate.getName())) {
+        if (categoryRepository.existsByNameIgnoreCase(categoryToCreate.getName())) {
             logger.warn("Une catégorie existe déjà avec le même nom : {}", categoryToCreate.getName());
             throw new AlreadyExistException("Une catégorie existe déjà avec le même nom.");
         }
@@ -60,7 +60,7 @@ public class CategoryService {
             return new NotFoundException("La catégorie à modifier n'a pas été trouvée.");
         });
 
-        if (!existingCategory.getName().equals(dto.name()) && categoryRepository.existsByName(dto.name())) {
+        if (!existingCategory.getName().equalsIgnoreCase(dto.name()) && categoryRepository.existsByNameIgnoreCase(dto.name())) {
             logger.warn("Une catégorie existe déjà avec le même nom : {}", dto.name());
             throw new AlreadyExistException("Une catégorie existe déjà avec le même nom.");
         }

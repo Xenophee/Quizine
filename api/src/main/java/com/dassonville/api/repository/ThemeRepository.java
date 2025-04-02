@@ -13,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface ThemeRepository extends JpaRepository<Theme, Long> {
 
-    boolean existsByName(String name);
+    boolean existsByNameIgnoreCase(String name);
 
     @EntityGraph(attributePaths = {"categories"})
     List<Theme> findAll();

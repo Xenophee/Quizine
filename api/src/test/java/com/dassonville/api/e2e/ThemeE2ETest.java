@@ -1,6 +1,7 @@
 package com.dassonville.api.e2e;
 
 import com.dassonville.api.constant.ApiRoutes;
+import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.model.Theme;
@@ -51,7 +52,7 @@ public class ThemeE2ETest {
 
         // When - Envoi de la requête HTTP pour créer le thème
         HttpEntity<ThemeUpsertDTO> request = new HttpEntity<>(themeToCreate);
-        ResponseEntity<ThemePublicDTO> response = restTemplate.exchange(url, HttpMethod.POST, request, ThemePublicDTO.class);
+        ResponseEntity<ThemeAdminDTO> response = restTemplate.exchange(url, HttpMethod.POST, request, ThemeAdminDTO.class);
 
         // Then - Vérifie la réponse HTTP
         URI location = response.getHeaders().getLocation();
@@ -60,7 +61,7 @@ public class ThemeE2ETest {
         assertThat(response.getBody().name()).isEqualTo(themeToCreate.name());
 
         // Vérifie que le thème est bien stocké en base
-        boolean themeIsExists = themeRepository.existsByName(themeToCreate.name());
+        boolean themeIsExists = themeRepository.existsByNameIgnoreCase(themeToCreate.name());
         assertThat(themeIsExists).isTrue();
 
         // Vérifie qu'on peut récupérer le thème avec un GET
@@ -79,7 +80,7 @@ public class ThemeE2ETest {
 
         // When - Envoi de la requête HTTP pour mettre à jour le thème
         HttpEntity<ThemeUpsertDTO> requestUpdate = new HttpEntity<>(themeToUpdate);
-        ResponseEntity<ThemePublicDTO> responseUpdate = restTemplate.exchange(url, HttpMethod.PUT, requestUpdate, ThemePublicDTO.class);
+        ResponseEntity<ThemeAdminDTO> responseUpdate = restTemplate.exchange(url, HttpMethod.PUT, requestUpdate, ThemeAdminDTO.class);
 
         // Then - Vérifie la réponse HTTP
         assertThat(responseUpdate.getStatusCode()).isEqualTo(HttpStatus.OK);

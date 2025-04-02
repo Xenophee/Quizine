@@ -60,7 +60,7 @@ public class DifficultyLevelService {
 
         difficultyLevelToCreate.setName(capitalize(difficultyLevelToCreate.getName()));
 
-        if (difficultyLevelRepository.existsByName(difficultyLevelToCreate.getName())) {
+        if (difficultyLevelRepository.existsByNameIgnoreCase(difficultyLevelToCreate.getName())) {
             logger.warn("Un niveau de difficulté existe déjà avec le même nom : {}", difficultyLevelToCreate.getName());
             throw new AlreadyExistException("Un niveau de difficulté existe déjà avec le même nom.");
         }
@@ -77,7 +77,7 @@ public class DifficultyLevelService {
             return new NotFoundException("Le niveau de difficulté à modifier n'a pas été trouvé.");
         });
 
-        if (!existingDifficultyLevel.getName().equals(dto.name()) && difficultyLevelRepository.existsByName(dto.name())) {
+        if (!existingDifficultyLevel.getName().equalsIgnoreCase(dto.name()) && difficultyLevelRepository.existsByNameIgnoreCase(dto.name())) {
             logger.warn("Un niveau de difficulté existe déjà avec le même nom : {}", dto.name());
             throw new AlreadyExistException("Un niveau de difficulté existe déjà avec le même nom.");
         }

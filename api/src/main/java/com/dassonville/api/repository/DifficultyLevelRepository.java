@@ -11,7 +11,7 @@ import java.util.List;
 @Repository
 public interface DifficultyLevelRepository extends JpaRepository<DifficultyLevel, Long> {
 
-    boolean existsByName(String name);
+    boolean existsByNameIgnoreCase(String name);
 
     List<PublicDifficultyLevelProjection> findByDisabledAtIsNull();
 }
