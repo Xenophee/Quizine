@@ -38,7 +38,7 @@ public interface DifficultyLevelMapper {
 
     List<DifficultyLevelAdminDTO> toAdminDTOList(List<DifficultyLevel> difficultyLevels);
 
-    DifficultyLevelUpsertDTO toUpsertDto(DifficultyLevel difficultyLevel);
+    DifficultyLevelUpsertDTO toUpsertDTO(DifficultyLevel difficultyLevel);
 
 
     default boolean isDifficultyLevelNew(LocalDate createdAt) {
