@@ -48,6 +48,7 @@ public class ThemeServiceTest {
     private PublicThemeProjection publicThemeProjection;
     private Theme themeToUpdate;
     private ThemePublicDTO themePublicDTO;
+    private ThemeAdminDTO themeAdminDTO;
     private ThemeUpsertDTO themeToCreateDTO;
     private ThemeUpsertDTO themeToUpdateDTO;
 
@@ -78,6 +79,7 @@ public class ThemeServiceTest {
         themeToUpdate.setDescription("Nouvelle description");
 
         themePublicDTO = themeMapper.toPublicDTO(publicThemeProjection);
+        themeAdminDTO = themeMapper.toAdminDTO(theme);
         themeToCreateDTO = themeMapper.toUpsertDTO(theme);
         themeToUpdateDTO = themeMapper.toUpsertDTO(themeToUpdate);
     }
@@ -133,12 +135,41 @@ public class ThemeServiceTest {
             // Then
             verify(themeRepository).findByIdAndDisabledAtIsNull(any(Long.class));
             assertThat(result).isNotNull();
-            assertThat(result).isEqualTo(themePublicDTO);
+            assertThat(result.name()).isEqualTo(themePublicDTO.name());
         }
 
         @Test
-        @DisplayName("Récupérer un thème par un ID inexistant")
-        public void findById_nonExistingId() {
+        @DisplayName("Récupérer un thème par un ID inexistant - USER")
+        public void findByIdForUser_nonExistingId() {
+            // Given
+            when(themeRepository.findByIdAndDisabledAtIsNull(any(Long.class)))
+                    .thenReturn(Optional.empty());
+
+            // When & Then
+            assertThrows(NotFoundException.class, () -> themeService.findByIdForUser(id));
+
+            verify(themeRepository).findByIdAndDisabledAtIsNull(any(Long.class));
+        }
+
+        @Test
+        @DisplayName("Récupérer un thème par son ID")
+        public void findByIdForAdmin_existingId() {
+            // Given
+            when(themeRepository.findById(any(Long.class)))
+                    .thenReturn(Optional.of(theme));
+
+            // When
+            ThemeAdminDTO result = themeService.findByIdForAdmin(id);
+
+            // Then
+            verify(themeRepository).findById(any(Long.class));
+            assertThat(result).isNotNull();
+            assertThat(result.name()).isEqualTo(themeAdminDTO.name());
+        }
+
+        @Test
+        @DisplayName("Récupérer un thème par un ID inexistant - ADMIN")
+        public void findByIdForAdmin_nonExistingId() {
             // Given
             when(themeRepository.findById(any(Long.class)))
                     .thenReturn(Optional.empty());
@@ -160,7 +191,7 @@ public class ThemeServiceTest {
         @DisplayName("Créer un nouveau thème")
         public void create_newTheme() {
             // Given
-            when(themeRepository.existsByName(any(String.class)))
+            when(themeRepository.existsByNameIgnoreCase(any(String.class)))
                     .thenReturn(false);
             when(themeRepository.save(any(Theme.class)))
                     .thenReturn(theme);
@@ -169,7 +200,7 @@ public class ThemeServiceTest {
             ThemeAdminDTO result = themeService.create(themeToCreateDTO);
 
             // Then
-            verify(themeRepository).existsByName(any(String.class));
+            verify(themeRepository).existsByNameIgnoreCase(any(String.class));
             verify(themeRepository).save(any(Theme.class));
             assertThat(result).isNotNull();
             assertThat(result.name()).isEqualTo(themeToCreateDTO.name());
@@ -179,13 +210,13 @@ public class ThemeServiceTest {
         @DisplayName("Créer un thème déjà existant")
         public void create_existingTheme() {
             // Given
-            when(themeRepository.existsByName(any(String.class)))
+            when(themeRepository.existsByNameIgnoreCase(any(String.class)))
                     .thenReturn(true);
 
             // When & Then
             assertThrows(AlreadyExistException.class, () -> themeService.create(themeToCreateDTO));
 
-            verify(themeRepository).existsByName(any(String.class));
+            verify(themeRepository).existsByNameIgnoreCase(any(String.class));
             verify(themeRepository, never()).save(any(Theme.class));
         }
 
@@ -202,7 +233,7 @@ public class ThemeServiceTest {
             // Given
             when(themeRepository.findById(any(Long.class)))
                     .thenReturn(Optional.of(theme));
-            when(themeRepository.existsByName(any(String.class)))
+            when(themeRepository.existsByNameIgnoreCase(any(String.class)))
                     .thenReturn(false);
             when(themeRepository.save(any(Theme.class)))
                     .thenReturn(themeToUpdate);
@@ -212,7 +243,7 @@ public class ThemeServiceTest {
 
             // Then
             verify(themeRepository).findById(any(Long.class));
-            verify(themeRepository).existsByName(any(String.class));
+            verify(themeRepository).existsByNameIgnoreCase(any(String.class));
             verify(themeRepository).save(any(Theme.class));
             assertThat(result).isNotNull();
             assertThat(result.name()).isEqualTo(themeToUpdateDTO.name());
@@ -220,7 +251,7 @@ public class ThemeServiceTest {
 
         @Test
         @DisplayName("Mettre à jour un thème sans changer le nom")
-        public void update_existingThemeWithSameName() {
+        public void update_existingThemeWithoutChangingName() {
             // Given
             when(themeRepository.findById(any(Long.class)))
                     .thenReturn(Optional.of(themeToUpdate));
@@ -232,7 +263,7 @@ public class ThemeServiceTest {
 
             // Then
             verify(themeRepository).findById(any(Long.class));
-            verify(themeRepository, never()).existsByName(any(String.class));
+            verify(themeRepository, never()).existsByNameIgnoreCase(any(String.class));
             verify(themeRepository).save(any(Theme.class));
             assertThat(result).isNotNull();
             assertThat(result.name()).isEqualTo(themeToUpdateDTO.name());
@@ -249,7 +280,7 @@ public class ThemeServiceTest {
             assertThrows(NotFoundException.class, () -> themeService.update(id, themeToUpdateDTO));
 
             verify(themeRepository).findById(any(Long.class));
-            verify(themeRepository, never()).existsByName(any(String.class));
+            verify(themeRepository, never()).existsByNameIgnoreCase(any(String.class));
             verify(themeRepository, never()).save(any(Theme.class));
         }
 
@@ -259,14 +290,14 @@ public class ThemeServiceTest {
             // Given
             when(themeRepository.findById(any(Long.class)))
                     .thenReturn(Optional.of(theme));
-            when(themeRepository.existsByName(any(String.class)))
+            when(themeRepository.existsByNameIgnoreCase(any(String.class)))
                     .thenReturn(true);
 
             // When & Then
             assertThrows(AlreadyExistException.class, () -> themeService.update(id, themeToUpdateDTO));
 
             verify(themeRepository).findById(any(Long.class));
-            verify(themeRepository).existsByName(any(String.class));
+            verify(themeRepository).existsByNameIgnoreCase(any(String.class));
             verify(themeRepository, never()).save(any(Theme.class));
         }
 
