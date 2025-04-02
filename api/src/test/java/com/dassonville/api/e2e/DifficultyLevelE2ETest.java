@@ -78,7 +78,7 @@ public class DifficultyLevelE2ETest {
         // Given
         long id = 1;
         DifficultyLevelUpsertDTO difficultyLevelToUpdate = new DifficultyLevelUpsertDTO("Volcanique", (byte) 5, (short) 0, 50);
-        String url = "http://localhost:" + port + ApiRoutes.DifficultyLevels.ADMIN_DIFFICULTY_LEVELS + "/" + id;;
+        String url = "http://localhost:" + port + ApiRoutes.DifficultyLevels.ADMIN_DIFFICULTY_LEVELS + "/" + id;
 
         // When - Envoi de la requête HTTP pour créer le thème
         HttpEntity<DifficultyLevelUpsertDTO> requestUpdate = new HttpEntity<>(difficultyLevelToUpdate);
@@ -99,7 +99,7 @@ public class DifficultyLevelE2ETest {
         // Given
         long id = 9;
         DifficultyLevelUpsertDTO difficultyLevelToUpdate = new DifficultyLevelUpsertDTO("volcanique", (byte) 5, (short) 0, 50);
-        String url = "http://localhost:" + port + ApiRoutes.DifficultyLevels.ADMIN_DIFFICULTY_LEVELS + "/" + id;;
+        String url = "http://localhost:" + port + ApiRoutes.DifficultyLevels.ADMIN_DIFFICULTY_LEVELS + "/" + id;
 
         // When - Envoi de la requête HTTP pour créer le thème
         HttpEntity<DifficultyLevelUpsertDTO> requestUpdate = new HttpEntity<>(difficultyLevelToUpdate);

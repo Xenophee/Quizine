@@ -86,7 +86,7 @@ public class DifficultyLevelServiceIT {
             long idToFind = 100L;
 
             // When / Then
-            Exception exception = assertThrows(Exception.class, () -> difficultyLevelService.findById(idToFind));
+            assertThrows(Exception.class, () -> difficultyLevelService.findById(idToFind));
         }
     }
 

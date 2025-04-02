@@ -2,7 +2,6 @@ package com.dassonville.api.service;
 
 
 import com.dassonville.api.dto.DifficultyLevelAdminDTO;
-import com.dassonville.api.dto.DifficultyLevelPublicDTO;
 import com.dassonville.api.dto.DifficultyLevelUpsertDTO;
 import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
