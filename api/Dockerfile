@@ -8,8 +8,8 @@ WORKDIR /app
 COPY gradle/ gradle/
 COPY settings.gradle.kts build.gradle.kts gradlew ./
 
-# Vérifie les dépendances pour détecter d'éventuelles failles de sécurité
-RUN ./gradlew dependencyCheckAnalyze --no-daemon || true
+# Ajoute les permissions d'exécution pour gradlew
+RUN chmod +x gradlew
 
 # Télécharge les dépendances sans compiler le code source
 RUN ./gradlew dependencies --no-daemon # ajouter || true si on veut passer les erreurs

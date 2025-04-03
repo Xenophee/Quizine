@@ -8,7 +8,7 @@ RUN apk --no-cache add chromium
 WORKDIR /app
 
 # Copie uniquement les fichiers nécessaires pour installer les dépendances
-COPY package*.json ./
+COPY package*.json angular.json tsconfig.json ./
 
 # Installe les dépendances du projet
 RUN npm install --no-cache
