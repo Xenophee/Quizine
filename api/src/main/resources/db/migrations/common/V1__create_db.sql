@@ -71,6 +71,7 @@ CREATE TABLE difficulty_levels
     max_responses       SMALLINT    NOT NULL,
     timer_seconds       SMALLINT    NOT NULL DEFAULT 0,
     points_per_question SMALLINT    NOT NULL,
+    is_reference        BOOLEAN     NOT NULL DEFAULT FALSE,
     created_at          DATE        NOT NULL DEFAULT CURRENT_DATE,
     updated_at          DATE,
     disabled_at         DATE
@@ -82,8 +83,11 @@ CREATE TABLE difficulty_levels
 CREATE TABLE quizzes
 (
     id          SERIAL PRIMARY KEY,
-    title       VARCHAR(100) NOT NULL,
-    alt_image   VARCHAR(150) NOT NULL,
+    title       VARCHAR(100) NOT NULL UNIQUE,
+    is_vip_only BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at  DATE         NOT NULL DEFAULT CURRENT_DATE,
+    updated_at  DATE,
+    disabled_at DATE,
     id_category INTEGER      NOT NULL REFERENCES categories (id) ON DELETE CASCADE,
     id_theme    INTEGER      NOT NULL REFERENCES themes (id) ON DELETE CASCADE
 );
@@ -93,9 +97,12 @@ CREATE TABLE quizzes
 ---------------------------------------------------
 CREATE TABLE questions
 (
-    id      SERIAL PRIMARY KEY,
-    text    VARCHAR(300) NOT NULL,
-    id_quiz INTEGER      NOT NULL REFERENCES quizzes (id) ON DELETE CASCADE
+    id          SERIAL PRIMARY KEY,
+    text        VARCHAR(300) NOT NULL,
+    created_at  DATE         NOT NULL DEFAULT CURRENT_DATE,
+    updated_at  DATE,
+    disabled_at DATE,
+    id_quiz     INTEGER      NOT NULL REFERENCES quizzes (id) ON DELETE CASCADE
 );
 
 ---------------------------------------------------
@@ -106,6 +113,9 @@ CREATE TABLE answers
     id          SERIAL PRIMARY KEY,
     text        VARCHAR(150) NOT NULL,
     is_correct  BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at  DATE         NOT NULL DEFAULT CURRENT_DATE,
+    updated_at  DATE,
+    disabled_at DATE,
     id_question INTEGER      NOT NULL REFERENCES questions (id)
 );
 
