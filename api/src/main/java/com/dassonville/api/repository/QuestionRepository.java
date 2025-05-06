@@ -7,4 +7,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {
+
+    boolean existsByQuizIdAndTextIgnoreCase(long quizId, String text);
+
+    boolean existsByQuizIdAndTextIgnoreCaseAndIdNot(long quizId, String text, long id);
+
+    int countByQuizIdAndDisabledAtIsNull(long quizId);
 }
