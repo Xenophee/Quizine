@@ -35,6 +35,10 @@ public class GlobalExceptionHandler {
         return errors;
     }
 
+    @ExceptionHandler(InvalidStateException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Error handleInvalidStateException(InvalidStateException ex) { return new Error(ex.getMessage()); }
+
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Error handleNotFoundException(NotFoundException ex) {
