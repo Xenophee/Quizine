@@ -1,14 +1,14 @@
 package com.dassonville.api.repository;
 
-import com.dassonville.api.model.Response;
+import com.dassonville.api.model.Answer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 
 @Repository
-public interface ResponseRepository extends JpaRepository<Response, Long> {
+public interface AnswerRepository extends JpaRepository<Answer, Long> {
 
-    boolean existsByTextIgnoreCase(String text);
+    boolean existsByTextIgnoreCaseAndQuestionId(String text, long questionId);
 
     boolean existsByTextIgnoreCaseAndIdNot(String text, long id);
 

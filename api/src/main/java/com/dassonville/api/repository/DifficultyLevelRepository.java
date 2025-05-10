@@ -18,6 +18,6 @@ public interface DifficultyLevelRepository extends JpaRepository<DifficultyLevel
     List<PublicDifficultyLevelProjection> findByDisabledAtIsNull();
 
     @Query("SELECT maxResponses FROM DifficultyLevel WHERE isReference = true")
-    Optional<Byte> findReferenceLevelMaxResponses();
+    Optional<Byte> findReferenceLevelMaxAnswers();
 
 }
