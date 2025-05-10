@@ -12,5 +12,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     boolean existsByNameIgnoreCase(String name);
 
+    boolean existsByIdAndThemeId(long categoryId, long themeId);
+
     List<Category> findByThemeId(Long themeId);
 }
