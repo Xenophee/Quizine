@@ -9,7 +9,7 @@ public record DifficultyLevelUpsertDTO(
         String name,
 
         @NotNull(message = "Veuillez indiquer le nombre de réponses minimum.")
-        @Min(value = 2, message = "Le nombre de réponses minimum doit être supérieur à 1.")
+        @Min(value = 0, message = "Le nombre de réponses ne doit pas être négatif.")
         byte maxResponses,
 
         @Min(value = 0, message = "Le timer ne doit pas être négatif.")
