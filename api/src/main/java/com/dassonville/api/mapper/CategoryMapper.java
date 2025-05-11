@@ -2,11 +2,14 @@ package com.dassonville.api.mapper;
 
 
 import com.dassonville.api.dto.CategoryAdminDTO;
+import com.dassonville.api.dto.IdNameDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
 import com.dassonville.api.model.Category;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
@@ -29,4 +32,7 @@ public interface CategoryMapper {
             @Mapping(target = "themeId", source = "theme.id")
     })
     CategoryUpsertDTO toUpsertDTO(Category category);
+
+
+    List<IdNameDTO> toDTOList(List<Category> category);
 }
