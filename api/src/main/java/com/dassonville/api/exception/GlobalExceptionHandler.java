@@ -39,6 +39,10 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Error handleInvalidStateException(InvalidStateException ex) { return new Error(ex.getMessage()); }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Error handleIllegalArgumentException(IllegalArgumentException ex) { return new Error(ex.getMessage()); }
+
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Error handleNotFoundException(NotFoundException ex) {
@@ -49,5 +53,20 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public Error handleAlreadyExistException(AlreadyExistException ex) {
         return new Error(ex.getMessage());
+    }
+
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Error handleIllegalStateException(IllegalStateException ex) {
+        logger.error("Une erreur inattendue s'est produite : {}", ex.getMessage());
+        return new Error("Une erreur inattendue s'est produite.");
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Error handleGeneralException(Exception ex) {
+        logger.error("Une erreur inattendue s'est produite : {}", ex.getMessage());
+        return new Error("Une erreur inattendue s'est produite.");
     }
 }
