@@ -22,4 +22,6 @@ public interface ThemeRepository extends JpaRepository<Theme, Long> {
 
     List<PublicThemeProjection> findByDisabledAtIsNull();
 
+    List<Theme> findAllByQuizzesDisabledAtIsNull();
+
 }
