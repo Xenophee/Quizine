@@ -4,7 +4,7 @@ package com.dassonville.api.controller;
 import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.service.CategoryService;
@@ -42,14 +42,14 @@ public class CategoryAdminControllerTest {
     private CategoryService categoryService;
 
     private long endpointId;
-    private ToggleDisableRequestDTO toggleDisableRequestDTO;
+    private BooleanRequestDTO booleanRequestDTO;
     private CategoryAdminDTO categoryAdminDTO;
     private CategoryUpsertDTO categoryUpsertDTO;
 
     @BeforeEach
     public void setUp() {
         endpointId = 1L;
-        toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+        booleanRequestDTO = new BooleanRequestDTO(true);
         categoryAdminDTO = new CategoryAdminDTO(1L, "Code", "", null, null, null, 6);
         categoryUpsertDTO = new CategoryUpsertDTO("Code", "", 6);
     }
@@ -240,12 +240,12 @@ public class CategoryAdminControllerTest {
         @DisplayName("Désactiver une catégorie")
         public void toggleDisableCategory_shouldReturn204() throws Exception {
             // Given
-            doNothing().when(categoryService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
+            doNothing().when(categoryService).toggleDisable(anyLong(), any(BooleanRequestDTO.class));
 
             // When & Then
             mockMvc.perform(patch(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
+                            .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNoContent());
         }
 
@@ -253,12 +253,12 @@ public class CategoryAdminControllerTest {
         @DisplayName("Désactiver une catégorie inexistante")
         public void toggleDisableCategory_shouldReturn404() throws Exception {
             // Given
-            doThrow(new NotFoundException()).when(categoryService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
+            doThrow(new NotFoundException()).when(categoryService).toggleDisable(anyLong(), any(BooleanRequestDTO.class));
 
             // When & Then
             mockMvc.perform(patch(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
+                            .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }

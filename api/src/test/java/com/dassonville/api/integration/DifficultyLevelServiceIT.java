@@ -4,7 +4,7 @@ package com.dassonville.api.integration;
 import com.dassonville.api.dto.DifficultyLevelAdminDTO;
 import com.dassonville.api.dto.DifficultyLevelPublicDTO;
 import com.dassonville.api.dto.DifficultyLevelUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.DifficultyLevel;
@@ -225,10 +225,10 @@ public class DifficultyLevelServiceIT {
         public void shouldDisableDifficultyLevel() {
             // Given
             long idToDisable = 1L;
-            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+            BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(true);
 
             // When
-            difficultyLevelService.toggleDisable(idToDisable, toggleDisableRequestDTO);
+            difficultyLevelService.toggleDisable(idToDisable, booleanRequestDTO);
 
             // Then
             DifficultyLevel difficultyLevel = difficultyLevelRepository.findById(idToDisable).get();
@@ -240,10 +240,10 @@ public class DifficultyLevelServiceIT {
         public void shouldEnableDifficultyLevel() {
             // Given
             long idToEnable = 1L;
-            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(false);
+            BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(false);
 
             // When
-            difficultyLevelService.toggleDisable(idToEnable, toggleDisableRequestDTO);
+            difficultyLevelService.toggleDisable(idToEnable, booleanRequestDTO);
 
             // Then
             DifficultyLevel difficultyLevel = difficultyLevelRepository.findById(idToEnable).get();

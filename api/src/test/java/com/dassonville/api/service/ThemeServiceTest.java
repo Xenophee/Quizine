@@ -4,7 +4,7 @@ package com.dassonville.api.service;
 import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.ThemeMapper;
@@ -43,7 +43,7 @@ public class ThemeServiceTest {
 
 
     private long id;
-    private ToggleDisableRequestDTO toggleDisableRequestDTO;
+    private BooleanRequestDTO booleanRequestDTO;
     private Theme theme;
     private PublicThemeProjection publicThemeProjection;
     private Theme themeToUpdate;
@@ -59,7 +59,7 @@ public class ThemeServiceTest {
         themeService = new ThemeService(themeRepository, themeMapper);
 
         id = 1L;
-        toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+        booleanRequestDTO = new BooleanRequestDTO(true);
 
         theme = new Theme();
         theme.setId(1);
@@ -352,7 +352,7 @@ public class ThemeServiceTest {
                     .thenReturn(Optional.of(theme));
 
             // When
-            themeService.toggleDisable(id, toggleDisableRequestDTO);
+            themeService.toggleDisable(id, booleanRequestDTO);
 
             // Then
             verify(themeRepository).findById(any(Long.class));
@@ -363,13 +363,13 @@ public class ThemeServiceTest {
         @DisplayName("Réactiver un thème désactivé")
         public void enable_disabledTheme() {
             // Given
-            toggleDisableRequestDTO = new ToggleDisableRequestDTO(false);
+            booleanRequestDTO = new BooleanRequestDTO(false);
             theme.setDisabledAt(theme.getCreatedAt());
             when(themeRepository.findById(any(Long.class)))
                     .thenReturn(Optional.of(theme));
 
             // When
-            themeService.toggleDisable(id, toggleDisableRequestDTO);
+            themeService.toggleDisable(id, booleanRequestDTO);
 
             // Then
             verify(themeRepository).findById(any(Long.class));
@@ -384,7 +384,7 @@ public class ThemeServiceTest {
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.toggleDisable(id, toggleDisableRequestDTO));
+            assertThrows(NotFoundException.class, () -> themeService.toggleDisable(id, booleanRequestDTO));
 
             verify(themeRepository).findById(any(Long.class));
             verify(themeRepository, never()).save(any(Theme.class));

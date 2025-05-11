@@ -3,7 +3,7 @@ package com.dassonville.api.service;
 
 import com.dassonville.api.dto.DifficultyLevelAdminDTO;
 import com.dassonville.api.dto.DifficultyLevelUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.DifficultyLevelMapper;
@@ -41,7 +41,7 @@ public class DifficultyLevelServiceTest {
 
 
     private long id;
-    private ToggleDisableRequestDTO toggleDisableRequestDTO;
+    private BooleanRequestDTO booleanRequestDTO;
     private DifficultyLevel difficultyLevel;
     private PublicDifficultyLevelProjection publicDifficultyLevelProjection;
     private DifficultyLevel difficultyLevelToUpdate;
@@ -55,7 +55,7 @@ public class DifficultyLevelServiceTest {
         difficultyLevelService = new DifficultyLevelService(difficultyLevelRepository, difficultyLevelMapper);
 
         id = 1L;
-        toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+        booleanRequestDTO = new BooleanRequestDTO(true);
 
         difficultyLevel = new DifficultyLevel();
         difficultyLevel.setId(1);
@@ -317,7 +317,7 @@ public class DifficultyLevelServiceTest {
                     .thenReturn(Optional.of(difficultyLevel));
 
             // When
-            difficultyLevelService.toggleDisable(id, toggleDisableRequestDTO);
+            difficultyLevelService.toggleDisable(id, booleanRequestDTO);
 
             // Then
             verify(difficultyLevelRepository).findById(any(Long.class));
@@ -328,13 +328,13 @@ public class DifficultyLevelServiceTest {
         @DisplayName("Réactiver un niveau de difficulté")
         void enable_existingDifficultyLevel() {
             // Given
-            toggleDisableRequestDTO = new ToggleDisableRequestDTO(false);
+            booleanRequestDTO = new BooleanRequestDTO(false);
             difficultyLevel.setDisabledAt(difficultyLevel.getCreatedAt());
             when(difficultyLevelRepository.findById(any(Long.class)))
                     .thenReturn(Optional.of(difficultyLevel));
 
             // When
-            difficultyLevelService.toggleDisable(id, toggleDisableRequestDTO);
+            difficultyLevelService.toggleDisable(id, booleanRequestDTO);
 
             // Then
             verify(difficultyLevelRepository).findById(any(Long.class));
@@ -349,7 +349,7 @@ public class DifficultyLevelServiceTest {
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThrows(NotFoundException.class, () -> difficultyLevelService.toggleDisable(id, toggleDisableRequestDTO));
+            assertThrows(NotFoundException.class, () -> difficultyLevelService.toggleDisable(id, booleanRequestDTO));
 
             verify(difficultyLevelRepository).findById(any(Long.class));
             verify(difficultyLevelRepository, never()).save(any(DifficultyLevel.class));

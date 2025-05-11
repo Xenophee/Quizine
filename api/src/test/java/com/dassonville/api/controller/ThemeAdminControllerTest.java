@@ -4,7 +4,7 @@ package com.dassonville.api.controller;
 import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.service.ThemeService;
@@ -42,14 +42,14 @@ public class ThemeAdminControllerTest {
     private ThemeService themeService;
 
     private long endpointId;
-    private ToggleDisableRequestDTO toggleDisableRequestDTO;
+    private BooleanRequestDTO booleanRequestDTO;
     private ThemeAdminDTO themeAdminDTO;
     private ThemeUpsertDTO themeUpsertDTO;
 
     @BeforeEach
     public void setUp() {
         endpointId = 1L;
-        toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+        booleanRequestDTO = new BooleanRequestDTO(true);
         themeAdminDTO = new ThemeAdminDTO(1L, "Informatique", "", null, null, null, List.of());
         themeUpsertDTO = new ThemeUpsertDTO("Informatique", "");
     }
@@ -256,11 +256,11 @@ public class ThemeAdminControllerTest {
         @DisplayName("Désactiver un thème")
         public void toggleDisableTheme_shouldReturn204() throws Exception {
             // Given
-            doNothing().when(themeService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
+            doNothing().when(themeService).toggleDisable(anyLong(), any(BooleanRequestDTO.class));
             // When & Then
             mockMvc.perform(patch(ApiRoutes.Themes.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
+                            .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNoContent());
         }
 
@@ -268,11 +268,11 @@ public class ThemeAdminControllerTest {
         @DisplayName("Désactiver un thème inexistant")
         public void toggleDisableTheme_shouldReturn404() throws Exception {
             // Given
-            doThrow(new NotFoundException()).when(themeService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
+            doThrow(new NotFoundException()).when(themeService).toggleDisable(anyLong(), any(BooleanRequestDTO.class));
             // When & Then
             mockMvc.perform(patch(ApiRoutes.Themes.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
+                            .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }

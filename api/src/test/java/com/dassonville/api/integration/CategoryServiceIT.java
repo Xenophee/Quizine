@@ -3,7 +3,7 @@ package com.dassonville.api.integration;
 
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.Category;
@@ -84,7 +84,7 @@ public class CategoryServiceIT {
             Category category = categoryRepository.findById(createdCategory.id()).get();
             assertThat(category.getName()).isEqualTo(capitalize(categoryToCreate.name()));
             assertThat(category.getCreatedAt()).isNotNull();
-            assertThat(category.getDisabledAt()).isNotNull();
+            assertThat(category.getDisabledAt()).isNull();
             assertThat(category.getTheme().getId()).isEqualTo(createdCategory.themeId());
         }
 
@@ -183,10 +183,10 @@ public class CategoryServiceIT {
         public void shouldDisable_WhenExistingCategory() {
             // Given
             long idToDisable = 2L;
-            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+            BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(true);
 
             // When
-            categoryService.toggleDisable(idToDisable, toggleDisableRequestDTO);
+            categoryService.toggleDisable(idToDisable, booleanRequestDTO);
 
             // Then
             Category category = categoryRepository.findById(idToDisable).get();
@@ -198,10 +198,10 @@ public class CategoryServiceIT {
         public void shouldEnable_WhenDisabledCategory() {
             // Given
             long idToEnable = 1L;
-            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(false);
+            BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(false);
 
             // When
-            categoryService.toggleDisable(idToEnable, toggleDisableRequestDTO);
+            categoryService.toggleDisable(idToEnable, booleanRequestDTO);
 
             // Then
             Category category = categoryRepository.findById(idToEnable).get();
@@ -213,10 +213,10 @@ public class CategoryServiceIT {
         public void shouldFailToDisable_WhenNonExistingCategory() {
             // Given
             long idToDisable = 13L;
-            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+            BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(true);
 
             // When / Then
-            assertThrows(NotFoundException.class, () -> categoryService.toggleDisable(idToDisable, toggleDisableRequestDTO));
+            assertThrows(NotFoundException.class, () -> categoryService.toggleDisable(idToDisable, booleanRequestDTO));
         }
     }
 }

@@ -4,7 +4,7 @@ package com.dassonville.api.controller;
 import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.DifficultyLevelAdminDTO;
 import com.dassonville.api.dto.DifficultyLevelUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.service.DifficultyLevelService;
@@ -48,7 +48,7 @@ public class DifficultyLevelAdminControllerTest {
     private DifficultyLevelService difficultyLevelService;
 
     private long endpointId;
-    private ToggleDisableRequestDTO toggleDisableRequestDTO;
+    private BooleanRequestDTO booleanRequestDTO;
     private DifficultyLevelUpsertDTO difficultyLevelUpsertDTO;
     private DifficultyLevelAdminDTO difficultyLevelAdminDTO;
 
@@ -56,7 +56,7 @@ public class DifficultyLevelAdminControllerTest {
     @BeforeEach
     public void setUp() {
         endpointId = 1L;
-        toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+        booleanRequestDTO = new BooleanRequestDTO(true);
         difficultyLevelAdminDTO = new DifficultyLevelAdminDTO(1L, "Facile", (byte) 2, (short) 0, 5, LocalDate.now(), null, null);
         difficultyLevelUpsertDTO = new DifficultyLevelUpsertDTO("Facile", (byte) 2, (short) 0, 5);
     }
@@ -260,12 +260,12 @@ public class DifficultyLevelAdminControllerTest {
         @DisplayName("Activer / désactiver un niveau de difficulté")
         public void toggleDisableDifficultyLevel_shouldReturn204() throws Exception {
             // Given
-            doNothing().when(difficultyLevelService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
+            doNothing().when(difficultyLevelService).toggleDisable(anyLong(), any(BooleanRequestDTO.class));
 
             // When & Then
             mockMvc.perform(patch(ApiRoutes.DifficultyLevels.ADMIN_BY_ID, endpointId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
+                        .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNoContent());
         }
 
@@ -273,12 +273,12 @@ public class DifficultyLevelAdminControllerTest {
         @DisplayName("Activer / désactiver un niveau de difficulté inexistant")
         public void toggleDisableDifficultyLevel_shouldReturn404() throws Exception {
             // Given
-            doThrow(new NotFoundException()).when(difficultyLevelService).toggleDisable(anyLong(), any(ToggleDisableRequestDTO.class));
+            doThrow(new NotFoundException()).when(difficultyLevelService).toggleDisable(anyLong(), any(BooleanRequestDTO.class));
 
             // When & Then
             mockMvc.perform(patch(ApiRoutes.DifficultyLevels.ADMIN_BY_ID, endpointId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(toggleDisableRequestDTO)))
+                        .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }

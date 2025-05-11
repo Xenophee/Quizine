@@ -3,13 +3,14 @@ package com.dassonville.api.service;
 
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.CategoryMapper;
 import com.dassonville.api.model.Category;
 import com.dassonville.api.model.Theme;
 import com.dassonville.api.repository.CategoryRepository;
+import com.dassonville.api.repository.ThemeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -34,13 +35,16 @@ public class CategoryServiceTest {
     @Mock
     private CategoryRepository categoryRepository;
 
+    @Mock
+    private ThemeRepository themeRepository;
+
     private CategoryService categoryService;
 
 
     private final CategoryMapper categoryMapper = Mappers.getMapper(CategoryMapper.class);
 
     private long id;
-    private ToggleDisableRequestDTO toggleDisableRequestDTO;
+    private BooleanRequestDTO booleanRequestDTO;
     private Category category;
     private Category categoryToUpdate;
     private CategoryAdminDTO categoryAdminDTO;
@@ -50,10 +54,10 @@ public class CategoryServiceTest {
 
     @BeforeEach
     void setUp() {
-        categoryService = new CategoryService(categoryRepository, categoryMapper);
+        categoryService = new CategoryService(categoryRepository, themeRepository, categoryMapper);
 
         id = 1L;
-        toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+        booleanRequestDTO = new BooleanRequestDTO(true);
         Theme theme = new Theme();
         theme.setId(1);
 
@@ -281,7 +285,7 @@ public class CategoryServiceTest {
                     .thenReturn(Optional.of(category));
 
             // When
-            categoryService.toggleDisable(id, toggleDisableRequestDTO);
+            categoryService.toggleDisable(id, booleanRequestDTO);
 
             // Then
             verify(categoryRepository).findById(any(Long.class));
@@ -292,13 +296,13 @@ public class CategoryServiceTest {
         @DisplayName("Réactiver une catégorie désactivée")
         void enable_disabledCategory() {
             // Given
-            toggleDisableRequestDTO = new ToggleDisableRequestDTO(false);
+            booleanRequestDTO = new BooleanRequestDTO(false);
             category.setDisabledAt(category.getCreatedAt());
             when(categoryRepository.findById(any(Long.class)))
                     .thenReturn(Optional.of(category));
 
             // When
-            categoryService.toggleDisable(id, toggleDisableRequestDTO);
+            categoryService.toggleDisable(id, booleanRequestDTO);
 
             // Then
             verify(categoryRepository).findById(any(Long.class));
@@ -313,7 +317,7 @@ public class CategoryServiceTest {
                     .thenReturn(Optional.empty());
 
             // When
-            assertThrows(NotFoundException.class, () -> categoryService.toggleDisable(id, toggleDisableRequestDTO));
+            assertThrows(NotFoundException.class, () -> categoryService.toggleDisable(id, booleanRequestDTO));
 
             // Then
             verify(categoryRepository).findById(any(Long.class));

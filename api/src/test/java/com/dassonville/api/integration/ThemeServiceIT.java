@@ -3,7 +3,7 @@ package com.dassonville.api.integration;
 import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.Theme;
@@ -206,10 +206,10 @@ public class ThemeServiceIT {
         public void shouldDisable_WhenActiveTheme() {
             // Given
             long idToDisable = 4L;
-            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+            BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(true);
 
             // When
-            themeService.toggleDisable(idToDisable, toggleDisableRequestDTO);
+            themeService.toggleDisable(idToDisable, booleanRequestDTO);
 
             // Then
             Theme theme = themeRepository.findById(idToDisable).get();
@@ -221,10 +221,10 @@ public class ThemeServiceIT {
         public void shouldEnable_WhenDisabledTheme() {
             // Given
             long idToEnable = 2L;
-            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(false);
+            BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(false);
 
             // When
-            themeService.toggleDisable(idToEnable, toggleDisableRequestDTO);
+            themeService.toggleDisable(idToEnable, booleanRequestDTO);
 
             // Then
             Theme theme = themeRepository.findById(idToEnable).get();
@@ -236,10 +236,10 @@ public class ThemeServiceIT {
         public void shouldFailToDisable_WhenNonExistingTheme() {
             // Given
             long idToDisable = 9L;
-            ToggleDisableRequestDTO toggleDisableRequestDTO = new ToggleDisableRequestDTO(true);
+            BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(true);
 
             // When / Then
-            assertThrows(NotFoundException.class, () -> themeService.toggleDisable(idToDisable, toggleDisableRequestDTO));
+            assertThrows(NotFoundException.class, () -> themeService.toggleDisable(idToDisable, booleanRequestDTO));
         }
 
     }
