@@ -11,7 +11,7 @@ import org.springframework.util.StringUtils;
 public interface AnswerMapper {
 
     @Mappings({
-            @Mapping(target = "question", qualifiedByName = "mapQuestionIdToQuestion"),
+            @Mapping(target = "question", expression = "java(mapQuestionIdToQuestion(questionId))"),
             @Mapping(target = "createdAt", ignore = true),
             @Mapping(target = "updatedAt", ignore = true),
             @Mapping(target = "disabledAt", ignore = true),
@@ -42,7 +42,6 @@ public interface AnswerMapper {
     }
 
 
-    @Named("mapQuestionIdToQuestion")
     default Question mapQuestionIdToQuestion(long questionId) {
         return new Question(questionId);
     }

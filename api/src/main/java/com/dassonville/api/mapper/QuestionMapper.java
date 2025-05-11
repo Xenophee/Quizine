@@ -13,7 +13,7 @@ import org.springframework.util.StringUtils;
 public interface QuestionMapper {
 
     @Mappings({
-            @Mapping(target = "quiz", qualifiedByName = "mapQuizIdToQuiz"),
+            @Mapping(target = "quiz", expression = "java(mapQuizIdToQuiz(quizId))"),
             @Mapping(target = "answers", source = "answers"),
             @Mapping(target = "createdAt", ignore = true),
             @Mapping(target = "updatedAt", ignore = true),
@@ -52,7 +52,6 @@ public interface QuestionMapper {
     }
 
 
-    @Named("mapQuizIdToQuiz")
     default Quiz mapQuizIdToQuiz(long quizId) {
         return new Quiz(quizId);
     }
