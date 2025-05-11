@@ -42,9 +42,9 @@ CREATE TABLE themes
     id          SERIAL PRIMARY KEY,
     name        VARCHAR(50) NOT NULL UNIQUE,
     description VARCHAR(250),
-    created_at  DATE        NOT NULL DEFAULT CURRENT_DATE,
-    updated_at  DATE,
-    disabled_at DATE
+    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP,
+    disabled_at TIMESTAMP
 );
 
 ---------------------------------------------------
@@ -55,9 +55,9 @@ CREATE TABLE categories
     id          SERIAL PRIMARY KEY,
     name        VARCHAR(50) NOT NULL UNIQUE,
     description VARCHAR(250),
-    created_at  DATE        NOT NULL DEFAULT CURRENT_DATE,
-    updated_at  DATE,
-    disabled_at DATE,
+    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP,
+    disabled_at TIMESTAMP,
     id_theme    INTEGER     NOT NULL REFERENCES themes (id) ON DELETE CASCADE
 );
 
@@ -72,9 +72,9 @@ CREATE TABLE difficulty_levels
     timer_seconds       SMALLINT    NOT NULL DEFAULT 0,
     points_per_question SMALLINT    NOT NULL,
     is_reference        BOOLEAN     NOT NULL DEFAULT FALSE,
-    created_at          DATE        NOT NULL DEFAULT CURRENT_DATE,
-    updated_at          DATE,
-    disabled_at         DATE
+    created_at          TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP,
+    disabled_at         TIMESTAMP
 );
 
 ---------------------------------------------------
@@ -85,11 +85,11 @@ CREATE TABLE quizzes
     id          SERIAL PRIMARY KEY,
     title       VARCHAR(100) NOT NULL UNIQUE,
     is_vip_only BOOLEAN      NOT NULL DEFAULT FALSE,
-    created_at  DATE         NOT NULL DEFAULT CURRENT_DATE,
-    updated_at  DATE,
-    disabled_at DATE,
-    id_category INTEGER      NOT NULL REFERENCES categories (id) ON DELETE CASCADE,
-    id_theme    INTEGER      NOT NULL REFERENCES themes (id) ON DELETE CASCADE
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP,
+    disabled_at TIMESTAMP,
+    id_category INTEGER      REFERENCES categories (id) ON DELETE SET NULL,
+    id_theme    INTEGER      NOT NULL REFERENCES themes (id) ON DELETE RESTRICT
 );
 
 ---------------------------------------------------
@@ -99,9 +99,9 @@ CREATE TABLE questions
 (
     id          SERIAL PRIMARY KEY,
     text        VARCHAR(300) NOT NULL,
-    created_at  DATE         NOT NULL DEFAULT CURRENT_DATE,
-    updated_at  DATE,
-    disabled_at DATE,
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP,
+    disabled_at TIMESTAMP,
     id_quiz     INTEGER      NOT NULL REFERENCES quizzes (id) ON DELETE CASCADE
 );
 
@@ -113,10 +113,10 @@ CREATE TABLE answers
     id          SERIAL PRIMARY KEY,
     text        VARCHAR(150) NOT NULL,
     is_correct  BOOLEAN      NOT NULL DEFAULT FALSE,
-    created_at  DATE         NOT NULL DEFAULT CURRENT_DATE,
-    updated_at  DATE,
-    disabled_at DATE,
-    id_question INTEGER      NOT NULL REFERENCES questions (id)
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP,
+    disabled_at TIMESTAMP,
+    id_question INTEGER      NOT NULL REFERENCES questions (id) ON DELETE CASCADE
 );
 
 

@@ -1,20 +1,30 @@
 
 
--- Insertion de données dans la table "users"
+
 INSERT INTO users (username, email, password)
 VALUES
     ('alice', 'alice@example.com', 'password123'),
     ('bob', 'bob@example.com', 'password456');
 
 
+
+---------------------------------------------------
+-- Insertion des thèmes
+---------------------------------------------------
+
 INSERT INTO themes (name)
 VALUES
     ('Art'),
     ('Droit & Politique'),
     ('Histoire & Géographie'),
-    ('Littérature & Langue française'),
+    ('Littérature'),
     ('Sciences humaines'),
     ('Sciences & Techniques');
+
+
+---------------------------------------------------
+-- Insertion des catégories
+---------------------------------------------------
 
 INSERT INTO categories (name, id_theme)
 VALUES
@@ -24,12 +34,19 @@ VALUES
     ('Relations internationales', 2),
     ('Économie', 2),
     ('Géographie française', 3),
-    ('Expression & vocabulaire', 4),
+    ('Courant littéraire', 4),
     ('Philosophie', 5),
     ('Mythologie & religions', 5),
     ('Biologie & santé', 6);
 
-INSERT INTO difficulty_levels (name, max_responses, timer_seconds, points_per_question)
+
+---------------------------------------------------
+-- Insertion des niveaux de difficulté
+---------------------------------------------------
+
+INSERT INTO difficulty_levels (name, max_responses, timer_seconds, points_per_question, is_reference, disabled_at)
 VALUES
-    ('Facile', 2, 0, 5),
-    ('Intermédiaire', 4, 0, 10);
+    ('Facile', 2, 0, 5, false, null),
+    ('Intermédiaire', 4, 0, 10, true, null),
+    ('Difficile', 0, 0, 15, false, CURRENT_TIMESTAMP),
+    ('Expert', 0, 30, 20, false, CURRENT_TIMESTAMP);
