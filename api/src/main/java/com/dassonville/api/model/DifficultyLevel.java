@@ -2,23 +2,25 @@ package com.dassonville.api.model;
 
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 @Entity
 @Table(name = "difficulty_levels")
-@Data
+@Getter
+@Setter
 public class DifficultyLevel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(length = 50, nullable = false, unique = true)
     private String name;
 
     @Column(name = "max_responses", nullable = false)
@@ -30,15 +32,28 @@ public class DifficultyLevel {
     @Column(name = "points_per_question", nullable = false)
     private int pointsPerQuestion;
 
+    @Column(name = "is_reference", nullable = false)
+    private Boolean isReference;
+
     @Column(name = "created_at", updatable = false)
     @CreationTimestamp
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     @UpdateTimestamp
-    private LocalDate updatedAt;
+    private LocalDateTime updatedAt;
 
     @Column(name = "disabled_at")
     @CreationTimestamp
-    private LocalDate disabledAt;
+    private LocalDateTime disabledAt;
+
+
+
+    public void setVisible(boolean visible) {
+        this.disabledAt = visible ? null : LocalDateTime.now();
+    }
+
+    public boolean isVisible() {
+        return this.disabledAt == null;
+    }
 }

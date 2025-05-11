@@ -1,37 +1,68 @@
 package com.dassonville.api.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
 @Table(name = "quizzes")
 @Getter
 @Setter
+@NoArgsConstructor
 public class Quiz {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(nullable = false)
-    @NotEmpty(message = "Veuillez saisir un titre pour le quiz.")
-    @Size(max = 100, message = "Le titre du quiz doit contenir entre 4 et 100 caractères.")
+    @Column(length = 100, nullable = false, unique = true)
     private String title;
 
-    @Column(nullable = false)
-    @NotEmpty(message = "Veuillez saisir une description pour l''image du quiz.")
-    @Size(max = 150, message = "La description de l''image ne doit pas dépasser 250 caractères.")
-    private String alt_image;
+    @Column(name = "is_vip_only", nullable = false)
+    private Boolean isVipOnly;
 
-    @ManyToOne
-    @JoinColumn(name = "id_category", referencedColumnName = "id", nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    @Column(name = "disabled_at")
+    @CreationTimestamp
+    private LocalDateTime disabledAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_category", referencedColumnName = "id")
     private Category category;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_theme", referencedColumnName = "id", nullable = false)
     private Theme theme;
+
+    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Question> questions = new ArrayList<>();
+
+
+
+    public Quiz(long id) {
+        this.id = id;
+    }
+
+    public void setVisible(boolean visible) {
+        this.disabledAt = visible ? null : LocalDateTime.now();
+    }
+
+    public boolean isVisible() {
+        return this.disabledAt == null;
+    }
 }

@@ -2,10 +2,12 @@ package com.dassonville.api.model;
 
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "answers")
@@ -17,14 +19,34 @@ public class Answer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(nullable = false)
-    @NotEmpty(message = "Veuillez saisir un texte pour la réponse.")
-    @Size(max = 150, message = "Le texte de la réponse ne doit pas dépasser 150 caractères.")
+    @Column(length = 150, nullable = false)
     private String text;
 
-    private Boolean is_correct;
+    @Column(name = "is_correct", nullable = false)
+    private Boolean isCorrect;
 
-    @ManyToOne
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    @Column(name = "disabled_at")
+    private LocalDateTime disabledAt;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_question", referencedColumnName = "id", nullable = false)
     private Question question;
+
+
+
+    public void setVisible(boolean visible) {
+        this.disabledAt = visible ? null : LocalDateTime.now();
+    }
+
+    public boolean isVisible() {
+        return this.disabledAt == null;
+    }
 }
