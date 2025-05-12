@@ -9,7 +9,7 @@ import com.dassonville.api.util.DateUtils;
 import org.mapstruct.*;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.dassonville.api.constant.AppConstants.NEWNESS_THRESHOLD_DAYS;
@@ -68,6 +68,7 @@ public interface QuizMapper {
 
     List<QuizActiveAdminDTO> toActiveAdminDTOList(List<Quiz> quizzes);
     List<QuizInactiveAdminDTO> toInactiveAdminDTOList(List<Quiz> quizzes);
+    List<QuizzesByThemeAdminDTO> toQuizzesByThemeList(List<Theme> themes);
 
 
     @Mappings({
@@ -81,7 +82,7 @@ public interface QuizMapper {
     })
     void updateModelFromDTO(QuizUpsertDTO dto, @MappingTarget Quiz quiz);
 
-    default boolean isQuizNew(LocalDate createdAt) {
+    default boolean isQuizNew(LocalDateTime createdAt) {
         return DateUtils.isNew(createdAt, NEWNESS_THRESHOLD_DAYS);
     }
 

@@ -11,7 +11,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.dassonville.api.constant.AppConstants.NEWNESS_THRESHOLD_DAYS;
@@ -41,7 +41,7 @@ public interface DifficultyLevelMapper {
     DifficultyLevelUpsertDTO toUpsertDTO(DifficultyLevel difficultyLevel);
 
 
-    default boolean isDifficultyLevelNew(LocalDate createdAt) {
+    default boolean isDifficultyLevelNew(LocalDateTime createdAt) {
         return DateUtils.isNew(createdAt, NEWNESS_THRESHOLD_DAYS);
     }
 }

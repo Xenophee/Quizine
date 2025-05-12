@@ -1,6 +1,6 @@
 package com.dassonville.api.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record DifficultyLevelAdminDTO(
         long id,
@@ -8,8 +8,8 @@ public record DifficultyLevelAdminDTO(
         byte maxResponses,
         short timerSeconds,
         int pointsPerQuestion,
-        LocalDate createdAt,
-        LocalDate updatedAt,
-        LocalDate disabledAt
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        LocalDateTime disabledAt
 ) {
 }

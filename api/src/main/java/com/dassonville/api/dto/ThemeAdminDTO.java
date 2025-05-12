@@ -1,15 +1,15 @@
 package com.dassonville.api.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record ThemeAdminDTO(
         long id,
         String name,
         String description,
-        LocalDate createdAt,
-        LocalDate updatedAt,
-        LocalDate disabledAt,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        LocalDateTime disabledAt,
         List<CategoryAdminDTO> categories
 ) {
 }

@@ -11,7 +11,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.dassonville.api.constant.AppConstants.NEWNESS_THRESHOLD_DAYS;
@@ -44,7 +44,7 @@ public interface ThemeMapper {
     ThemeUpsertDTO toUpsertDTO(Theme theme);
 
 
-    default boolean isThemeNew(LocalDate createdAt) {
+    default boolean isThemeNew(LocalDateTime createdAt) {
         return DateUtils.isNew(createdAt, NEWNESS_THRESHOLD_DAYS);
     }
 }

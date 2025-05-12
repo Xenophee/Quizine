@@ -1,6 +1,6 @@
 package com.dassonville.api.projection;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public interface PublicDifficultyLevelProjection {
     Long getId();
@@ -8,5 +8,5 @@ public interface PublicDifficultyLevelProjection {
     Byte getMaxResponses();
     Short getTimerSeconds();
     Integer getPointsPerQuestion();
-    LocalDate getCreatedAt();
+    LocalDateTime getCreatedAt();
 }
