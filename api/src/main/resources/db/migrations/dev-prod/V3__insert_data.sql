@@ -37,16 +37,17 @@ VALUES
     ('Courant littéraire', 4),
     ('Philosophie', 5),
     ('Mythologie & religions', 5),
-    ('Biologie & santé', 6);
+    ('Biologie & santé', 6),
+    ('Période littéraire', 4);
 
 
 ---------------------------------------------------
 -- Insertion des niveaux de difficulté
 ---------------------------------------------------
 
-INSERT INTO difficulty_levels (name, max_responses, timer_seconds, points_per_question, is_reference, disabled_at)
+INSERT INTO difficulty_levels (name, max_responses, timer_seconds, points_per_question, is_reference, display_order, disabled_at)
 VALUES
-    ('Facile', 2, 0, 5, false, null),
-    ('Intermédiaire', 4, 0, 10, true, null),
-    ('Difficile', 0, 0, 15, false, CURRENT_TIMESTAMP),
-    ('Expert', 0, 30, 20, false, CURRENT_TIMESTAMP);
+    ('Facile', 2, 0, 5, false, 1, null),
+    ('Intermédiaire', 4, 0, 10, true, 2, null),
+    ('Difficile', 0, 0, 15, false, 3, CURRENT_TIMESTAMP),
+    ('Expert', 0, 30, 20, false, 4, CURRENT_TIMESTAMP);
