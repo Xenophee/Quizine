@@ -46,7 +46,7 @@ public class DifficultyLevelE2ETest {
 
 
     @Test
-    @DisplayName("Create and retrieve the difficulty level with the header Location")
+    @DisplayName("Créer et récupérer un niveau de difficulté")
     public void shouldCreateAndRetrieveDifficultyLevel() {
         // Given
         DifficultyLevelUpsertDTO difficultyLevelToCreate = new DifficultyLevelUpsertDTO("Volcanique", (byte) 5, (short) 0, 50);

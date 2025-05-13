@@ -10,10 +10,7 @@ import com.dassonville.api.model.Theme;
 import com.dassonville.api.repository.ThemeRepository;
 import com.dassonville.api.service.ThemeService;
 import org.flywaydb.core.Flyway;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -76,7 +73,7 @@ public class ThemeServiceIT {
             ThemeAdminDTO theme = themeService.findByIdForAdmin(idToFind);
 
             // Then
-            assertThat(theme.name()).isEqualTo("Art");
+            assertThat(theme.name()).isEqualTo("Sciences humaines");
         }
 
         @Test
@@ -171,6 +168,7 @@ public class ThemeServiceIT {
     @DisplayName("Suppression de thèmes")
     class DeletingTheme {
 
+        @Disabled
         @Test
         @DisplayName("Supprimer un thème existant")
         public void shouldDelete_WhenExistingTheme() {

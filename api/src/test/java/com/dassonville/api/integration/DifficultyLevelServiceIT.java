@@ -70,7 +70,7 @@ public class DifficultyLevelServiceIT {
         @DisplayName("Récupérer un niveau de difficulté par son ID")
         public void shouldGetDifficultyLevel_WhenExistingId() {
             // Given
-            long idToFind = 1L;
+            long idToFind = 3L;
 
             // When
             DifficultyLevelAdminDTO difficultyLevel = difficultyLevelService.findById(idToFind);
@@ -149,7 +149,7 @@ public class DifficultyLevelServiceIT {
             );
 
             // When
-            DifficultyLevelAdminDTO updatedDifficultyLevel = difficultyLevelService.update(1L, difficultyLevelToUpdate);
+            DifficultyLevelAdminDTO updatedDifficultyLevel = difficultyLevelService.update(3L, difficultyLevelToUpdate);
 
             // Then
             DifficultyLevel difficultyLevel = difficultyLevelRepository.findById(updatedDifficultyLevel.id()).get();

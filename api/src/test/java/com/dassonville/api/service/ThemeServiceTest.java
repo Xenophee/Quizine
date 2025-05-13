@@ -1,10 +1,10 @@
 package com.dassonville.api.service;
 
 
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
-import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.ThemeMapper;
@@ -20,7 +20,7 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,13 +65,13 @@ public class ThemeServiceTest {
         theme.setId(1);
         theme.setName("informatique");
         theme.setDescription("");
-        theme.setCreatedAt(LocalDate.now());
+        theme.setCreatedAt(LocalDateTime.now());
 
         publicThemeProjection = mock(PublicThemeProjection.class);
         when(publicThemeProjection.getId()).thenReturn(1L);
         when(publicThemeProjection.getName()).thenReturn("informatique");
         when(publicThemeProjection.getDescription()).thenReturn("");
-        when(publicThemeProjection.getCreatedAt()).thenReturn(LocalDate.now());
+        when(publicThemeProjection.getCreatedAt()).thenReturn(LocalDateTime.now());
 
         themeToUpdate = new Theme();
         themeToUpdate.setId(1);

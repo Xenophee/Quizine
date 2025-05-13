@@ -1,9 +1,9 @@
 package com.dassonville.api.service;
 
 
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.dto.DifficultyLevelAdminDTO;
 import com.dassonville.api.dto.DifficultyLevelUpsertDTO;
-import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.DifficultyLevelMapper;
@@ -19,7 +19,7 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,7 +63,7 @@ public class DifficultyLevelServiceTest {
         difficultyLevel.setMaxResponses((byte) 2);
         difficultyLevel.setTimerSeconds((short) 0);
         difficultyLevel.setPointsPerQuestion(5);
-        difficultyLevel.setCreatedAt(LocalDate.now());
+        difficultyLevel.setCreatedAt(LocalDateTime.now());
 
         difficultyLevelToUpdate = new DifficultyLevel();
         difficultyLevelToUpdate.setId(1);
@@ -105,7 +105,7 @@ public class DifficultyLevelServiceTest {
             when(publicDifficultyLevelProjection.getMaxResponses()).thenReturn((byte) 0);
             when(publicDifficultyLevelProjection.getTimerSeconds()).thenReturn((short) 0);
             when(publicDifficultyLevelProjection.getPointsPerQuestion()).thenReturn(5);
-            when(publicDifficultyLevelProjection.getCreatedAt()).thenReturn(LocalDate.now());
+            when(publicDifficultyLevelProjection.getCreatedAt()).thenReturn(LocalDateTime.now());
 
             // Given
             when(difficultyLevelRepository.findByDisabledAtIsNull())

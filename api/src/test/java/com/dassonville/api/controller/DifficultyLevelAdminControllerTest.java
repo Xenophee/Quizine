@@ -2,9 +2,9 @@ package com.dassonville.api.controller;
 
 
 import com.dassonville.api.constant.ApiRoutes;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.dto.DifficultyLevelAdminDTO;
 import com.dassonville.api.dto.DifficultyLevelUpsertDTO;
-import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.service.DifficultyLevelService;
@@ -19,7 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -57,7 +57,7 @@ public class DifficultyLevelAdminControllerTest {
     public void setUp() {
         endpointId = 1L;
         booleanRequestDTO = new BooleanRequestDTO(true);
-        difficultyLevelAdminDTO = new DifficultyLevelAdminDTO(1L, "Facile", (byte) 2, (short) 0, 5, LocalDate.now(), null, null);
+        difficultyLevelAdminDTO = new DifficultyLevelAdminDTO(1L, "Facile", (byte) 2, (short) 0, 5, LocalDateTime.now(), null, null);
         difficultyLevelUpsertDTO = new DifficultyLevelUpsertDTO("Facile", (byte) 2, (short) 0, 5);
     }
 

@@ -59,7 +59,7 @@ public class CategoryServiceIT {
         @DisplayName("Récupérer une catégorie par son ID - Catégorie non trouvée")
         public void shouldFailToGetCategory_WhenNonExistingId() {
             // Given
-            long idToFind = 13L;
+            long idToFind = 130L;
 
             // When / Then
             assertThrows(NotFoundException.class, () -> categoryService.findById(idToFind));
@@ -108,7 +108,7 @@ public class CategoryServiceIT {
         @DisplayName("Mettre à jour une catégorie existante")
         public void shouldUpdate_WhenExistingCategory() {
             // Given
-            long idToUpdate = 1L;
+            long idToUpdate = 9L;
             CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO("catégorie", "description", 1);
 
             // When
@@ -125,7 +125,7 @@ public class CategoryServiceIT {
         @DisplayName("Mettre à jour une catégorie inexistante")
         public void shouldFailToUpdate_WhenNonExistingCategory() {
             // Given
-            long idToUpdate = 13L;
+            long idToUpdate = 130L;
             CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO("catégorie", "description", 1);
 
             // When / Then
@@ -166,7 +166,7 @@ public class CategoryServiceIT {
         @DisplayName("Supprimer une catégorie inexistante")
         public void shouldFailToDelete_WhenNonExistingCategory() {
             // Given
-            long idToDelete = 13L;
+            long idToDelete = 130L;
 
             // When / Then
             assertThrows(NotFoundException.class, () -> categoryService.delete(idToDelete));
@@ -212,7 +212,7 @@ public class CategoryServiceIT {
         @DisplayName("Désactiver une catégorie inexistante")
         public void shouldFailToDisable_WhenNonExistingCategory() {
             // Given
-            long idToDisable = 13L;
+            long idToDisable = 130L;
             BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(true);
 
             // When / Then
