@@ -9,33 +9,35 @@ VALUES
 
 INSERT INTO themes (name, disabled_at)
 VALUES
-    ('Art', CURRENT_DATE),
-    ('Droit & Politique', CURRENT_DATE),
-    ('Histoire & Géographie', CURRENT_DATE),
-    ('Littérature & Langue française', NULL),
     ('Sciences humaines', NULL),
+    ('Droit & Politique', CURRENT_TIMESTAMP),
+    ('Art', CURRENT_TIMESTAMP),
+    ('Littérature', NULL),
+    ('Histoire & Géographie', CURRENT_TIMESTAMP),
     ('Sciences & Techniques', NULL);
 
 INSERT INTO categories (name, disabled_at, id_theme)
 VALUES
-    ('Peinture', CURRENT_DATE, 1),
-    ('Cinéma', NULL, 1),
-    ('Droit civil', CURRENT_DATE, 2),
+    ('Peinture', CURRENT_TIMESTAMP, 3),
+    ('Cinéma', NULL, 3),
+    ('Droit civil', CURRENT_TIMESTAMP, 2),
     ('Droit constitutionnel', NULL, 2),
-    ('Relations internationales', CURRENT_DATE, 2),
-    ('Histoire médiévale', CURRENT_DATE, 3),
-    ('Géographie française', NULL, 3),
-    ('Littérature du XIXe', NULL, 4),
-    ('Philosophie', NULL, 5),
-    ('Sociologie', NULL, 5),
+    ('Relations internationales', CURRENT_TIMESTAMP, 2),
+    ('Histoire médiévale', CURRENT_TIMESTAMP, 5),
+    ('Géographie française', NULL, 5),
+    ('Courant littéraire', NULL, 4),
+    ('Philosophie', NULL, 1),
+    ('Sociologie', NULL, 1),
     ('Informatique', NULL, 6),
-    ('Biologie', CURRENT_DATE, 6);
+    ('Biologie', CURRENT_TIMESTAMP, 6),
+    ('Période littéraire', NULL, 4),
+    ('Mythologie & Religion', NULL, 1);
 
-INSERT INTO difficulty_levels (name, max_responses, timer_seconds, points_per_question, disabled_at)
+INSERT INTO difficulty_levels (name, max_responses, timer_seconds, points_per_question, is_reference, display_order, disabled_at)
 VALUES
-    ('Facile', 2, 0, 5, null),
-    ('Intermédiaire', 4, 0, 10, null),
-    ('Difficile', 6, 0, 15, CURRENT_DATE),
-    ('Expert', 0, 15, 20, CURRENT_DATE);
+    ('Expert', 0, 30, 20, false, 4, CURRENT_TIMESTAMP),
+    ('Intermédiaire', 4, 0, 10, true, 2, null),
+    ('Facile', 2, 0, 5, false, 1, null),
+    ('Difficile', 0, 0, 15, false, 3, CURRENT_TIMESTAMP);
 
 
