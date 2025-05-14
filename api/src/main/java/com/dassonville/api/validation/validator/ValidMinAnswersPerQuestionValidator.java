@@ -23,7 +23,7 @@ public class ValidMinAnswersPerQuestionValidator implements ConstraintValidator<
 
     @Override
     public boolean isValid(QuestionInsertDTO dto, ConstraintValidatorContext context) {
-        int min = difficultyLevelRepository.findReferenceLevelMaxAnswers()
+        byte min = difficultyLevelRepository.findReferenceLevelMaxAnswers()
                 .orElseThrow(() -> {
                     logger.error("Le niveau de difficulté de référence n'a pas été trouvé.");
                     return new IllegalStateException("Le niveau de difficulté de référence n'a pas été trouvé.");
