@@ -6,6 +6,8 @@ public class ApiRoutes {
     public static final String API_ADMIN = API + "/admin";
     public static final String ID = "/{id}";
     public static final String VISIBILITY = ID + "/visibility";
+    public static final String ACTIVE = "/active";
+    public static final String INACTIVE = "/inactive";
 
     private ApiRoutes() {}
 
