@@ -43,7 +43,7 @@ public class QuizAdminController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "La liste des quiz a été trouvée.")
     })
-    @GetMapping("/active")
+    @GetMapping(ApiRoutes.ACTIVE)
     public ResponseEntity<List<QuizzesByThemeAdminDTO>> getAllQuizzesGroupedByTheme() {
         logger.info("Requête pour obtenir la liste des quiz actifs groupés par thème.");
         List<QuizzesByThemeAdminDTO> groupedQuizzes = quizService.getAllActiveQuizGroupedByTheme();
@@ -56,7 +56,7 @@ public class QuizAdminController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "La liste des quiz inactifs a été trouvée.")
     })
-    @GetMapping("/inactive")
+    @GetMapping(ApiRoutes.INACTIVE)
     public ResponseEntity<List<QuizInactiveAdminDTO>> getAllInactiveQuizzes() {
         logger.info("Requête pour obtenir la liste des quiz inactifs.");
         List<QuizInactiveAdminDTO> quizzes = quizService.getAllInactiveQuiz();
