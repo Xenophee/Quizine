@@ -1,9 +1,12 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.*;
+import com.dassonville.api.dto.QuizAdminDetailsDTO;
+import com.dassonville.api.dto.QuizInactiveAdminDTO;
+import com.dassonville.api.dto.QuizUpsertDTO;
+import com.dassonville.api.dto.QuizzesByThemeAdminDTO;
+import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
-import com.dassonville.api.exception.InvalidStateException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.QuizMapper;
 import com.dassonville.api.model.Quiz;
@@ -11,6 +14,7 @@ import com.dassonville.api.model.Theme;
 import com.dassonville.api.repository.QuestionRepository;
 import com.dassonville.api.repository.QuizRepository;
 import com.dassonville.api.repository.ThemeRepository;
+import com.dassonville.api.util.TextUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -32,42 +36,24 @@ public class QuizService {
     private final QuizMapper quizMapper;
 
     private final QuestionRepository questionRepository;
+
     private final ThemeRepository themeRepository;
+    private final ThemeService themeService;
 
 
-    public List<QuizActiveAdminDTO> getAllQuiz() {
-        List<Quiz> quizzes = quizRepository.findAll();
-        return quizMapper.toActiveAdminDTOList(quizzes);
-    }
-
-    /*@Transactional
-    public List<QuizzesByTheme> getAllActiveQuizGroupedByTheme() {
-        List<Theme> themes = themeRepository.findAllByQuizzesDisabledAtIsNull();
-        return themes.stream()
-                .map(quizMapper::toQuizzesByTheme)
-                .toList();
-    }*/
-
+    // TODO: A reconsidérer pour une meilleure UX / performance
     @Transactional
     public List<QuizzesByThemeAdminDTO> getAllActiveQuizGroupedByTheme() {
         List<Theme> themes = themeRepository.findAllByQuizzesDisabledAtIsNull();
-        return themes.stream()
-                .map(theme -> {
-                    theme.getQuizzes()
-                            .sort((quiz1, quiz2) -> quiz1.getCategory().getName()
-                                    .compareToIgnoreCase(quiz2.getCategory().getName()));
-                    return quizMapper.toQuizzesByTheme(theme);
-                })
-                .toList();
+        themes.sort(Comparator.comparing(Theme::getName, String.CASE_INSENSITIVE_ORDER));
+        return quizMapper.toQuizzesByThemeList(themes);
     }
 
     @Transactional
     public List<QuizInactiveAdminDTO> getAllInactiveQuiz() {
         List<Quiz> quizzes = quizRepository.findAllByDisabledAtIsNotNull();
-        return quizzes.stream()
-                .sorted(Comparator.comparing(quiz -> quiz.getTheme().getName(), String.CASE_INSENSITIVE_ORDER))
-                .map(quizMapper::toInactiveAdminDTO)
-                .toList();
+        quizzes.sort(Comparator.comparing(quiz -> quiz.getTheme().getName(), String.CASE_INSENSITIVE_ORDER));
+        return quizMapper.toInactiveAdminDTOList(quizzes);
     }
 
     @Transactional
@@ -79,8 +65,11 @@ public class QuizService {
 
     public QuizAdminDetailsDTO create(QuizUpsertDTO dto) {
 
-        if (quizRepository.existsByTitleIgnoreCase(dto.title())) {
-            logger.warn("Le quiz avec le titre {}, existe déjà.", dto.title());
+        String normalizedNewText = TextUtils.normalizeText(dto.title());
+        logger.debug("Titre normalisé : {}, depuis {}", normalizedNewText, dto.title());
+
+        if (quizRepository.existsByTitleIgnoreCase(normalizedNewText)) {
+            logger.warn("Le quiz avec le titre {}, existe déjà.", normalizedNewText);
             throw new AlreadyExistException("Le quiz existe déjà.");
         }
 
@@ -95,8 +84,11 @@ public class QuizService {
 
         Quiz quizToUpdate = findQuizById(id);
 
-        if (quizRepository.existsByTitleIgnoreCaseAndIdNot(dto.title(), id)) {
-            logger.warn("Le quiz avec le titre {}, existe déjà.", dto.title());
+        String normalizedNewText = TextUtils.normalizeText(dto.title());
+        logger.debug("Titre normalisé : {}, depuis {}", normalizedNewText, dto.title());
+
+        if (quizRepository.existsByTitleIgnoreCaseAndIdNot(normalizedNewText, id)) {
+            logger.warn("Le quiz avec le titre {}, existe déjà.", normalizedNewText);
             throw new AlreadyExistException("Le quiz existe déjà.");
         }
 
@@ -109,27 +101,32 @@ public class QuizService {
 
     public void delete(long id) {
 
-        if (!quizRepository.existsById(id)) {
-            logger.warn("Le quiz avec l'ID {}, n'a pas été trouvé.", id);
-            throw new NotFoundException("Le quiz n'a pas été trouvé.");
-        }
+        Quiz quiz = findQuizById(id);
 
         quizRepository.deleteById(id);
+
+        disableThemeIfNoActiveQuizzes(quiz.getTheme().getId());
     }
 
-    public void toggleVisibility(long id, boolean visible) {
+    public void updateVisibility(long id, boolean visible) {
+
         Quiz quiz = findQuizById(id);
 
         if (quiz.isVisible() == visible) return;
 
-        if (visible && !hasMinimumQuestions(id)) {
-            logger.warn("Le quiz avec l'ID {}, ne peut pas être activé car il n'a pas assez de questions.", id);
-            throw new InvalidStateException("Le quiz ne peut pas être activé car il ne contient pas au moins " + MINIMUM_QUIZ_QUESTIONS + " questions.");
+        if (visible) {
+            logger.debug("Demande d'activation du quiz avec l'ID {}, vérification du nombre de questions actives.", id);
+            hasMinimumQuestions(id);
         }
 
         quiz.setVisible(visible);
 
         quizRepository.save(quiz);
+
+        if (!visible) {
+            logger.debug("Désactivation demandée du quiz avec l'ID {}, vérification du nombre de quiz actifs restant.", id);
+            disableThemeIfNoActiveQuizzes(quiz.getTheme().getId());
+        }
     }
 
 
@@ -141,7 +138,28 @@ public class QuizService {
                 });
     }
 
-    private boolean hasMinimumQuestions(long quizId) {
-        return questionRepository.countByQuizIdAndDisabledAtIsNull(quizId) >= MINIMUM_QUIZ_QUESTIONS;
+    private void hasMinimumQuestions(long quizId) {
+
+        int numberOfActiveQuestions = questionRepository.countByQuizIdAndDisabledAtIsNull(quizId);
+
+        if (numberOfActiveQuestions < MINIMUM_QUIZ_QUESTIONS) {
+            logger.warn("Le quiz avec l'ID {}, ne peut pas être activé car il n'a pas assez de questions.", quizId);
+            throw new ActionNotAllowedException("Le quiz ne peut pas être activé car il ne contient pas au moins " + MINIMUM_QUIZ_QUESTIONS + " questions.");
+        } else {
+            logger.debug("Le quiz avec l'ID {}, a suffisamment de questions : {} pour être activé.", quizId, numberOfActiveQuestions);
+        }
     }
+
+    private void disableThemeIfNoActiveQuizzes(long themeId) {
+
+        int numberOfActiveQuizzes = quizRepository.countByThemeIdAndDisabledAtIsNull(themeId);
+
+        if (numberOfActiveQuizzes == 0) {
+            logger.warn("Le thème avec l'ID {} n'a pas de quiz actifs et va être désactivé.", themeId);
+            themeService.updateVisibility(themeId, false);
+        } else {
+            logger.debug("Le thème avec l'ID {} a {} quiz actifs et reste donc actif.", themeId, numberOfActiveQuizzes);
+        }
+    }
+
 }
