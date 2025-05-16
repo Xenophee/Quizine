@@ -72,7 +72,7 @@ CREATE TABLE difficulty_levels
     timer_seconds       SMALLINT    NOT NULL DEFAULT 0,
     points_per_question SMALLINT    NOT NULL,
     is_reference        BOOLEAN     NOT NULL DEFAULT FALSE,
-    display_order       SMALLINT    NOT NULL,
+    display_order       SMALLINT    NOT NULL UNIQUE,
     created_at          TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP,
     disabled_at         TIMESTAMP
