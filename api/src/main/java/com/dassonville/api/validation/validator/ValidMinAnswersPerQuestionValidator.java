@@ -54,6 +54,26 @@ public class ValidMinAnswersPerQuestionValidator implements ConstraintValidator<
             return false;
         }
 
+        long distinctCount = dto.answers().stream()
+                .map(AnswerUpsertDTO::text)
+                .filter(text -> text != null && !text.trim().isEmpty())
+                .map(text -> text.trim().toLowerCase())
+                .distinct()
+                .count();
+
+        long validCount = dto.answers().stream()
+                .map(AnswerUpsertDTO::text)
+                .filter(text -> text != null && !text.trim().isEmpty())
+                .count();
+
+        if (distinctCount != validCount) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("Chaque réponse doit avoir un texte unique.")
+                    .addPropertyNode("answers")
+                    .addConstraintViolation();
+            return false;
+        }
+
         return true;
     }
 
