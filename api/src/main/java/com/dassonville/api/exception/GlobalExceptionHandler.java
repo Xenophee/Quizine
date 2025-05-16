@@ -1,5 +1,6 @@
 package com.dassonville.api.exception;
 
+import com.dassonville.api.util.ValidationErrorUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +11,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -20,28 +23,7 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidationException(MethodArgumentNotValidException ex) {
-        var errors = new HashMap<String, String>();
 
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-
-        logger.error("Les vérifications de validation ont détecté des erreurs : {}", errors);
-        return errors;
-    }
-
-    @ExceptionHandler(InvalidStateException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Error handleInvalidStateException(InvalidStateException ex) { return new Error(ex.getMessage()); }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Error handleIllegalArgumentException(IllegalArgumentException ex) { return new Error(ex.getMessage()); }
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -52,6 +34,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AlreadyExistException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public Error handleAlreadyExistException(AlreadyExistException ex) {
+        return new Error(ex.getMessage());
+    }
+
+    @ExceptionHandler(ActionNotAllowedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Error handleAlreadyExistException(ActionNotAllowedException ex) {
         return new Error(ex.getMessage());
     }
 
@@ -68,5 +56,27 @@ public class GlobalExceptionHandler {
     public Error handleGeneralException(Exception ex) {
         logger.error("Une erreur inattendue s'est produite : {}", ex.getMessage());
         return new Error("Une erreur inattendue s'est produite.");
+    }
+
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, Object> handleValidationException(MethodArgumentNotValidException ex) {
+
+        Map<String, Object> errors = new HashMap<>();
+
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
+            String[] parts = error.getField().split("\\.");
+            Map<String, Object> current = errors;
+
+            for (int i = 0; i < parts.length - 1; i++) {
+                current = ValidationErrorUtils.navigateOrCreate(current, parts[i]);
+            }
+
+            current.put(parts[parts.length - 1], error.getDefaultMessage());
+        });
+
+        logger.warn("Les vérifications de validation ont détecté des erreurs : {}", errors);
+        return errors;
     }
 }
