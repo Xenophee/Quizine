@@ -12,6 +12,8 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
 
     boolean existsByTextIgnoreCaseAndIdNot(String text, long id);
 
+    boolean existsByQuestionId(long questionId);
+
     boolean existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(long questionId, long id);
 
     int countByQuestionIdAndDisabledAtIsNull(long questionId);

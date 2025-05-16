@@ -32,8 +32,12 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
     boolean existsByTitleIgnoreCaseAndIdNot(String title, long id);
 
+    int countByThemeIdAndDisabledAtIsNull(long themeId);
+
     /*@Query(FIND_ALL_ACTIVE_PUBLIC_QUIZZES)
     List<PublicQuizProjection> findByDisabledAtIsNull();*/
 
     List<Quiz> findAllByDisabledAtIsNotNull();
+
+    List<Quiz> findByThemeIdAndDisabledAtIsNull(long themeId);
 }

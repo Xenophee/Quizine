@@ -12,5 +12,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     boolean existsByQuizIdAndTextIgnoreCaseAndIdNot(long quizId, String text, long id);
 
+    boolean existsByQuizId(long quizId);
+
     int countByQuizIdAndDisabledAtIsNull(long quizId);
 }
