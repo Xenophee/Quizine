@@ -1,6 +1,7 @@
 package com.dassonville.api.dto;
 
 import com.dassonville.api.validation.annotation.ValidMinAnswersPerQuestion;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
@@ -12,6 +13,7 @@ public record QuestionInsertDTO(
         @Size(max = 300, message = "Le contenu de la question ne doit pas dépasser 300 caractères.")
         String text,
 
+        @Valid
         List<AnswerUpsertDTO> answers
 ) {
 }
