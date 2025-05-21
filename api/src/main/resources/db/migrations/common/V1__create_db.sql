@@ -68,7 +68,7 @@ CREATE TABLE difficulty_levels
 (
     id                  SERIAL PRIMARY KEY,
     name                VARCHAR(50) NOT NULL UNIQUE,
-    max_responses       SMALLINT    NOT NULL,
+    max_answers         SMALLINT    NOT NULL,
     timer_seconds       SMALLINT    NOT NULL DEFAULT 0,
     points_per_question SMALLINT    NOT NULL,
     is_reference        BOOLEAN     NOT NULL DEFAULT FALSE,
