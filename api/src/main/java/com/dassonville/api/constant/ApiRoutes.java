@@ -6,8 +6,9 @@ public class ApiRoutes {
     public static final String API_ADMIN = API + "/admin";
     public static final String ID = "/{id}";
     public static final String VISIBILITY = ID + "/visibility";
-    public static final String ACTIVE = "/active";
-    public static final String INACTIVE = "/inactive";
+    public static final String DETAILS = "/details";
+    public static final String SUMMARY = "/summary";
+    public static final String REORDER = "/reorder";
 
     private ApiRoutes() {}
 
@@ -30,6 +31,7 @@ public class ApiRoutes {
         public static final String ADMIN_CATEGORIES = API_ADMIN + STRING;
         public static final String ADMIN_BY_ID = ADMIN_CATEGORIES + ID;
 
+        public static final String ADMIN_QUESTIONS_POST = Themes.ADMIN_BY_ID + STRING;
         public static final String ADMIN_VISIBILITY_PATCH = ADMIN_CATEGORIES + VISIBILITY;
 
         private Categories() {}
