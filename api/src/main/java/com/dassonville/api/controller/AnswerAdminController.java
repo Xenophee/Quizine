@@ -22,7 +22,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.Map;
 
-@Tag(name = "Gestion de réponse - admin")
+@Tag(name = "ADMIN - Quiz : Réponses", description = "Gestion des réponses pour les administrateurs")
 @RestController
 public class AnswerAdminController {
 
@@ -49,8 +49,7 @@ public class AnswerAdminController {
         AnswerAdminDTO createdAnswer = answerService.create(id, answer);
         logger.info("Réponse créée avec succès.");
 
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path(ApiRoutes.ID)
+        URI location = ServletUriComponentsBuilder.fromPath(ApiRoutes.Answers.ADMIN_BY_ID)
                 .buildAndExpand(createdAnswer.id())
                 .toUri();
 
@@ -101,7 +100,7 @@ public class AnswerAdminController {
     @PatchMapping(ApiRoutes.Answers.ADMIN_VISIBILITY_PATCH)
     public ResponseEntity<Void> toggleVisibility(@PathVariable long id, @RequestBody BooleanRequestDTO request) {
         logger.info("Requête pour activer / désactiver la réponse avec l'ID {}.", id);
-        answerService.toggleVisibility(id, request.value());
+        answerService.updateVisibility(id, request.value());
         logger.info("La réponse a été activée / désactivée avec succès.");
         return ResponseEntity.noContent().build();
     }

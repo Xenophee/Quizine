@@ -23,7 +23,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.Map;
 
-@Tag(name = "Gestion de question - admin")
+@Tag(name = "ADMIN - Quiz : Questions", description = "Gestion des questions pour les administrateurs")
 @RestController
 public class QuestionAdminController {
 
@@ -50,8 +50,7 @@ public class QuestionAdminController {
         QuestionAdminDTO createdQuestion = questionService.create(id, question);
         logger.info("Question créée avec succès.");
 
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path(ApiRoutes.ID)
+        URI location = ServletUriComponentsBuilder.fromPath(ApiRoutes.Questions.ADMIN_BY_ID)
                 .buildAndExpand(createdQuestion.id())
                 .toUri();
 
@@ -100,9 +99,9 @@ public class QuestionAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))}),
     })
     @PatchMapping(ApiRoutes.Questions.ADMIN_VISIBILITY_PATCH)
-    public ResponseEntity<Void> toggleVisibility(@PathVariable long id, @RequestBody BooleanRequestDTO request) {
+    public ResponseEntity<Void> updateQuestionVisibility(@PathVariable long id, @RequestBody BooleanRequestDTO request) {
         logger.info("Requête pour activer / désactiver la question avec l'ID {}.", id);
-        questionService.toggleVisibility(id, request.value());
+        questionService.updateVisibility(id, request.value());
         logger.info("Question activée / désactivée avec succès.");
         return ResponseEntity.noContent().build();
     }

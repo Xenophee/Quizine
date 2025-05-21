@@ -2,7 +2,10 @@ package com.dassonville.api.controller;
 
 
 import com.dassonville.api.constant.ApiRoutes;
-import com.dassonville.api.dto.*;
+import com.dassonville.api.dto.BooleanRequestDTO;
+import com.dassonville.api.dto.QuizAdminDTO;
+import com.dassonville.api.dto.QuizAdminDetailsDTO;
+import com.dassonville.api.dto.QuizUpsertDTO;
 import com.dassonville.api.service.QuizService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,18 +16,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
 import static com.dassonville.api.constant.AppConstants.MINIMUM_QUIZ_QUESTIONS;
 
 
-@Tag(name = "Gestion de quiz - admin")
+@Tag(name = "ADMIN - Quiz", description = "Gestion des quiz pour les administrateurs")
 @RestController
 @RequestMapping(ApiRoutes.Quizzes.ADMIN_QUIZZES)
 public class QuizAdminController {
@@ -38,30 +43,27 @@ public class QuizAdminController {
     }
 
 
-
-    @Operation(summary = "Obtenir la liste des quiz actifs", description = "Obtient la liste des quiz actifs groupés par thème.")
+    @Operation(summary = "Obtenir la liste des quiz",
+            description = "Obtient la liste des quiz actifs.<br>" +
+                    "Pour obtenir la liste des quiz désactivés, utilisez le paramètre <code>visible=false</code>.<br>" +
+                    "Pour obtenir tous les quiz, utilisez le paramètre <code>visible=null</code>.<br>" +
+                    "Le nombre de quiz par page est de 10 par défaut.<br>" +
+                    "Le tri par défaut est par titre de quiz.<br>" +
+                    "Dans la démo Swagger, écrivez le <code>sort</code> de cette manière : <code>\"sort\": \"title\"</code> et non pas sous forme de tableau comme l'indique l'exemple.<br>" +
+                    "Côté front, la requête doit ressembler à ceci : <code>/api/admin/quizzes?themeId=4&visible=true&sort=title</code>")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "La liste des quiz a été trouvée.")
     })
-    @GetMapping(ApiRoutes.ACTIVE)
-    public ResponseEntity<List<QuizzesByThemeAdminDTO>> getAllQuizzesGroupedByTheme() {
-        logger.info("Requête pour obtenir la liste des quiz actifs groupés par thème.");
-        List<QuizzesByThemeAdminDTO> groupedQuizzes = quizService.getAllActiveQuizGroupedByTheme();
-        logger.info("Liste des quiz récupérée et groupée par thème.");
+    @GetMapping
+    public ResponseEntity<Page<QuizAdminDTO>> getQuizzesByTheme(
+            @RequestParam long themeId,
+            @RequestParam(required = false) Boolean visible,
+            @PageableDefault(size = 10, sort = "title") Pageable pageable
+    ) {
+        logger.info("Requête pour obtenir la liste des quiz.");
+        Page<QuizAdminDTO> groupedQuizzes = quizService.getQuizzesByTheme(themeId, visible, pageable);
+        logger.info("Liste des quiz récupérée.");
         return ResponseEntity.ok(groupedQuizzes);
-    }
-
-
-    @Operation(summary = "Obtenir la liste des quiz inactifs", description = "Obtient la liste des quiz inactifs ordonnées par thème.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "La liste des quiz inactifs a été trouvée.")
-    })
-    @GetMapping(ApiRoutes.INACTIVE)
-    public ResponseEntity<List<QuizInactiveAdminDTO>> getAllInactiveQuizzes() {
-        logger.info("Requête pour obtenir la liste des quiz inactifs.");
-        List<QuizInactiveAdminDTO> quizzes = quizService.getAllInactiveQuiz();
-        logger.info("Liste des quiz inactifs récupérée.");
-        return ResponseEntity.ok(quizzes);
     }
 
 
@@ -148,7 +150,7 @@ public class QuizAdminController {
     @PatchMapping(ApiRoutes.VISIBILITY)
     public ResponseEntity<Void> toggleVisibility(@PathVariable long id, @RequestBody @Valid BooleanRequestDTO request) {
         logger.info("Requête pour activer / désactiver le quiz avec l'ID: {}", id);
-        quizService.toggleVisibility(id, request.value());
+        quizService.updateVisibility(id, request.value());
         logger.info("Quiz activé / désactivé avec l'ID: {}", id);
         return ResponseEntity.noContent().build();
     }

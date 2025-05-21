@@ -2,9 +2,10 @@ package com.dassonville.api.controller;
 
 
 import com.dassonville.api.constant.ApiRoutes;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.dto.DifficultyLevelAdminDTO;
 import com.dassonville.api.dto.DifficultyLevelUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
+import com.dassonville.api.dto.ReorderRequestDTO;
 import com.dassonville.api.service.DifficultyLevelService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Tag(name = "Gestion de niveau de difficulté - admin")
+@Tag(name = "ADMIN - Niveaux de difficulté", description = "Gestion des niveaux de difficulté pour les administrateurs")
 @RestController
 @RequestMapping(ApiRoutes.DifficultyLevels.ADMIN_DIFFICULTY_LEVELS)
 public class DifficultyLevelAdminController {
@@ -112,6 +113,8 @@ public class DifficultyLevelAdminController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Le niveau de difficulté a été supprimé."),
             @ApiResponse(responseCode = "404", description = "Le niveau de difficulté avec l'ID spécifié n'a pas été trouvé.",
+                    content = {@Content(schema = @Schema(implementation = Error.class))}),
+            @ApiResponse(responseCode = "409", description = "Le niveau de difficulté est une référence et ne peut pas être supprimé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @DeleteMapping(ApiRoutes.ID)
@@ -131,11 +134,26 @@ public class DifficultyLevelAdminController {
             @ApiResponse(responseCode = "404", description = "Le niveau de difficulté avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @PatchMapping(ApiRoutes.ID)
-    public ResponseEntity<Void> disableDifficultyLevel(@PathVariable long id, @RequestBody @Valid ToggleDisableRequestDTO toggleDisableRequestDTO) {
+    @PatchMapping(ApiRoutes.VISIBILITY)
+    public ResponseEntity<Void> updateDifficultyLevelVisibility(@PathVariable long id, @RequestBody @Valid BooleanRequestDTO booleanRequestDTO) {
         logger.info("Requête pour activer / désactiver le niveau de difficulté avec l'ID: {}", id);
-        difficultyLevelService.toggleDisable(id, toggleDisableRequestDTO);
+        difficultyLevelService.updateVisibility(id, booleanRequestDTO.value());
         logger.info("Niveau de difficulté activé / désactivé avec l'ID: {}", id);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    @Operation(summary = "Mettre à jour l'ordre d'affichage des niveaux de difficulté", description = "Met à jour l'ordre d'affichage des niveaux de difficulté")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "L'ordre d'affichage des niveaux de difficulté a été mis à jour."),
+            @ApiResponse(responseCode = "400", description = "Les données fournies pour mettre à jour l'ordre d'affichage sont invalides.",
+                    content = {@Content(schema = @Schema(implementation = Map.class))}),
+            @ApiResponse(responseCode = "404", description = "Un ou plusieurs niveaux de difficulté avec les ID spécifiés n'ont pas été trouvés.",
+                    content = {@Content(schema = @Schema(implementation = Error.class))}),
+    })
+    @PatchMapping(ApiRoutes.REORDER)
+    public ResponseEntity<Void> reorder(@RequestBody @Valid ReorderRequestDTO request) {
+        difficultyLevelService.updateDisplayOrder(request.orderedIds());
         return ResponseEntity.noContent().build();
     }
 }

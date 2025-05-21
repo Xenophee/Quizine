@@ -1,9 +1,11 @@
 package com.dassonville.api.controller;
 
 import com.dassonville.api.constant.ApiRoutes;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.dto.ThemeAdminDTO;
+import com.dassonville.api.dto.ThemeSummaryDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
+import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.service.ThemeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Tag(name = "Gestion de thèmes - admin")
+@Tag(name = "ADMIN - Thème", description = "Gestion des thèmes pour les administrateurs")
 @RestController
 @RequestMapping(ApiRoutes.Themes.ADMIN_THEMES)
 public class ThemeAdminController {
@@ -37,14 +39,41 @@ public class ThemeAdminController {
     }
 
 
-    @Operation(summary = "Obtenir la liste des thèmes", description = "Obtient la liste des thèmes")
+
+    @Operation(summary = "Obtenir un récapitulatif des thèmes / catégories / quiz", description = "Obtient la liste des thèmes avec les catégories et le nombre de quiz associé.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "La liste des thèmes a été trouvée.")
+    })
+    @GetMapping(ApiRoutes.SUMMARY)
+    public ResponseEntity<List<ThemeSummaryDTO>> getThemeSummary() {
+        logger.info("Requête pour obtenir la liste des thèmes avec les catégories et les quiz associés.");
+        List<ThemeSummaryDTO> themes = themeService.getThemeSummary();
+        logger.info("Liste des thèmes récupérée.");
+        return ResponseEntity.ok(themes);
+    }
+
+
+
+    @Operation(summary = "Obtenir la liste des thèmes en détail", description = "Obtient la liste des thèmes complète avec les catégories.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "La liste des thèmes a été trouvée.")
+    })
+    @GetMapping(ApiRoutes.DETAILS)
+    public ResponseEntity<List<ThemeAdminDTO>> getAllThemesDetails() {
+        logger.info("Requête pour obtenir la liste des thèmes.");
+        List<ThemeAdminDTO> themes = themeService.getAllThemesDetails();
+        logger.info("Liste des thèmes récupérée.");
+        return ResponseEntity.ok(themes);
+    }
+
+    @Operation(summary = "Obtenir la liste des noms de thèmes", description = "Obtient la liste des thèmes avec uniquement l'ID et le nom.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "La liste des thèmes a été trouvée.")
     })
     @GetMapping
-    public ResponseEntity<List<ThemeAdminDTO>> getAllThemes() {
+    public ResponseEntity<List<IdAndNameProjection>> getAllThemes() {
         logger.info("Requête pour obtenir la liste des thèmes.");
-        List<ThemeAdminDTO> themes = themeService.getAllThemes();
+        List<IdAndNameProjection> themes = themeService.getAllThemes();
         logger.info("Liste des thèmes récupérée.");
         return ResponseEntity.ok(themes);
     }
@@ -64,10 +93,23 @@ public class ThemeAdminController {
         return ResponseEntity.ok(theme);
     }
 
+    @Operation(summary = "Obtenir la liste des nom de catégories par thème", description = "Obtient la liste des catégories pour un thème par son ID. Ne renvoie que l'ID et le nom de la catégorie.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "La liste des catégories a été trouvée."),
+            @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
+                    content = {@Content(schema = @Schema(implementation = Error.class))})
+    })
+    @GetMapping(ApiRoutes.ID + ApiRoutes.Categories.STRING)
+    public ResponseEntity<List<IdAndNameProjection>> getCategoriesByTheme(@PathVariable long id) {
+        logger.info("Requête pour obtenir la liste des catégories pour le thème avec l'ID: {}", id);
+        List<IdAndNameProjection> categories = themeService.getCategoriesByTheme(id);
+        logger.info("Liste des catégories récupérée.");
+        return ResponseEntity.ok(categories);
+    }
 
     @Operation(summary = "Créer un thème", description = "Crée un nouveau thème")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Le thème a été créé."),
+            @ApiResponse(responseCode = "201", description = "Le thème a été créé avec succès."),
             @ApiResponse(responseCode = "400", description = "Le thème avec les données spécifiées n'est pas valide.",
                     content = {@Content(schema = @Schema(implementation = Map.class))}),
             @ApiResponse(responseCode = "409", description = "Le thème avec le nom spécifié existe déjà.",
@@ -101,9 +143,9 @@ public class ThemeAdminController {
     @PutMapping(ApiRoutes.ID)
     public ResponseEntity<ThemeAdminDTO> updateTheme(@PathVariable long id, @RequestBody @Valid ThemeUpsertDTO theme) {
         logger.info("Requête pour mettre à jour le thème avec l'ID: {}", id);
-        ThemeAdminDTO themeUpdated = themeService.update(id, theme);
+        ThemeAdminDTO updatedTheme = themeService.update(id, theme);
         logger.info("Thème mis à jour avec l'ID: {}", id);
-        return ResponseEntity.ok(themeUpdated);
+        return ResponseEntity.ok(updatedTheme);
     }
 
 
@@ -130,10 +172,10 @@ public class ThemeAdminController {
             @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
-    @PatchMapping(ApiRoutes.ID)
-    public ResponseEntity<Void> disableTheme(@PathVariable long id, @RequestBody @Valid ToggleDisableRequestDTO toggleDisableRequestDTO) {
+    @PatchMapping(ApiRoutes.VISIBILITY)
+    public ResponseEntity<Void> updateThemeVisibility(@PathVariable long id, @RequestBody @Valid BooleanRequestDTO booleanRequestDTO) {
         logger.info("Requête pour activer / désactiver le thème avec l'ID: {}", id);
-        themeService.toggleDisable(id, toggleDisableRequestDTO);
+        themeService.updateVisibility(id, booleanRequestDTO.value());
         logger.info("Thème activé / désactivé avec l'ID: {}", id);
         return ResponseEntity.noContent().build();
     }

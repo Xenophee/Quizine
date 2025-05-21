@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Public", description = "Endpoints accessibles publiquement")
+@Tag(name = "PUBLIC", description = "Endpoints accessibles publiquement")
 @RestController
 @RequestMapping(ApiRoutes.DifficultyLevels.BASE)
 public class DifficultyLevelController {
