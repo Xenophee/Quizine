@@ -3,6 +3,7 @@ package com.dassonville.api.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 @Table(name = "difficulty_levels")
 @Getter
 @Setter
+@NoArgsConstructor
 public class DifficultyLevel {
 
     @Id
@@ -23,8 +25,8 @@ public class DifficultyLevel {
     @Column(length = 50, nullable = false, unique = true)
     private String name;
 
-    @Column(name = "max_responses", nullable = false)
-    private byte maxResponses;
+    @Column(name = "max_answers", nullable = false)
+    private byte maxAnswers;
 
     @Column(name = "timer_seconds")
     private short timerSeconds;
@@ -33,7 +35,10 @@ public class DifficultyLevel {
     private int pointsPerQuestion;
 
     @Column(name = "is_reference", nullable = false)
-    private Boolean isReference;
+    private Boolean isReference = false;
+
+    @Column(name = "display_order", nullable = false)
+    private short displayOrder;
 
     @Column(name = "created_at", updatable = false)
     @CreationTimestamp
@@ -47,6 +52,14 @@ public class DifficultyLevel {
     @CreationTimestamp
     private LocalDateTime disabledAt;
 
+
+
+
+    public DifficultyLevel(long id, String name, short displayOrder) {
+        this.id = id;
+        this.name = name;
+        this.displayOrder = displayOrder;
+    }
 
 
     public void setVisible(boolean visible) {
