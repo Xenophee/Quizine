@@ -15,9 +15,18 @@ public interface DifficultyLevelRepository extends JpaRepository<DifficultyLevel
 
     boolean existsByNameIgnoreCase(String name);
 
-    List<PublicDifficultyLevelProjection> findByDisabledAtIsNull();
+    boolean existsByNameIgnoreCaseAndIdNot(String name, long id);
 
-    @Query("SELECT maxResponses FROM DifficultyLevel WHERE isReference = true")
+    int countBy();
+
+    List<PublicDifficultyLevelProjection> findByDisabledAtIsNullOrderByDisplayOrder();
+
+    List<DifficultyLevel> findAllByOrderByDisplayOrder();
+
+    @Query("SELECT maxAnswers FROM DifficultyLevel WHERE isReference = true")
     Optional<Byte> findReferenceLevelMaxAnswers();
+
+    @Query("SELECT MAX(displayOrder) FROM DifficultyLevel")
+    Optional<Short> findMaxDisplayOrder();
 
 }
