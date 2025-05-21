@@ -1,11 +1,11 @@
 package com.dassonville.api.dto;
 
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record ThemeUpsertDTO(
 
-        @NotEmpty(message = "Veuillez saisir un nom de thème.")
+        @NotBlank(message = "Veuillez saisir un nom de thème.")
         @Size(max = 50, message = "Le nom du thème ne doit pas dépasser 70 caractères.")
         String name,
 

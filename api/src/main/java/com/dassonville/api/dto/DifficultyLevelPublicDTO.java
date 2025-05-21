@@ -1,9 +1,12 @@
 package com.dassonville.api.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public record DifficultyLevelPublicDTO(
         long id,
         String name,
-        byte maxResponses,
+        @Schema(type = "integer", format = "int32")
+        byte maxAnswers,
         short timerSeconds,
         int pointsPerQuestion,
         boolean isNew

@@ -1,6 +1,9 @@
 package com.dassonville.api.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 public record BooleanRequestDTO(
-        boolean value
+        @NotNull(message = "Veuillez indiquer une valeur")
+        Boolean value
 ) {
 }

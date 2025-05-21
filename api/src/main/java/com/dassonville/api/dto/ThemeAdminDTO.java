@@ -10,6 +10,6 @@ public record ThemeAdminDTO(
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         LocalDateTime disabledAt,
-        List<CategoryAdminDTO> categories
+        List<CategoryInfoThemeAdminDTO> categories
 ) {
 }
