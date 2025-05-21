@@ -5,6 +5,7 @@ import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.AnswerAdminDTO;
 import com.dassonville.api.dto.AnswerUpsertDTO;
 import com.dassonville.api.dto.BooleanRequestDTO;
+import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.service.AnswerService;
@@ -28,7 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AnswerAdminController.class)
-@DisplayName("IT - QuizAdminController")
+@DisplayName("IT - ADMIN Controller : Réponse")
 public class AnswerAdminControllerTest {
 
     @Autowired
@@ -57,11 +58,11 @@ public class AnswerAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode POST")
+    @DisplayName("POST")
     class PostTests {
 
         @Test
-        @DisplayName("Créer une réponse")
+        @DisplayName("Succès")
         void createAnswer_shouldReturn201() throws Exception {
             // Given
             when(answerService.create(anyLong(), any(AnswerUpsertDTO.class)))
@@ -77,7 +78,22 @@ public class AnswerAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Créer une réponse avec un texte déjà existant pour la question")
+        @DisplayName("Erreur - Question non trouvée")
+        void createAnswer_shouldReturn404() throws Exception {
+            // Given
+            when(answerService.create(anyLong(), any(AnswerUpsertDTO.class)))
+                    .thenThrow(new NotFoundException());
+
+            // When & Then
+            mockMvc.perform(post(ApiRoutes.Answers.ADMIN_ANSWERS_POST, endpointId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(answerUpsertDTO)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        @DisplayName("Erreur - Réponse déjà existante")
         void createAnswer_shouldReturn409() throws Exception {
             // Given
             when(answerService.create(anyLong(), any(AnswerUpsertDTO.class)))
@@ -92,7 +108,7 @@ public class AnswerAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Créer une réponse avec des données invalides")
+        @DisplayName("Erreur - Données invalides")
         void createAnswer_shouldReturn400() throws Exception {
             // Given
             answerUpsertDTO = new AnswerUpsertDTO("", true);
@@ -108,11 +124,11 @@ public class AnswerAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode PUT")
+    @DisplayName("PUT")
     class PutTests {
 
         @Test
-        @DisplayName("Mettre à jour une réponse")
+        @DisplayName("Succès")
         void updateAnswer_shouldReturn200() throws Exception {
             // Given
             when(answerService.update(anyLong(), any(AnswerUpsertDTO.class)))
@@ -127,7 +143,7 @@ public class AnswerAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Mettre à jour une réponse avec un texte déjà existant pour la question")
+        @DisplayName("Erreur - Réponse déjà existante")
         void updateAnswer_shouldReturn409() throws Exception {
             // Given
             when(answerService.update(anyLong(), any(AnswerUpsertDTO.class)))
@@ -142,7 +158,7 @@ public class AnswerAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Mettre à jour une réponse avec des données invalides")
+        @DisplayName("Erreur - Données invalides")
         void updateAnswer_shouldReturn400() throws Exception {
             // Given
             answerUpsertDTO = new AnswerUpsertDTO("", true);
@@ -156,7 +172,7 @@ public class AnswerAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Mettre à jour une réponse inexistante")
+        @DisplayName("Erreur - Réponse non trouvée")
         void updateAnswer_shouldReturn404() throws Exception {
             // Given
             when(answerService.update(anyLong(), any(AnswerUpsertDTO.class)))
@@ -173,11 +189,11 @@ public class AnswerAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode DELETE")
+    @DisplayName("DELETE")
     class DeleteTests {
 
         @Test
-        @DisplayName("Supprimer une réponse")
+        @DisplayName("Succès")
         void deleteAnswer_shouldReturn204() throws Exception {
             // Given
             doNothing().when(answerService).delete(anyLong());
@@ -188,7 +204,7 @@ public class AnswerAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Supprimer une réponse inexistante")
+        @DisplayName("Erreur - Réponse non trouvée")
         void deleteAnswer_shouldReturn404() throws Exception {
             // Given
             doThrow(new NotFoundException()).when(answerService).delete(anyLong());
@@ -198,18 +214,30 @@ public class AnswerAdminControllerTest {
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }
+
+        @Test
+        @DisplayName("Erreur - Action non autorisée")
+        void deleteAnswer_shouldReturn409() throws Exception {
+            // Given
+            doThrow(new ActionNotAllowedException()).when(answerService).delete(anyLong());
+
+            // When & Then
+            mockMvc.perform(delete(ApiRoutes.Answers.ADMIN_BY_ID, endpointId))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.message").exists());
+        }
     }
 
 
     @Nested
-    @DisplayName("Tests pour la méthode PATCH")
+    @DisplayName("PATCH")
     class PatchTests {
 
         @Test
-        @DisplayName("Activer / désactiver une réponse")
-        void toggleVisibility_shouldReturn204() throws Exception {
+        @DisplayName("Succès")
+        void updateVisibility_shouldReturn204() throws Exception {
             // Given
-            doNothing().when(answerService).toggleVisibility(anyLong(), anyBoolean());
+            doNothing().when(answerService).updateVisibility(anyLong(), anyBoolean());
 
             // When & Then
             mockMvc.perform(patch(ApiRoutes.Answers.ADMIN_VISIBILITY_PATCH, endpointId)
@@ -219,16 +247,30 @@ public class AnswerAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Activer / désactiver une réponse inexistante")
-        void toggleVisibility_shouldReturn404() throws Exception {
+        @DisplayName("Erreur - Réponse non trouvée")
+        void updateVisibility_shouldReturn404() throws Exception {
             // Given
-            doThrow(new NotFoundException()).when(answerService).toggleVisibility(anyLong(), anyBoolean());
+            doThrow(new NotFoundException()).when(answerService).updateVisibility(anyLong(), anyBoolean());
 
             // When & Then
             mockMvc.perform(patch(ApiRoutes.Answers.ADMIN_VISIBILITY_PATCH, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        @DisplayName("Erreur - Action non autorisée")
+        void updateVisibility_shouldReturn409() throws Exception {
+            // Given
+            doThrow(new ActionNotAllowedException()).when(answerService).updateVisibility(anyLong(), anyBoolean());
+
+            // When & Then
+            mockMvc.perform(patch(ApiRoutes.Answers.ADMIN_VISIBILITY_PATCH, endpointId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(booleanRequestDTO)))
+                    .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.message").exists());
         }
     }

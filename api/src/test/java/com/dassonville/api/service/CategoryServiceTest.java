@@ -3,7 +3,6 @@ package com.dassonville.api.service;
 
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
-import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.CategoryMapper;
@@ -20,6 +19,7 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -29,12 +29,11 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("UNI - CategoryService")
+@DisplayName("UNI - Service : Catégorie")
 public class CategoryServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
-
     @Mock
     private ThemeRepository themeRepository;
 
@@ -43,284 +42,292 @@ public class CategoryServiceTest {
 
     private final CategoryMapper categoryMapper = Mappers.getMapper(CategoryMapper.class);
 
+
     private long id;
-    private BooleanRequestDTO booleanRequestDTO;
     private Category category;
-    private Category categoryToUpdate;
-    private CategoryAdminDTO categoryAdminDTO;
-    private CategoryUpsertDTO categoryToCreateDTO;
-    private CategoryUpsertDTO categoryToUpdateDTO;
+    private CategoryUpsertDTO categoryUpsertDTO;
 
 
     @BeforeEach
     void setUp() {
-        categoryService = new CategoryService(categoryRepository, themeRepository, categoryMapper);
+        categoryService = new CategoryService(categoryRepository, categoryMapper, themeRepository);
 
         id = 1L;
-        booleanRequestDTO = new BooleanRequestDTO(true);
-        Theme theme = new Theme();
-        theme.setId(1);
 
         category = new Category();
-        category.setId(1);
-        category.setName("informatique");
-        category.setDescription("");
-        category.setTheme(theme);
+        category.setId(1L);
+        category.setName("Catégorie");
+        category.setDescription("Description");
+        category.setCreatedAt(LocalDateTime.now());
+        category.setUpdatedAt(LocalDateTime.now());
+        category.setDisabledAt(null);
+        category.setTheme(new Theme(1L));
 
-        categoryToUpdate = new Category();
-        categoryToUpdate.setId(1);
-        categoryToUpdate.setName("Nouveau nom");
-        categoryToUpdate.setDescription("Nouvelle description");
-        categoryToUpdate.setTheme(theme);
-
-        categoryAdminDTO = categoryMapper.toAdminDTO(category);
-        categoryToCreateDTO = categoryMapper.toUpsertDTO(category);
-        categoryToUpdateDTO = categoryMapper.toUpsertDTO(categoryToUpdate);
+        categoryUpsertDTO = new CategoryUpsertDTO(" catégorie", " description");
     }
 
 
     @Nested
-    @DisplayName("Tests de la méthode findById")
+    @DisplayName("Récupérer une catégorie par son ID")
     class FindByIdTest {
 
         @Test
-        @DisplayName("Récupérer une catégorie par son ID")
+        @DisplayName("Succès")
         void findById_existingId() {
             // Given
-            when(categoryRepository.findById(any(Long.class)))
+            when(categoryRepository.findById(anyLong()))
                     .thenReturn(Optional.of(category));
 
             // When
             CategoryAdminDTO result = categoryService.findById(id);
 
             // Then
-            verify(categoryRepository).findById(any(Long.class));
+            verify(categoryRepository).findById(anyLong());
+
             assertThat(result).isNotNull();
-            assertThat(result).isEqualTo(categoryAdminDTO);
+            assertThat(result.id()).isEqualTo(category.getId());
+            assertThat(result.name()).isEqualTo(category.getName());
+            assertThat(result.description()).isEqualTo(category.getDescription());
+            assertThat(result.createdAt()).isEqualTo(category.getCreatedAt());
+            assertThat(result.updatedAt()).isEqualTo(category.getUpdatedAt());
+            assertThat(result.disabledAt()).isEqualTo(category.getDisabledAt());
+            assertThat(result.themeId()).isEqualTo(category.getTheme().getId());
         }
 
         @Test
-        @DisplayName("Récupérer une catégorie par un ID inexistant")
+        @DisplayName("Erreur - Catégorie non trouvée")
         void findById_nonExistingId() {
             // Given
-            when(categoryRepository.findById(any(Long.class)))
+            when(categoryRepository.findById(anyLong()))
                     .thenReturn(Optional.empty());
 
             // When
             assertThrows(NotFoundException.class, () -> categoryService.findById(id));
 
             // Then
-            verify(categoryRepository).findById(any(Long.class));
+            verify(categoryRepository).findById(anyLong());
         }
     }
 
 
     @Nested
-    @DisplayName("Tests de la méthode create")
+    @DisplayName("Créer une catégorie")
     class CreateTest {
 
         @Test
-        @DisplayName("Créer une nouvelle catégorie")
+        @DisplayName("Succès")
         void create_newCategory() {
             // Given
-            when(categoryRepository.existsByNameIgnoreCase(any(String.class)))
+            when(themeRepository.existsById(anyLong()))
+                    .thenReturn(true);
+            when(categoryRepository.existsByNameIgnoreCase(anyString()))
                     .thenReturn(false);
             when(categoryRepository.save(any(Category.class)))
                     .thenReturn(category);
 
             // When
-            CategoryAdminDTO result = categoryService.create(categoryToCreateDTO);
+            CategoryAdminDTO result = categoryService.create(1L, categoryUpsertDTO);
 
             // Then
-            verify(categoryRepository).existsByNameIgnoreCase(any(String.class));
+            verify(themeRepository).existsById(anyLong());
+            verify(categoryRepository).existsByNameIgnoreCase(anyString());
             verify(categoryRepository).save(any(Category.class));
+
             assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(categoryToCreateDTO.name());
+            assertThat(result.name()).isEqualTo(category.getName());
+            assertThat(result.description()).isEqualTo(category.getDescription());
+            assertThat(result.createdAt()).isEqualTo(category.getCreatedAt());
+            assertThat(result.updatedAt()).isEqualTo(category.getUpdatedAt());
+            assertThat(result.disabledAt()).isEqualTo(category.getDisabledAt());
+            assertThat(result.themeId()).isEqualTo(category.getTheme().getId());
         }
 
         @Test
-        @DisplayName("Créer une catégorie avec un nom déjà existant")
+        @DisplayName("Erreur - Thème non trouvé")
+        void create_nonExistingTheme() {
+            // Given
+            when(themeRepository.existsById(anyLong()))
+                    .thenReturn(false);
+
+            // When
+            assertThrows(NotFoundException.class, () -> categoryService.create(1L, categoryUpsertDTO));
+
+            // Then
+            verify(themeRepository).existsById(anyLong());
+            verify(categoryRepository, never()).existsByNameIgnoreCase(anyString());
+            verify(categoryRepository, never()).save(any(Category.class));
+        }
+
+        @Test
+        @DisplayName("Erreur - Catégorie déjà existante")
         void create_existingCategory() {
             // Given
-            when(categoryRepository.existsByNameIgnoreCase(any(String.class)))
+            when(themeRepository.existsById(anyLong()))
+                    .thenReturn(true);
+            when(categoryRepository.existsByNameIgnoreCase(anyString()))
                     .thenReturn(true);
 
             // When
-            assertThrows(AlreadyExistException.class, () -> categoryService.create(categoryToCreateDTO));
+            assertThrows(AlreadyExistException.class, () -> categoryService.create(1L, categoryUpsertDTO));
 
             // Then
-            verify(categoryRepository).existsByNameIgnoreCase(any(String.class));
+            verify(themeRepository).existsById(anyLong());
+            verify(categoryRepository).existsByNameIgnoreCase(anyString());
             verify(categoryRepository, never()).save(any(Category.class));
         }
     }
 
 
     @Nested
-    @DisplayName("Tests de la méthode update")
+    @DisplayName("Mise à jour d'une catégorie")
     class UpdateTest {
 
         @Test
-        @DisplayName("Mettre à jour une catégorie existante")
+        @DisplayName("Succès")
         void update_existingCategory() {
             // Given
-            when(categoryRepository.findById(any(Long.class)))
+            when(categoryRepository.findById(anyLong()))
                     .thenReturn(Optional.of(category));
-            when(categoryRepository.existsByNameIgnoreCase(any(String.class)))
+            when(categoryRepository.existsByNameIgnoreCaseAndIdNot(anyString(), anyLong()))
                     .thenReturn(false);
             when(categoryRepository.save(any(Category.class)))
-                    .thenReturn(categoryToUpdate);
+                    .thenReturn(category);
 
             // When
-            CategoryAdminDTO result = categoryService.update(id, categoryToUpdateDTO);
+            CategoryAdminDTO result = categoryService.update(id, categoryUpsertDTO);
 
             // Then
-            verify(categoryRepository).findById(any(Long.class));
-            verify(categoryRepository).existsByNameIgnoreCase(any(String.class));
+            verify(categoryRepository).findById(anyLong());
+            verify(categoryRepository).existsByNameIgnoreCaseAndIdNot(anyString(), anyLong());
             verify(categoryRepository).save(any(Category.class));
+
             assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(categoryToUpdateDTO.name());
+            assertThat(result.name()).isEqualTo(category.getName());
+            assertThat(result.description()).isEqualTo(category.getDescription());
+            assertThat(result.createdAt()).isEqualTo(category.getCreatedAt());
+            assertThat(result.updatedAt()).isEqualTo(category.getUpdatedAt());
+            assertThat(result.disabledAt()).isEqualTo(category.getDisabledAt());
+            assertThat(result.themeId()).isEqualTo(category.getTheme().getId());
         }
 
         @Test
-        @DisplayName("Mettre à jour une catégorie sans changer le nom")
-        void update_existingCategoryWithoutChangingName() {
-            // Given
-            when(categoryRepository.findById(any(Long.class)))
-                    .thenReturn(Optional.of(categoryToUpdate));
-            when(categoryRepository.save(any(Category.class)))
-                    .thenReturn(categoryToUpdate);
-
-            // When
-            CategoryAdminDTO result = categoryService.update(id, categoryToUpdateDTO);
-
-            // Then
-            verify(categoryRepository).findById(any(Long.class));
-            verify(categoryRepository, never()).existsByNameIgnoreCase(any(String.class));
-            verify(categoryRepository).save(any(Category.class));
-            assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(categoryToUpdateDTO.name());
-        }
-
-        @Test
-        @DisplayName("Mettre à jour une catégorie inexistante")
+        @DisplayName("Erreur - Catégorie non trouvée")
         void update_nonExistingCategory() {
             // Given
-            when(categoryRepository.findById(any(Long.class)))
+            when(categoryRepository.findById(anyLong()))
                     .thenReturn(Optional.empty());
 
             // When
-            assertThrows(NotFoundException.class, () -> categoryService.update(id, categoryToUpdateDTO));
+            assertThrows(NotFoundException.class, () -> categoryService.update(id, categoryUpsertDTO));
 
             // Then
-            verify(categoryRepository).findById(any(Long.class));
-            verify(categoryRepository, never()).existsByNameIgnoreCase(any(String.class));
+            verify(categoryRepository).findById(anyLong());
+            verify(categoryRepository, never()).existsByNameIgnoreCase(anyString());
             verify(categoryRepository, never()).save(any(Category.class));
         }
 
         @Test
-        @DisplayName("Mettre à jour une catégorie avec un nom déjà existant")
+        @DisplayName("Erreur - Catégorie déjà existante")
         void update_existingCategoryWithExistingName() {
             // Given
-            when(categoryRepository.findById(any(Long.class)))
+            when(categoryRepository.findById(anyLong()))
                     .thenReturn(Optional.of(category));
-            when(categoryRepository.existsByNameIgnoreCase(any(String.class)))
+            when(categoryRepository.existsByNameIgnoreCaseAndIdNot(anyString(), anyLong()))
                     .thenReturn(true);
 
             // When
-            assertThrows(AlreadyExistException.class, () -> categoryService.update(id, categoryToUpdateDTO));
+            assertThrows(AlreadyExistException.class, () -> categoryService.update(id, categoryUpsertDTO));
 
             // Then
-            verify(categoryRepository).findById(any(Long.class));
-            verify(categoryRepository).existsByNameIgnoreCase(any(String.class));
+            verify(categoryRepository).findById(anyLong());
+            verify(categoryRepository).existsByNameIgnoreCaseAndIdNot(anyString(), anyLong());
             verify(categoryRepository, never()).save(any(Category.class));
         }
     }
 
 
     @Nested
-    @DisplayName("Tests de la méthode delete")
+    @DisplayName("Supprimer une catégorie")
     class DeleteTest {
 
         @Test
-        @DisplayName("Supprimer une catégorie existante")
+        @DisplayName("Succès")
         void delete_existingCategory() {
             // Given
-            when(categoryRepository.existsById(any(Long.class)))
+            when(categoryRepository.existsById(anyLong()))
                     .thenReturn(true);
 
             // When
             categoryService.delete(id);
 
             // Then
-            verify(categoryRepository).existsById(any(Long.class));
-            verify(categoryRepository).deleteById(any(Long.class));
+            verify(categoryRepository).existsById(anyLong());
+            verify(categoryRepository).deleteById(anyLong());
         }
 
         @Test
-        @DisplayName("Supprimer une catégorie inexistante")
+        @DisplayName("Erreur - Catégorie non trouvée")
         void delete_nonExistingCategory() {
             // Given
-            when(categoryRepository.existsById(any(Long.class)))
+            when(categoryRepository.existsById(anyLong()))
                     .thenReturn(false);
 
             // When
             assertThrows(NotFoundException.class, () -> categoryService.delete(id));
 
             // Then
-            verify(categoryRepository).existsById(any(Long.class));
-            verify(categoryRepository, never()).deleteById(any(Long.class));
+            verify(categoryRepository).existsById(anyLong());
+            verify(categoryRepository, never()).deleteById(anyLong());
         }
     }
 
 
     @Nested
-    @DisplayName("Tests de la méthode toggleDisable")
-    class ToggleDisableTest {
+    @DisplayName("Basculer la visibilité d'une catégorie")
+    class UpdateDisableTest {
 
         @Test
-        @DisplayName("Désactiver une catégorie existante")
+        @DisplayName("Succès")
         void disable_activeCategory() {
             // Given
-            when(categoryRepository.findById(any(Long.class)))
+            when(categoryRepository.findById(anyLong()))
                     .thenReturn(Optional.of(category));
 
             // When
-            categoryService.toggleDisable(id, booleanRequestDTO);
+            categoryService.updateVisibility(id, false);
 
             // Then
-            verify(categoryRepository).findById(any(Long.class));
+            verify(categoryRepository).findById(anyLong());
             verify(categoryRepository).save(any(Category.class));
         }
 
         @Test
-        @DisplayName("Réactiver une catégorie désactivée")
-        void enable_disabledCategory() {
+        @DisplayName("RAS - Pas de changement d'état")
+        void disable_noChange() {
             // Given
-            booleanRequestDTO = new BooleanRequestDTO(false);
-            category.setDisabledAt(category.getCreatedAt());
-            when(categoryRepository.findById(any(Long.class)))
+            when(categoryRepository.findById(anyLong()))
                     .thenReturn(Optional.of(category));
 
             // When
-            categoryService.toggleDisable(id, booleanRequestDTO);
+            categoryService.updateVisibility(id, true);
 
             // Then
-            verify(categoryRepository).findById(any(Long.class));
-            verify(categoryRepository).save(any(Category.class));
+            verify(categoryRepository).findById(anyLong());
+            verify(categoryRepository, never()).save(any(Category.class));
         }
 
         @Test
-        @DisplayName("Désactiver une catégorie inexistante")
+        @DisplayName("Erreur - Catégorie non trouvée")
         void disable_nonExistingCategory() {
             // Given
-            when(categoryRepository.findById(any(Long.class)))
+            when(categoryRepository.findById(anyLong()))
                     .thenReturn(Optional.empty());
 
             // When
-            assertThrows(NotFoundException.class, () -> categoryService.toggleDisable(id, booleanRequestDTO));
+            assertThrows(NotFoundException.class, () -> categoryService.updateVisibility(id, false));
 
             // Then
-            verify(categoryRepository).findById(any(Long.class));
+            verify(categoryRepository).findById(anyLong());
             verify(categoryRepository, never()).save(any(Category.class));
         }
     }

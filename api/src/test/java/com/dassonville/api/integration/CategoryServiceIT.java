@@ -3,12 +3,12 @@ package com.dassonville.api.integration;
 
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
-import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.Category;
 import com.dassonville.api.repository.CategoryRepository;
 import com.dassonville.api.service.CategoryService;
+import jakarta.transaction.Transactional;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,11 +19,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.springframework.util.StringUtils.capitalize;
 
 
 @SpringBootTest
-@DisplayName("IT - CategoryService")
+@DisplayName("IT - Service : Catégorie")
 public class CategoryServiceIT {
 
     @Autowired
@@ -43,7 +42,7 @@ public class CategoryServiceIT {
     class GettingCategories {
 
         @Test
-        @DisplayName("Récupérer une catégorie par son ID")
+        @DisplayName("Succès - Récupérer une catégorie par son ID")
         public void shouldGetCategory_WhenExistingId() {
             // Given
             long idToFind = 1L;
@@ -56,10 +55,10 @@ public class CategoryServiceIT {
         }
 
         @Test
-        @DisplayName("Récupérer une catégorie par son ID - Catégorie non trouvée")
+        @DisplayName("Erreur - Récupérer une catégorie par son ID - Catégorie non trouvée")
         public void shouldFailToGetCategory_WhenNonExistingId() {
             // Given
-            long idToFind = 130L;
+            long idToFind = 9999L;
 
             // When / Then
             assertThrows(NotFoundException.class, () -> categoryService.findById(idToFind));
@@ -72,72 +71,85 @@ public class CategoryServiceIT {
     class CreatingCategories {
 
         @Test
-        @DisplayName("Créer une catégorie inexistante")
+        @DisplayName("Succès")
         public void shouldCreateCategory() {
             // Given
-            CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO("catégorie", "description", 1);
+            CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO(" catégorie", " description");
 
             // When
-            CategoryAdminDTO createdCategory = categoryService.create(categoryToCreate);
+            CategoryAdminDTO createdCategory = categoryService.create(1L, categoryToCreate);
 
             // Then
             Category category = categoryRepository.findById(createdCategory.id()).get();
-            assertThat(category.getName()).isEqualTo(capitalize(categoryToCreate.name()));
+            assertThat(category.getName()).isEqualTo("Catégorie");
+            assertThat(category.getDescription()).isEqualTo("Description");
             assertThat(category.getCreatedAt()).isNotNull();
             assertThat(category.getDisabledAt()).isNull();
             assertThat(category.getTheme().getId()).isEqualTo(createdCategory.themeId());
         }
 
         @Test
-        @DisplayName("Créer une catégorie déjà existante")
-        public void shouldFailToCreateCategory_WhenAlreadyExisting() {
+        @DisplayName("Erreur - Thème non trouvé")
+        public void shouldFailToCreateCategory_WhenThemeNotFound() {
             // Given
-            CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO("Droit civil", "", 2);
+            CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO(" catégorie", " description");
 
             // When / Then
-            assertThrows(AlreadyExistException.class, () -> categoryService.create(categoryToCreate));
+            assertThrows(NotFoundException.class, () -> categoryService.create(9999L, categoryToCreate));
+        }
+
+        @Test
+        @DisplayName("Erreur - Catégorie déjà existante")
+        public void shouldFailToCreateCategory_WhenAlreadyExisting() {
+            // Given
+            CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO(" droit civil", "");
+
+            // When / Then
+            assertThrows(AlreadyExistException.class, () -> categoryService.create(1L, categoryToCreate));
         }
     }
 
 
     @Nested
-    @DisplayName("Mise à jour de catégories")
+    @DisplayName("Mettre à jour une catégorie")
     class UpdatingCategories {
 
         @Test
-        @DisplayName("Mettre à jour une catégorie existante")
+        @DisplayName("Succès")
         public void shouldUpdate_WhenExistingCategory() {
             // Given
             long idToUpdate = 9L;
-            CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO("catégorie", "description", 1);
+            CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO(" catégorie", " description");
 
             // When
             CategoryAdminDTO updatedCategory = categoryService.update(idToUpdate, categoryToUpdate);
 
             // Then
             Category category = categoryRepository.findById(updatedCategory.id()).get();
-            assertThat(category.getName()).isEqualTo(capitalize(categoryToUpdate.name()));
-            assertThat(category.getDescription()).isEqualTo(categoryToUpdate.description());
-            assertThat(category.getTheme().getId()).isEqualTo(categoryToUpdate.themeId());
+            assertThat(category.getName()).isEqualTo("Catégorie");
+            assertThat(category.getDescription()).isEqualTo("Description");
+            assertThat(category.getCreatedAt()).isNotNull();
+            assertThat(category.getUpdatedAt()).isNotNull();
+            assertThat(category.getTheme().getId()).isEqualTo(1L);
         }
 
         @Test
-        @DisplayName("Mettre à jour une catégorie inexistante")
+        @DisplayName("Erreur - Catégorie non trouvée")
         public void shouldFailToUpdate_WhenNonExistingCategory() {
             // Given
-            long idToUpdate = 130L;
-            CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO("catégorie", "description", 1);
+            long idToUpdate = 9999L;
+            CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO(" catégorie", " description");
 
             // When / Then
             assertThrows(NotFoundException.class, () -> categoryService.update(idToUpdate, categoryToUpdate));
         }
 
         @Test
-        @DisplayName("Mettre à jour une catégorie avec un nom déjà existant")
+        @DisplayName("Erreur - Catégorie déjà existante")
         public void shouldFailToUpdate_WhenCategoryWithExistingName() {
             // Given
             long idToUpdate = 5L;
-            CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO("Peinture", "", 1);
+            CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO(" peinture", "");
 
             // When / Then
             assertThrows(AlreadyExistException.class, () -> categoryService.update(idToUpdate, categoryToUpdate));
@@ -150,7 +162,7 @@ public class CategoryServiceIT {
     class DeletingCategories {
 
         @Test
-        @DisplayName("Supprimer une catégorie existante")
+        @DisplayName("Succès")
         public void shouldDelete_WhenExistingCategory() {
             // Given
             long idToDelete = 1L;
@@ -163,10 +175,10 @@ public class CategoryServiceIT {
         }
 
         @Test
-        @DisplayName("Supprimer une catégorie inexistante")
+        @DisplayName("Erreur - Catégorie non trouvée")
         public void shouldFailToDelete_WhenNonExistingCategory() {
             // Given
-            long idToDelete = 130L;
+            long idToDelete = 9999L;
 
             // When / Then
             assertThrows(NotFoundException.class, () -> categoryService.delete(idToDelete));
@@ -179,14 +191,14 @@ public class CategoryServiceIT {
     class DisablingCategories {
 
         @Test
-        @DisplayName("Désactiver une catégorie existante")
+        @Transactional
+        @DisplayName("Succès - Désactivation")
         public void shouldDisable_WhenExistingCategory() {
             // Given
             long idToDisable = 2L;
-            BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(true);
 
             // When
-            categoryService.toggleDisable(idToDisable, booleanRequestDTO);
+            categoryService.updateVisibility(idToDisable, false);
 
             // Then
             Category category = categoryRepository.findById(idToDisable).get();
@@ -194,14 +206,13 @@ public class CategoryServiceIT {
         }
 
         @Test
-        @DisplayName("Réactiver une catégorie désactivée")
+        @DisplayName("Succès - Réactivation")
         public void shouldEnable_WhenDisabledCategory() {
             // Given
             long idToEnable = 1L;
-            BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(false);
 
             // When
-            categoryService.toggleDisable(idToEnable, booleanRequestDTO);
+            categoryService.updateVisibility(idToEnable, true);
 
             // Then
             Category category = categoryRepository.findById(idToEnable).get();
@@ -209,14 +220,13 @@ public class CategoryServiceIT {
         }
 
         @Test
-        @DisplayName("Désactiver une catégorie inexistante")
+        @DisplayName("Erreur - Catégorie non trouvée")
         public void shouldFailToDisable_WhenNonExistingCategory() {
             // Given
-            long idToDisable = 130L;
-            BooleanRequestDTO booleanRequestDTO = new BooleanRequestDTO(true);
+            long idToDisable = 9999L;
 
             // When / Then
-            assertThrows(NotFoundException.class, () -> categoryService.toggleDisable(idToDisable, booleanRequestDTO));
+            assertThrows(NotFoundException.class, () -> categoryService.updateVisibility(idToDisable, true));
         }
     }
 }

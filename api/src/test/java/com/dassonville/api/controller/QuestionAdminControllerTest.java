@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(QuestionAdminController.class)
 @Import(ValidMinAnswersPerQuestionValidator.class)
-@DisplayName("IT - QuestionAdminController")
+@DisplayName("IT - ADMIN Controller : Question")
 public class QuestionAdminControllerTest {
 
     @Autowired
@@ -52,7 +52,6 @@ public class QuestionAdminControllerTest {
     private QuestionAdminDTO questionAdminDTO;
     private QuestionInsertDTO questionInsertDTO;
     private QuestionUpdateDTO questionUpdateDTO;
-    private AnswerUpsertDTO answerUpsertDTO;
 
 
     @BeforeEach
@@ -60,8 +59,10 @@ public class QuestionAdminControllerTest {
         endpointId = 1L;
         booleanRequestDTO = new BooleanRequestDTO(true);
         questionAdminDTO = new QuestionAdminDTO(1L, "Question", null, null, null, List.of());
-        answerUpsertDTO = new AnswerUpsertDTO("Réponse", true);
-        questionInsertDTO = new QuestionInsertDTO("Question", List.of(answerUpsertDTO, answerUpsertDTO));
+        questionInsertDTO = new QuestionInsertDTO("Question", List.of(
+                new AnswerUpsertDTO("Réponse", true),
+                new AnswerUpsertDTO("Réponse2", false)
+        ));
         questionUpdateDTO = new QuestionUpdateDTO("Question");
 
         when(difficultyLevelRepository.findReferenceLevelMaxAnswers()).thenReturn(Optional.of((byte) 2));
@@ -69,11 +70,11 @@ public class QuestionAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode POST")
+    @DisplayName("POST")
     class PostTests {
 
         @Test
-        @DisplayName("Créer une question")
+        @DisplayName("Succès")
         void createQuestion_shouldReturn201() throws Exception {
             // Given
             when(questionService.create(anyLong(), any(QuestionInsertDTO.class)))
@@ -89,7 +90,22 @@ public class QuestionAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Créer une question avec un texte déjà existant")
+        @DisplayName("Erreur - Quiz non trouvée")
+        void createQuestion_shouldReturn404() throws Exception {
+            // Given
+            when(questionService.create(anyLong(), any(QuestionInsertDTO.class)))
+                    .thenThrow(new NotFoundException());
+
+            // When & Then
+            mockMvc.perform(post(ApiRoutes.Questions.ADMIN_QUESTIONS_POST, endpointId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(questionInsertDTO)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        @DisplayName("Erreur - Texte de la question déjà existant")
         void createQuestion_shouldReturn409() throws Exception {
             // Given
             when(questionService.create(anyLong(), any(QuestionInsertDTO.class)))
@@ -104,7 +120,7 @@ public class QuestionAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Créer une question avec des données invalides (null)")
+        @DisplayName("Erreur - Données invalides (null)")
         void createQuestion_shouldReturn400() throws Exception {
             // Given
             questionInsertDTO = new QuestionInsertDTO(null, null);
@@ -119,10 +135,10 @@ public class QuestionAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Créer une question avec des données invalides (pas assez de réponses)")
+        @DisplayName("Erreur - Données invalides (pas assez de réponses)")
         void createQuestion_shouldReturn400_2() throws Exception {
             // Given
-            questionInsertDTO = new QuestionInsertDTO("Question", List.of(answerUpsertDTO));
+            questionInsertDTO = new QuestionInsertDTO("Question", List.of(new AnswerUpsertDTO("Réponse", true)));
 
             // When & Then
             mockMvc.perform(post(ApiRoutes.Questions.ADMIN_QUESTIONS_POST, endpointId)
@@ -133,7 +149,7 @@ public class QuestionAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Créer une question avec des données invalides (pas de réponses correctes)")
+        @DisplayName("Erreur - Données invalides (pas de réponses correctes)")
         void createQuestion_shouldReturn400_3() throws Exception {
             // Given
             questionInsertDTO = new QuestionInsertDTO("Question",
@@ -146,15 +162,53 @@ public class QuestionAdminControllerTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.answers").exists());
         }
+
+        @Test
+        @DisplayName("Erreur - Données invalides (réponses sans texte)")
+        void createQuestion_shouldReturn400_4() throws Exception {
+            // Given
+            questionInsertDTO = new QuestionInsertDTO("",
+                    List.of(new AnswerUpsertDTO("", true), new AnswerUpsertDTO("", false)));
+
+            // When & Then
+            mockMvc.perform(post(ApiRoutes.Questions.ADMIN_QUESTIONS_POST, endpointId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(questionInsertDTO)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.text").exists())
+                    .andExpect(jsonPath("$.answers[0].text").exists());
+        }
+
+        @Test
+        @DisplayName("Erreur - Données invalides (doublon de réponse)")
+        void createQuestion_shouldReturn400_5() throws Exception {
+            // Given
+            when(difficultyLevelRepository.findReferenceLevelMaxAnswers())
+                    .thenReturn(Optional.of((byte) 3));
+
+            questionInsertDTO = new QuestionInsertDTO("Question",
+                    List.of(
+                            new AnswerUpsertDTO("Réponse", true),
+                            new AnswerUpsertDTO("Réponse", false),
+                            new AnswerUpsertDTO("Réponse2", false)
+                    ));
+
+            // When & Then
+            mockMvc.perform(post(ApiRoutes.Questions.ADMIN_QUESTIONS_POST, endpointId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(questionInsertDTO)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.answers").exists());
+        }
     }
 
 
     @Nested
-    @DisplayName("Tests pour la méthode PUT")
+    @DisplayName("PUT")
     class PutTests {
 
         @Test
-        @DisplayName("Mettre à jour une question")
+        @DisplayName("Succès")
         void updateQuestion_shouldReturn200() throws Exception {
             // Given
             when(questionService.update(anyLong(), any(QuestionUpdateDTO.class)))
@@ -169,7 +223,7 @@ public class QuestionAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Mettre à jour une question avec un texte déjà existant")
+        @DisplayName("Erreur - Texte de la question déjà existant")
         void updateQuestion_shouldReturn409() throws Exception {
             // Given
             when(questionService.update(anyLong(), any(QuestionUpdateDTO.class)))
@@ -184,7 +238,7 @@ public class QuestionAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Mettre à jour une question avec des données invalides")
+        @DisplayName("Erreur - Données invalides")
         void updateQuestion_shouldReturn400() throws Exception {
             // Given
             questionUpdateDTO = new QuestionUpdateDTO(null);
@@ -198,7 +252,7 @@ public class QuestionAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Mettre à jour une question avec un ID non valide")
+        @DisplayName("Erreur - Question non trouvée")
         void updateQuestion_shouldReturn404() throws Exception {
             // Given
             when(questionService.update(anyLong(), any(QuestionUpdateDTO.class)))
@@ -215,11 +269,11 @@ public class QuestionAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode DELETE")
+    @DisplayName("DELETE")
     class DeleteTests {
 
         @Test
-        @DisplayName("Supprimer une question")
+        @DisplayName("Succès")
         void deleteQuestion_shouldReturn204() throws Exception {
             // Given
             doNothing().when(questionService).delete(anyLong());
@@ -230,7 +284,7 @@ public class QuestionAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Supprimer une question inexistante")
+        @DisplayName("Erreur - Question non trouvée")
         void deleteQuestion_shouldReturn404() throws Exception {
             // Given
             doThrow(new NotFoundException()).when(questionService).delete(anyLong());
@@ -244,14 +298,14 @@ public class QuestionAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode PATCH")
+    @DisplayName("PATCH")
     class PatchTests {
 
         @Test
-        @DisplayName("Activer / désactiver une question")
-        void disableQuestion_shouldReturn204() throws Exception {
+        @DisplayName("Succès")
+        void updateVisibilityQuestion_shouldReturn204() throws Exception {
             // Given
-            doNothing().when(questionService).toggleVisibility(anyLong(), any(Boolean.class));
+            doNothing().when(questionService).updateVisibility(anyLong(), anyBoolean());
 
             // When & Then
             mockMvc.perform(patch(ApiRoutes.Questions.ADMIN_VISIBILITY_PATCH, endpointId)
@@ -261,10 +315,10 @@ public class QuestionAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Activer / désactiver une question inexistante")
-        void disableQuestion_shouldReturn404() throws Exception {
+        @DisplayName("Erreur - Question non trouvée")
+        void updateVisibilityQuestion_shouldReturn404() throws Exception {
             // Given
-            doThrow(new NotFoundException()).when(questionService).toggleVisibility(anyLong(), anyBoolean());
+            doThrow(new NotFoundException()).when(questionService).updateVisibility(anyLong(), anyBoolean());
 
             // When & Then
             mockMvc.perform(patch(ApiRoutes.Questions.ADMIN_VISIBILITY_PATCH, endpointId)

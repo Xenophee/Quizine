@@ -4,7 +4,6 @@ import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.service.ThemeService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -25,21 +23,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @WebMvcTest(ThemeController.class)
-@DisplayName("IT - ThemeController")
+@DisplayName("IT - PUBLIC Controller : Thème")
 public class ThemeControllerTest {
 
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockitoBean
     private ThemeService themeService;
 
     private long endpointId;
     private ThemePublicDTO themePublicDTO;
+
 
     @BeforeEach
     public void setUp() {
@@ -59,7 +55,7 @@ public class ThemeControllerTest {
         mockMvc.perform(get(ApiRoutes.Themes.BASE))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name", is(themePublicDTO.name())));
+                .andExpect(jsonPath("$[0].name").value(themePublicDTO.name()));
     }
 
     @Test
@@ -72,7 +68,7 @@ public class ThemeControllerTest {
         // When & Then
         mockMvc.perform(get(ApiRoutes.Themes.BY_ID, endpointId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name", is(themePublicDTO.name())));
+                .andExpect(jsonPath("$.name").value(themePublicDTO.name()));
     }
 
     @Test

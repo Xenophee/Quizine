@@ -4,7 +4,6 @@ package com.dassonville.api.controller;
 import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.dto.QuizAdminDetailsDTO;
-import com.dassonville.api.dto.QuizInactiveAdminDTO;
 import com.dassonville.api.dto.QuizUpsertDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
@@ -35,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(QuizAdminController.class)
 @Import(ValidCategoryForThemeValidator.class)
-@DisplayName("IT - QuizAdminController")
+@DisplayName("IT - ADMIN Controller : Quiz")
 public class QuizAdminControllerTest {
 
     @Autowired
@@ -55,7 +54,6 @@ public class QuizAdminControllerTest {
     private long endpointId;
     private BooleanRequestDTO booleanRequestDTO;
     private QuizAdminDetailsDTO quizAdminDetailsDTO;
-    private QuizInactiveAdminDTO quizInactiveAdminDTO;
     private QuizUpsertDTO quizUpsertDTO;
 
 
@@ -64,7 +62,6 @@ public class QuizAdminControllerTest {
         endpointId = 1L;
         booleanRequestDTO = new BooleanRequestDTO(true);
         quizAdminDetailsDTO = new QuizAdminDetailsDTO(1L, "Test Quiz", false, null, null, null, 9L, 1L, List.of());
-        quizInactiveAdminDTO = new QuizInactiveAdminDTO(1L, "Inactive Quiz", false, (byte) 9, null, null, null, null, null);
         quizUpsertDTO = new QuizUpsertDTO("Test Quiz", false, 9L, 1L);
 
         when(themeRepository.existsById(anyLong()))
@@ -75,11 +72,11 @@ public class QuizAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode GET")
+    @DisplayName("GET")
     class GetTests {
 
         @Test
-        @DisplayName("Récupérer un quiz par ID")
+        @DisplayName("Succès - Récupérer un quiz par ID")
         public void getQuizById_shouldReturn200() throws Exception {
             // Given
             when(quizService.findByIdForAdmin(anyLong()))
@@ -92,7 +89,7 @@ public class QuizAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Récupérer un quiz inexistant par son ID")
+        @DisplayName("Erreur - Quiz non trouvé")
         public void getQuizById_shouldReturn404() throws Exception {
             // Given
             when(quizService.findByIdForAdmin(anyLong()))
@@ -103,28 +100,15 @@ public class QuizAdminControllerTest {
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }
-
-        @Test
-        @DisplayName("Récupérer tous les quiz inactifs")
-        public void getAllInactiveQuizzes_shouldReturn200() throws Exception {
-            // Given
-            when(quizService.getAllInactiveQuiz())
-                    .thenReturn(List.of(quizInactiveAdminDTO));
-
-            // When & Then
-            mockMvc.perform(get(ApiRoutes.Quizzes.ADMIN_QUIZZES + ApiRoutes.INACTIVE))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$[0].title").value(quizInactiveAdminDTO.title()));
-        }
     }
 
 
     @Nested
-    @DisplayName("Tests pour la méthode POST")
+    @DisplayName("POST")
     class PostTests {
 
         @Test
-        @DisplayName("Créer un quiz")
+        @DisplayName("Succès")
         public void createQuiz_shouldReturn201() throws Exception {
             // Given
             when(quizService.create(any(QuizUpsertDTO.class)))
@@ -140,7 +124,7 @@ public class QuizAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Créer un quiz avec un titre déjà existant")
+        @DisplayName("Erreur - Quiz avec titre déjà existant")
         public void createQuiz_shouldReturn409() throws Exception {
             // Given
             when(quizService.create(any(QuizUpsertDTO.class)))
@@ -155,7 +139,7 @@ public class QuizAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Créer un quiz avec des données invalides")
+        @DisplayName("Erreur - Données invalides")
         public void createInvalidQuiz_shouldReturn400() throws Exception {
             // Given
             quizUpsertDTO = new QuizUpsertDTO("", false, null, null);
@@ -170,7 +154,7 @@ public class QuizAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Créer un quiz avec une correspondance de catégorie et de thème erronée")
+        @DisplayName("Erreur - Catégorie invalide pour le thème")
         public void createInvalidQuizWithWrongCategoryForTheme_shouldReturn400() throws Exception {
             // Given
             quizUpsertDTO = new QuizUpsertDTO("", false, 1L, 1L);
@@ -189,11 +173,11 @@ public class QuizAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode PUT")
+    @DisplayName("PUT")
     class PutTests {
 
         @Test
-        @DisplayName("Mettre à jour un quiz")
+        @DisplayName("Succès")
         public void updateQuiz_shouldReturn200() throws Exception {
             // Given
             when(quizService.update(anyLong(), any(QuizUpsertDTO.class)))
@@ -208,7 +192,7 @@ public class QuizAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Mettre à jour un quiz avec un titre déjà existant")
+        @DisplayName("Erreur - Quiz avec titre déjà existant")
         public void updateQuiz_shouldReturn409() throws Exception {
             // Given
             when(quizService.update(anyLong(), any(QuizUpsertDTO.class)))
@@ -223,7 +207,7 @@ public class QuizAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Mettre à jour un quiz avec des données invalides")
+        @DisplayName("Erreur - Données invalides")
         public void updateInvalidQuiz_shouldReturn400() throws Exception {
             // Given
             quizUpsertDTO = new QuizUpsertDTO("", false, null, null);
@@ -238,7 +222,7 @@ public class QuizAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Mettre à jour un quiz inexistant")
+        @DisplayName("Erreur - Quiz non trouvé")
         public void updateQuiz_shouldReturn404() throws Exception {
             // Given
             when(quizService.update(anyLong(), any(QuizUpsertDTO.class)))
@@ -255,11 +239,11 @@ public class QuizAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode DELETE")
+    @DisplayName("DELETE")
     class DeleteTests {
 
         @Test
-        @DisplayName("Supprimer un quiz")
+        @DisplayName("Succès")
         public void deleteQuiz_shouldReturn204() throws Exception {
             // Given
             doNothing().when(quizService).delete(anyLong());
@@ -270,7 +254,7 @@ public class QuizAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Supprimer un quiz inexistant")
+        @DisplayName("Erreur - Quiz non trouvé")
         public void deleteQuiz_shouldReturn404() throws Exception {
             // Given
             doThrow(new NotFoundException()).when(quizService).delete(anyLong());
@@ -284,14 +268,14 @@ public class QuizAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode PATCH")
+    @DisplayName("PATCH")
     class PatchTests {
 
         @Test
-        @DisplayName("Désactiver un quiz")
-        public void disableQuiz_shouldReturn204() throws Exception {
+        @DisplayName("Succès")
+        public void updateVisibilityQuiz_shouldReturn204() throws Exception {
             // Given
-            doNothing().when(quizService).toggleVisibility(anyLong(), anyBoolean());
+            doNothing().when(quizService).updateVisibility(anyLong(), anyBoolean());
 
             // When & Then
             mockMvc.perform(patch(ApiRoutes.Quizzes.ADMIN_QUIZZES + ApiRoutes.VISIBILITY, endpointId)
@@ -301,10 +285,10 @@ public class QuizAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Désactiver un quiz inexistant")
-        public void disableQuiz_shouldReturn404() throws Exception {
+        @DisplayName("Erreur - Quiz non trouvé")
+        public void updateVisibilityQuiz_shouldReturn404() throws Exception {
             // Given
-            doThrow(new NotFoundException()).when(quizService).toggleVisibility(anyLong(), anyBoolean());
+            doThrow(new NotFoundException()).when(quizService).updateVisibility(anyLong(), anyBoolean());
 
             // When & Then
             mockMvc.perform(patch(ApiRoutes.Quizzes.ADMIN_QUIZZES + ApiRoutes.VISIBILITY, endpointId)

@@ -5,8 +5,11 @@ import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.dto.DifficultyLevelAdminDTO;
 import com.dassonville.api.dto.DifficultyLevelUpsertDTO;
+import com.dassonville.api.dto.ReorderRequestDTO;
+import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
+import com.dassonville.api.repository.DifficultyLevelRepository;
 import com.dassonville.api.service.DifficultyLevelService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +26,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
@@ -35,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @WebMvcTest(DifficultyLevelAdminController.class)
-@DisplayName("IT - DifficultyLevelAdminController")
+@DisplayName("IT - ADMIN Controller : Niveaux de difficulté")
 public class DifficultyLevelAdminControllerTest {
 
     @Autowired
@@ -46,28 +48,36 @@ public class DifficultyLevelAdminControllerTest {
 
     @MockitoBean
     private DifficultyLevelService difficultyLevelService;
+    @MockitoBean
+    private DifficultyLevelRepository difficultyLevelRepository;
+
 
     private long endpointId;
     private BooleanRequestDTO booleanRequestDTO;
     private DifficultyLevelUpsertDTO difficultyLevelUpsertDTO;
     private DifficultyLevelAdminDTO difficultyLevelAdminDTO;
+    private ReorderRequestDTO reorderRequestDTO;
 
 
     @BeforeEach
     public void setUp() {
         endpointId = 1L;
         booleanRequestDTO = new BooleanRequestDTO(true);
-        difficultyLevelAdminDTO = new DifficultyLevelAdminDTO(1L, "Facile", (byte) 2, (short) 0, 5, LocalDateTime.now(), null, null);
+        difficultyLevelAdminDTO = new DifficultyLevelAdminDTO(1L, "Facile", (byte) 2, (short) 0, 5,
+                false, (byte) 5, LocalDateTime.now(), null, null);
         difficultyLevelUpsertDTO = new DifficultyLevelUpsertDTO("Facile", (byte) 2, (short) 0, 5);
+        reorderRequestDTO = new ReorderRequestDTO(List.of(1L, 2L, 3L));
+
+        when(difficultyLevelRepository.countBy()).thenReturn(3);
     }
 
 
     @Nested
-    @DisplayName("Tests pour la méthode GET")
+    @DisplayName("GET")
     class GetTests {
 
         @Test
-        @DisplayName("Récupérer tous les niveaux de difficulté")
+        @DisplayName("Succès - Récupérer tous les niveaux de difficulté")
         public void getAllDifficultyLevels_shouldReturn200() throws Exception {
             // Given
             when(difficultyLevelService.getAllDifficultyLevels())
@@ -81,7 +91,7 @@ public class DifficultyLevelAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Récupérer un niveau de difficulté par son ID")
+        @DisplayName("Succès - Récupérer un niveau de difficulté par son ID")
         public void getDifficultyLevelById_shouldReturn200() throws Exception {
             // Given
             when(difficultyLevelService.findById(anyLong()))
@@ -90,11 +100,11 @@ public class DifficultyLevelAdminControllerTest {
             // When & Then
             mockMvc.perform(get(ApiRoutes.DifficultyLevels.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name", is(difficultyLevelAdminDTO.name())));
+                    .andExpect(jsonPath("$.name").value(difficultyLevelAdminDTO.name()));
         }
 
         @Test
-        @DisplayName("Récupérer un niveau de difficulté inexistant par son ID")
+        @DisplayName("Erreur - Niveau de difficulté non trouvé")
         public void getDifficultyLevelById_shouldReturn404() throws Exception {
             // Given
             when(difficultyLevelService.findById(anyLong()))
@@ -109,11 +119,11 @@ public class DifficultyLevelAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode POST")
+    @DisplayName("POST")
     class PostTests {
 
         @Test
-        @DisplayName("Créer un niveau de difficulté")
+        @DisplayName("Succès")
         public void createDifficultyLevel_shouldReturn201() throws Exception {
             // Given
             when(difficultyLevelService.create(any(DifficultyLevelUpsertDTO.class)))
@@ -124,25 +134,28 @@ public class DifficultyLevelAdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(difficultyLevelUpsertDTO)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.name", is(difficultyLevelAdminDTO.name())));
+                    .andExpect(jsonPath("$.name").value(difficultyLevelAdminDTO.name()));
         }
 
         @Test
-        @DisplayName("Créer un niveau de difficulté avec des données invalides")
+        @DisplayName("Erreur - Données invalides")
         public void createDifficultyLevel_shouldReturn400() throws Exception {
             // Given
-            difficultyLevelUpsertDTO = new DifficultyLevelUpsertDTO("", (byte) 2, (short) 0, 5);
+            difficultyLevelUpsertDTO = new DifficultyLevelUpsertDTO("", null, (short) -10, 0);
 
             // When & Then
             mockMvc.perform(post(ApiRoutes.DifficultyLevels.ADMIN_DIFFICULTY_LEVELS)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(difficultyLevelUpsertDTO)))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(difficultyLevelUpsertDTO)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.name").exists());
+                    .andExpect(jsonPath("$.name").exists())
+                    .andExpect(jsonPath("$.maxAnswers").exists())
+                    .andExpect(jsonPath("$.timerSeconds").exists())
+                    .andExpect(jsonPath("$.pointsPerQuestion").exists());
         }
 
         @Test
-        @DisplayName("Créer un niveau de difficulté avec un nom déjà existant")
+        @DisplayName("Erreur - Niveau de difficulté déjà existant")
         public void createDifficultyLevel_shouldReturn409() throws Exception {
             // Given
             when(difficultyLevelService.create(difficultyLevelUpsertDTO))
@@ -159,11 +172,11 @@ public class DifficultyLevelAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode PUT")
+    @DisplayName("PUT")
     class PutTests {
 
         @Test
-        @DisplayName("Modifier un niveau de difficulté")
+        @DisplayName("Succès")
         public void updateDifficultyLevel_shouldReturn200() throws Exception {
             // Given
             when(difficultyLevelService.update(anyLong(), any(DifficultyLevelUpsertDTO.class)))
@@ -174,11 +187,11 @@ public class DifficultyLevelAdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(difficultyLevelUpsertDTO)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name", is(difficultyLevelAdminDTO.name())));
+                    .andExpect(jsonPath("$.name").value(difficultyLevelAdminDTO.name()));
         }
 
         @Test
-        @DisplayName("Modifier un niveau de difficulté avec un nom déjà existant")
+        @DisplayName("Erreur - Niveau de difficulté déjà existant")
         public void updateDifficultyLevel_shouldReturn409() throws Exception {
             // Given
             when(difficultyLevelService.update(anyLong(), any(DifficultyLevelUpsertDTO.class)))
@@ -193,21 +206,24 @@ public class DifficultyLevelAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Modifier un niveau de difficulté avec des données invalides")
+        @DisplayName("Erreur - Données invalides")
         public void updateDifficultyLevel_shouldReturn400() throws Exception {
             // Given
-            difficultyLevelUpsertDTO = new DifficultyLevelUpsertDTO("", (byte) 2, (short) 0, 5);
+            difficultyLevelUpsertDTO = new DifficultyLevelUpsertDTO(" ", (byte) -2, null, null);
 
             // When & Then
             mockMvc.perform(put(ApiRoutes.DifficultyLevels.ADMIN_BY_ID, endpointId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(difficultyLevelUpsertDTO)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.name").exists());
+                    .andExpect(jsonPath("$.name").exists())
+                    .andExpect(jsonPath("$.maxAnswers").exists())
+                    .andExpect(jsonPath("$.timerSeconds").exists())
+                    .andExpect(jsonPath("$.pointsPerQuestion").exists());
         }
 
         @Test
-        @DisplayName("Modifier un niveau de difficulté inexistant")
+        @DisplayName("Erreur - Niveau de difficulté non trouvé")
         public void updateDifficultyLevel_shouldReturn404() throws Exception {
             // Given
             when(difficultyLevelService.update(anyLong(), any(DifficultyLevelUpsertDTO.class)))
@@ -224,11 +240,11 @@ public class DifficultyLevelAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode DELETE")
+    @DisplayName("DELETE")
     class DeleteTests {
 
         @Test
-        @DisplayName("Désactiver un niveau de difficulté")
+        @DisplayName("Succès")
         public void deleteDifficultyLevel_shouldReturn200() throws Exception {
             // Given
             doNothing().when(difficultyLevelService).delete(anyLong());
@@ -239,7 +255,7 @@ public class DifficultyLevelAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Désactiver un niveau de difficulté inexistant")
+        @DisplayName("Erreur - Niveau de difficulté non trouvé")
         public void deleteDifficultyLevel_shouldReturn404() throws Exception {
             // Given
             doThrow(new NotFoundException()).when(difficultyLevelService).delete(anyLong());
@@ -249,38 +265,97 @@ public class DifficultyLevelAdminControllerTest {
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
         }
+
+        @Test
+        @DisplayName("Erreur - Action non autorisée")
+        public void deleteDifficultyLevel_shouldReturn409() throws Exception {
+            // Given
+            doThrow(new ActionNotAllowedException()).when(difficultyLevelService).delete(anyLong());
+
+            // When & Then
+            mockMvc.perform(delete(ApiRoutes.DifficultyLevels.ADMIN_BY_ID, endpointId))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.message").exists());
+        }
     }
 
 
     @Nested
-    @DisplayName("Tests pour la méthode PATCH")
-    class PatchTests {
+    @DisplayName("PATCH - Visibilité")
+    class PatchVisibilityTests {
 
         @Test
-        @DisplayName("Activer / désactiver un niveau de difficulté")
-        public void toggleDisableDifficultyLevel_shouldReturn204() throws Exception {
+        @DisplayName("Succès")
+        public void updateVisibilityDifficultyLevel_shouldReturn204() throws Exception {
             // Given
-            doNothing().when(difficultyLevelService).toggleDisable(anyLong(), any(BooleanRequestDTO.class));
+            doNothing().when(difficultyLevelService).updateVisibility(anyLong(), anyBoolean());
 
             // When & Then
-            mockMvc.perform(patch(ApiRoutes.DifficultyLevels.ADMIN_BY_ID, endpointId)
+            mockMvc.perform(patch(ApiRoutes.DifficultyLevels.ADMIN_VISIBILITY_PATCH, endpointId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNoContent());
         }
 
         @Test
-        @DisplayName("Activer / désactiver un niveau de difficulté inexistant")
-        public void toggleDisableDifficultyLevel_shouldReturn404() throws Exception {
+        @DisplayName("Erreur - Niveau de difficulté non trouvé")
+        public void updateVisibilityDifficultyLevel_shouldReturn404() throws Exception {
             // Given
-            doThrow(new NotFoundException()).when(difficultyLevelService).toggleDisable(anyLong(), any(BooleanRequestDTO.class));
+            doThrow(new NotFoundException()).when(difficultyLevelService).updateVisibility(anyLong(), anyBoolean());
 
             // When & Then
-            mockMvc.perform(patch(ApiRoutes.DifficultyLevels.ADMIN_BY_ID, endpointId)
+            mockMvc.perform(patch(ApiRoutes.DifficultyLevels.ADMIN_VISIBILITY_PATCH, endpointId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").exists());
+        }
+    }
+
+
+    @Nested
+    @DisplayName("PATCH - Réordonner")
+    class PatchReorderTests {
+
+        @Test
+        @DisplayName("Succès")
+        public void reorderDifficultyLevel_shouldReturn204() throws Exception {
+            // Given
+            doNothing().when(difficultyLevelService).updateDisplayOrder(reorderRequestDTO.orderedIds());
+
+            // When & Then
+            mockMvc.perform(patch(ApiRoutes.DifficultyLevels.ADMIN_DIFFICULTY_LEVELS + ApiRoutes.REORDER)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reorderRequestDTO)))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("Erreur - Niveaux de difficulté non trouvés")
+        public void reorderDifficultyLevel_shouldReturn404() throws Exception {
+            // Given
+            doThrow(new NotFoundException()).when(difficultyLevelService).updateDisplayOrder(reorderRequestDTO.orderedIds());
+
+            // When & Then
+            mockMvc.perform(patch(ApiRoutes.DifficultyLevels.ADMIN_DIFFICULTY_LEVELS + ApiRoutes.REORDER)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reorderRequestDTO)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        @DisplayName("Erreur - Nombre de niveaux de difficulté incorrect")
+        public void reorderDifficultyLevel_shouldReturn400() throws Exception {
+            // Given
+            reorderRequestDTO = new ReorderRequestDTO(List.of(1L, 2L));
+
+            // When & Then
+            mockMvc.perform(patch(ApiRoutes.DifficultyLevels.ADMIN_DIFFICULTY_LEVELS + ApiRoutes.REORDER)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reorderRequestDTO)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.orderedIds").exists());
         }
     }
 }

@@ -2,9 +2,9 @@ package com.dassonville.api.controller;
 
 
 import com.dassonville.api.constant.ApiRoutes;
+import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
-import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.service.CategoryService;
@@ -20,7 +20,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
@@ -29,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @WebMvcTest(controllers = CategoryAdminController.class)
-@DisplayName("IT - CategoryController")
+@DisplayName("IT - ADMIN Controller : Catégorie")
 public class CategoryAdminControllerTest {
 
     @Autowired
@@ -51,16 +50,16 @@ public class CategoryAdminControllerTest {
         endpointId = 1L;
         booleanRequestDTO = new BooleanRequestDTO(true);
         categoryAdminDTO = new CategoryAdminDTO(1L, "Code", "", null, null, null, 6);
-        categoryUpsertDTO = new CategoryUpsertDTO("Code", "", 6);
+        categoryUpsertDTO = new CategoryUpsertDTO("Code", "");
     }
 
 
     @Nested
-    @DisplayName("Tests pour la méthode GET")
+    @DisplayName("GET")
     class GetTests {
 
         @Test
-        @DisplayName("Obtenir une catégorie par son ID")
+        @DisplayName("Succès - Obtenir une catégorie par son ID")
         public void getCategoryById_shouldReturn200() throws Exception {
             // Given
             when(categoryService.findById(anyLong()))
@@ -69,11 +68,11 @@ public class CategoryAdminControllerTest {
             // When & Then
             mockMvc.perform(get(ApiRoutes.Categories.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name", is(categoryAdminDTO.name())));
+                    .andExpect(jsonPath("$.name").value(categoryAdminDTO.name()));
         }
 
         @Test
-        @DisplayName("Obtenir une catégorie inexistante par son ID")
+        @DisplayName("Erreur - Catégorie non trouvée")
         public void getCategoryById_shouldReturn404() throws Exception {
             // Given
             when(categoryService.findById(anyLong()))
@@ -88,34 +87,49 @@ public class CategoryAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode POST")
+    @DisplayName("POST")
     class PostTests {
 
         @Test
-        @DisplayName("Créer une catégorie")
+        @DisplayName("Succès")
         public void createCategory_shouldReturn201() throws Exception {
             // Given
-            when(categoryService.create(any(CategoryUpsertDTO.class)))
+            when(categoryService.create(anyLong(), any(CategoryUpsertDTO.class)))
                     .thenReturn(categoryAdminDTO);
 
             // When & Then
-            mockMvc.perform(post(ApiRoutes.Categories.ADMIN_CATEGORIES)
+            mockMvc.perform(post(ApiRoutes.Categories.ADMIN_QUESTIONS_POST, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isCreated())
                     .andExpect(header().string("Location", containsString(ApiRoutes.Categories.STRING + "/" + categoryAdminDTO.id())))
-                    .andExpect(jsonPath("$.name", is(categoryAdminDTO.name())));
+                    .andExpect(jsonPath("$.name").value(categoryAdminDTO.name()));
         }
 
         @Test
-        @DisplayName("Créer une catégorie avec un nom déjà existant")
-        public void createCategory_shouldReturn409() throws Exception {
+        @DisplayName("Erreur - Thème non trouvée")
+        public void createCategory_shouldReturn404() throws Exception {
             // Given
-            when(categoryService.create(any(CategoryUpsertDTO.class)))
-                    .thenThrow(new AlreadyExistException("Une catégorie existe déjà avec le même nom."));
+            when(categoryService.create(anyLong(), any(CategoryUpsertDTO.class)))
+                    .thenThrow(new NotFoundException());
 
             // When & Then
-            mockMvc.perform(post(ApiRoutes.Categories.ADMIN_CATEGORIES)
+            mockMvc.perform(post(ApiRoutes.Categories.ADMIN_QUESTIONS_POST, endpointId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        @DisplayName("Erreur - Catégorie déjà existante")
+        public void createCategory_shouldReturn409() throws Exception {
+            // Given
+            when(categoryService.create(anyLong(), any(CategoryUpsertDTO.class)))
+                    .thenThrow(new AlreadyExistException());
+
+            // When & Then
+            mockMvc.perform(post(ApiRoutes.Categories.ADMIN_QUESTIONS_POST, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isConflict())
@@ -123,13 +137,13 @@ public class CategoryAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Créer une catégorie avec des données invalides")
+        @DisplayName("Erreur - Données invalides")
         public void createCategory_shouldReturn400() throws Exception {
             // Given
-            categoryUpsertDTO = new CategoryUpsertDTO("", "", 1);
+            categoryUpsertDTO = new CategoryUpsertDTO("", "");
 
             // When & Then
-            mockMvc.perform(post(ApiRoutes.Categories.ADMIN_CATEGORIES)
+            mockMvc.perform(post(ApiRoutes.Categories.ADMIN_QUESTIONS_POST, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isBadRequest())
@@ -139,11 +153,11 @@ public class CategoryAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode PUT")
+    @DisplayName("PUT")
     class PutTests {
 
         @Test
-        @DisplayName("Modifier une catégorie")
+        @DisplayName("Succès")
         public void updateCategory_shouldReturn200() throws Exception {
             // Given
             when(categoryService.update(anyLong(), any(CategoryUpsertDTO.class)))
@@ -154,11 +168,11 @@ public class CategoryAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name", is(categoryAdminDTO.name())));
+                    .andExpect(jsonPath("$.name").value(categoryAdminDTO.name()));
         }
 
         @Test
-        @DisplayName("Modifier une catégorie avec un nom déjà existant")
+        @DisplayName("Erreur - Catégorie déjà existante")
         public void updateCategory_shouldReturn409() throws Exception {
             // Given
             when(categoryService.update(anyLong(), any(CategoryUpsertDTO.class)))
@@ -173,10 +187,10 @@ public class CategoryAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Modifier une catégorie avec des données invalides")
+        @DisplayName("Erreur - Données invalides")
         public void updateCategory_shouldReturn400() throws Exception {
             // Given
-            categoryUpsertDTO = new CategoryUpsertDTO("", "", 1);
+            categoryUpsertDTO = new CategoryUpsertDTO("", "");
 
             // When & Then
             mockMvc.perform(put(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
@@ -187,7 +201,7 @@ public class CategoryAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Modifier une catégorie avec un ID inexistant")
+        @DisplayName("Erreur - Catégorie non trouvée")
         public void updateCategory_shouldReturn404() throws Exception {
             // Given
             when(categoryService.update(anyLong(), any(CategoryUpsertDTO.class)))
@@ -204,11 +218,11 @@ public class CategoryAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode DELETE")
+    @DisplayName("DELETE")
     class DeleteTests {
 
         @Test
-        @DisplayName("Supprimer une catégorie")
+        @DisplayName("Succès")
         public void deleteCategory_shouldReturn204() throws Exception {
             // Given
             doNothing().when(categoryService).delete(anyLong());
@@ -219,7 +233,7 @@ public class CategoryAdminControllerTest {
         }
 
         @Test
-        @DisplayName("Supprimer une catégorie avec un ID inexistant")
+        @DisplayName("Erreur - Catégorie non trouvée")
         public void deleteCategory_shouldReturn404() throws Exception {
             // Given
             doThrow(new NotFoundException()).when(categoryService).delete(anyLong());
@@ -233,30 +247,30 @@ public class CategoryAdminControllerTest {
 
 
     @Nested
-    @DisplayName("Tests pour la méthode PATCH")
+    @DisplayName("PATCH")
     class PatchTests {
 
         @Test
-        @DisplayName("Désactiver une catégorie")
-        public void toggleDisableCategory_shouldReturn204() throws Exception {
+        @DisplayName("Succès")
+        public void updateVisibilityCategory_shouldReturn204() throws Exception {
             // Given
-            doNothing().when(categoryService).toggleDisable(anyLong(), any(BooleanRequestDTO.class));
+            doNothing().when(categoryService).updateVisibility(anyLong(), anyBoolean());
 
             // When & Then
-            mockMvc.perform(patch(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
+            mockMvc.perform(patch(ApiRoutes.Categories.ADMIN_VISIBILITY_PATCH, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNoContent());
         }
 
         @Test
-        @DisplayName("Désactiver une catégorie inexistante")
-        public void toggleDisableCategory_shouldReturn404() throws Exception {
+        @DisplayName("Erreur - Catégorie non trouvée")
+        public void updateVisibilityCategory_shouldReturn404() throws Exception {
             // Given
-            doThrow(new NotFoundException()).when(categoryService).toggleDisable(anyLong(), any(BooleanRequestDTO.class));
+            doThrow(new NotFoundException()).when(categoryService).updateVisibility(anyLong(), anyBoolean());
 
             // When & Then
-            mockMvc.perform(patch(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
+            mockMvc.perform(patch(ApiRoutes.Categories.ADMIN_VISIBILITY_PATCH, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNotFound())

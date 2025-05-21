@@ -48,8 +48,9 @@ public class CategoryE2ETest {
     @DisplayName("Créer et récupérer la catégorie avec le header Location")
     public void shouldCreateAndRetrieveCategory() {
         // Given
-        CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO("Droit européen", "Pour les juristes en herbe", 2);
-        String url = "http://localhost:" + port + ApiRoutes.Categories.ADMIN_CATEGORIES;
+        long id = 1;
+        CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO("Droit européen", "Pour les juristes en herbe");
+        String url = "http://localhost:" + port + ApiRoutes.Themes.ADMIN_THEMES + "/" + id + ApiRoutes.Categories.STRING;
 
         // When - Envoi de la requête HTTP pour créer la catégorie
         HttpEntity<CategoryUpsertDTO> request = new HttpEntity<>(categoryToCreate);
@@ -75,8 +76,9 @@ public class CategoryE2ETest {
     @DisplayName("Créer une catégorie avec le même nom")
     public void shouldNotCreateCategoryWithSameName() {
         // Given
-        CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO("Cinéma", "Pour les cinéphiles", 1);
-        String url = "http://localhost:" + port + ApiRoutes.Categories.ADMIN_CATEGORIES;
+        long id = 1;
+        CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO("Cinéma", "Pour les cinéphiles");
+        String url = "http://localhost:" + port + ApiRoutes.Themes.ADMIN_THEMES + "/" + id + ApiRoutes.Categories.STRING;
 
         // When - Envoi de la requête HTTP pour créer la catégorie
         HttpEntity<CategoryUpsertDTO> request = new HttpEntity<>(categoryToCreate);
@@ -94,7 +96,7 @@ public class CategoryE2ETest {
     public void shouldUpdateCategory() {
         // Given
         long id = 4;
-        CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO("Droit européen", "Pour les juristes en herbe", 2);
+        CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO("Droit européen", "Pour les juristes en herbe");
         String url = "http://localhost:" + port + ApiRoutes.Categories.ADMIN_CATEGORIES + "/" + id;
 
         // When - Envoi de la requête HTTP pour mettre à jour la catégorie

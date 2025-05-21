@@ -1,16 +1,18 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.dto.ThemeAdminDTO;
 import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
+import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.ThemeMapper;
 import com.dassonville.api.model.Theme;
+import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.projection.PublicThemeProjection;
 import com.dassonville.api.repository.ThemeRepository;
+import com.dassonville.api.repository.ThemeSummaryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,11 +33,13 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("UNI - ThemeService")
+@DisplayName("UNI - Service : Thème")
 public class ThemeServiceTest {
 
     @Mock
     private ThemeRepository themeRepository;
+    @Mock
+    private ThemeSummaryRepository themeSummaryRepository;
 
     private ThemeService themeService;
 
@@ -43,180 +47,221 @@ public class ThemeServiceTest {
 
 
     private long id;
-    private BooleanRequestDTO booleanRequestDTO;
     private Theme theme;
     private PublicThemeProjection publicThemeProjection;
-    private Theme themeToUpdate;
-    private ThemePublicDTO themePublicDTO;
-    private ThemeAdminDTO themeAdminDTO;
-    private ThemeUpsertDTO themeToCreateDTO;
-    private ThemeUpsertDTO themeToUpdateDTO;
+    private ThemeUpsertDTO themeToUpsertDTO;
 
 
 
     @BeforeEach
     void setUp() {
-        themeService = new ThemeService(themeRepository, themeMapper);
+        themeService = new ThemeService(themeRepository, themeMapper, themeSummaryRepository);
 
         id = 1L;
-        booleanRequestDTO = new BooleanRequestDTO(true);
 
         theme = new Theme();
-        theme.setId(1);
-        theme.setName("informatique");
-        theme.setDescription("");
+        theme.setId(1L);
+        theme.setName("Informatique");
+        theme.setDescription("Description");
         theme.setCreatedAt(LocalDateTime.now());
+        theme.setUpdatedAt(LocalDateTime.now());
+        theme.setDisabledAt(null);
 
         publicThemeProjection = mock(PublicThemeProjection.class);
-        when(publicThemeProjection.getId()).thenReturn(1L);
-        when(publicThemeProjection.getName()).thenReturn("informatique");
-        when(publicThemeProjection.getDescription()).thenReturn("");
-        when(publicThemeProjection.getCreatedAt()).thenReturn(LocalDateTime.now());
+        lenient().when(publicThemeProjection.getId()).thenReturn(1L);
+        lenient().when(publicThemeProjection.getName()).thenReturn("Informatique");
+        lenient().when(publicThemeProjection.getDescription()).thenReturn("Description");
+        lenient().when(publicThemeProjection.getCreatedAt()).thenReturn(LocalDateTime.now());
 
-        themeToUpdate = new Theme();
-        themeToUpdate.setId(1);
-        themeToUpdate.setName("Nouveau nom");
-        themeToUpdate.setDescription("Nouvelle description");
-
-        themePublicDTO = themeMapper.toPublicDTO(publicThemeProjection);
-        themeAdminDTO = themeMapper.toAdminDTO(theme);
-        themeToCreateDTO = themeMapper.toUpsertDTO(theme);
-        themeToUpdateDTO = themeMapper.toUpsertDTO(themeToUpdate);
+        themeToUpsertDTO = new ThemeUpsertDTO(" informatique ", " description");
     }
 
 
     @Nested
-    @DisplayName("Tests de la méthode getAllThemes")
+    @DisplayName("Récupérer une liste de thèmes")
     class getAllThemesTest {
+
         @Test
-        @DisplayName("Récupérer tous les thèmes")
-        public void getAllThemes() {
+        @DisplayName("ADMIN - Récupérer toutes les catégories d'un thème (ID et nom)")
+        public void getCategoriesByTheme() {
             // Given
-            when(themeRepository.findAll())
+            IdAndNameProjection idAndNameProjection = mock(IdAndNameProjection.class);
+
+            when(themeRepository.existsById(anyLong()))
+                    .thenReturn(true);
+            when(themeRepository.findAllCategoriesByThemeId(anyLong()))
+                    .thenReturn(List.of(idAndNameProjection));
+
+            // When
+            themeService.getCategoriesByTheme(id);
+
+            // Then
+            verify(themeRepository).existsById(anyLong());
+            verify(themeRepository).findAllCategoriesByThemeId(anyLong());
+        }
+
+        @Test
+        @DisplayName("ADMIN - Erreur - Récupérer toutes les catégories d'un thème (ID et nom) - Thème non trouvé")
+        public void getCategoriesByTheme_nonExistingTheme() {
+            // Given
+            when(themeRepository.existsById(anyLong()))
+                    .thenReturn(false);
+
+            // When & Then
+            assertThrows(NotFoundException.class, () -> themeService.getCategoriesByTheme(id));
+
+            verify(themeRepository).existsById(anyLong());
+            verify(themeRepository, never()).findAllCategoriesByThemeId(anyLong());
+        }
+
+
+        @Test
+        @DisplayName("ADMIN - Récupérer tous les thèmes en détails")
+        public void getAllThemesDetails() {
+            // Given
+            when(themeRepository.findAllByOrderByNameAndCategoryName())
                     .thenReturn(List.of(theme));
 
             // When
-            themeService.getAllThemes();
+            List<ThemeAdminDTO> results = themeService.getAllThemesDetails();
 
             // Then
-            verify(themeRepository).findAll();
+            verify(themeRepository).findAllByOrderByNameAndCategoryName();
+
+            assertThat(results).isNotNull();
+            assertThat(results.size()).isEqualTo(1);
+            assertThat(results.get(0).id()).isEqualTo(theme.getId());
+            assertThat(results.get(0).name()).isEqualTo(theme.getName());
+            assertThat(results.get(0).description()).isEqualTo(theme.getDescription());
+            assertThat(results.get(0).createdAt()).isEqualTo(theme.getCreatedAt());
+            assertThat(results.get(0).updatedAt()).isEqualTo(theme.getUpdatedAt());
+            assertThat(results.get(0).disabledAt()).isEqualTo(theme.getDisabledAt());
         }
 
         @Test
-        @DisplayName("Récupérer tous les thèmes actifs")
+        @DisplayName("USER - Récupérer tous les thèmes actifs")
         public void getAllActiveThemes() {
             // Given
-            when(themeRepository.findByDisabledAtIsNull())
+            when(themeRepository.findByDisabledAtIsNullOrderByName())
                     .thenReturn(List.of(publicThemeProjection));
 
             // When
-            themeService.getAllActiveThemes();
+            List<ThemePublicDTO> results = themeService.getAllActiveThemes();
 
             // Then
-            verify(themeRepository).findByDisabledAtIsNull();
+            verify(themeRepository).findByDisabledAtIsNullOrderByName();
+
+            assertThat(results).isNotNull();
+            assertThat(results.size()).isEqualTo(1);
+            assertThat(results.get(0).id()).isEqualTo(publicThemeProjection.getId());
+            assertThat(results.get(0).name()).isEqualTo(publicThemeProjection.getName());
+            assertThat(results.get(0).description()).isEqualTo(publicThemeProjection.getDescription());
+            assertThat(results.get(0).isNew()).isEqualTo(true);
         }
     }
 
 
     @Nested
-    @DisplayName("Tests de la méthode findById")
+    @DisplayName("Récupérer un thème par son ID")
     class FindByIdTests {
 
         @Test
-        @DisplayName("Récupérer un thème par son ID")
+        @DisplayName("USER - Succès")
         public void findById_existingId() {
             // Given
-            when(themeRepository.findByIdAndDisabledAtIsNull(any(Long.class)))
+            when(themeRepository.findByIdAndDisabledAtIsNull(anyLong()))
                     .thenReturn(Optional.of(publicThemeProjection));
 
             // When
             ThemePublicDTO result = themeService.findByIdForUser(id);
 
             // Then
-            verify(themeRepository).findByIdAndDisabledAtIsNull(any(Long.class));
+            verify(themeRepository).findByIdAndDisabledAtIsNull(anyLong());
+
             assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(themePublicDTO.name());
+            assertThat(result.name()).isEqualTo(publicThemeProjection.getName());
         }
 
         @Test
-        @DisplayName("Récupérer un thème par un ID inexistant - USER")
+        @DisplayName("USER - Erreur - Thème non trouvé")
         public void findByIdForUser_nonExistingId() {
             // Given
-            when(themeRepository.findByIdAndDisabledAtIsNull(any(Long.class)))
+            when(themeRepository.findByIdAndDisabledAtIsNull(anyLong()))
                     .thenReturn(Optional.empty());
 
             // When & Then
             assertThrows(NotFoundException.class, () -> themeService.findByIdForUser(id));
 
-            verify(themeRepository).findByIdAndDisabledAtIsNull(any(Long.class));
+            verify(themeRepository).findByIdAndDisabledAtIsNull(anyLong());
         }
 
         @Test
-        @DisplayName("Récupérer un thème par son ID")
+        @DisplayName("ADMIN - Succès")
         public void findByIdForAdmin_existingId() {
             // Given
-            when(themeRepository.findById(any(Long.class)))
+            when(themeRepository.findById(anyLong()))
                     .thenReturn(Optional.of(theme));
 
             // When
             ThemeAdminDTO result = themeService.findByIdForAdmin(id);
 
             // Then
-            verify(themeRepository).findById(any(Long.class));
+            verify(themeRepository).findById(anyLong());
+
             assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(themeAdminDTO.name());
+            assertThat(result.name()).isEqualTo(theme.getName());
         }
 
         @Test
-        @DisplayName("Récupérer un thème par un ID inexistant - ADMIN")
+        @DisplayName("ADMIN - Erreur - Thème non trouvé")
         public void findByIdForAdmin_nonExistingId() {
             // Given
-            when(themeRepository.findById(any(Long.class)))
+            when(themeRepository.findById(anyLong()))
                     .thenReturn(Optional.empty());
 
             // When & Then
             assertThrows(NotFoundException.class, () -> themeService.findByIdForAdmin(id));
 
-            verify(themeRepository).findById(any(Long.class));
+            verify(themeRepository).findById(anyLong());
         }
 
     }
 
 
     @Nested
-    @DisplayName("Tests de la méthode create")
+    @DisplayName("Créer un thème")
     class CreateTests {
 
         @Test
-        @DisplayName("Créer un nouveau thème")
+        @DisplayName("Succès")
         public void create_newTheme() {
             // Given
-            when(themeRepository.existsByNameIgnoreCase(any(String.class)))
+            when(themeRepository.existsByNameIgnoreCase(anyString()))
                     .thenReturn(false);
             when(themeRepository.save(any(Theme.class)))
                     .thenReturn(theme);
 
             // When
-            ThemeAdminDTO result = themeService.create(themeToCreateDTO);
+            ThemeAdminDTO result = themeService.create(themeToUpsertDTO);
 
             // Then
-            verify(themeRepository).existsByNameIgnoreCase(any(String.class));
+            verify(themeRepository).existsByNameIgnoreCase(anyString());
             verify(themeRepository).save(any(Theme.class));
             assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(themeToCreateDTO.name());
+            assertThat(result.name()).isEqualTo(theme.getName());
         }
 
         @Test
-        @DisplayName("Créer un thème déjà existant")
+        @DisplayName("Erreur - Thème déjà existant")
         public void create_existingTheme() {
             // Given
-            when(themeRepository.existsByNameIgnoreCase(any(String.class)))
+            when(themeRepository.existsByNameIgnoreCase(anyString()))
                     .thenReturn(true);
 
             // When & Then
-            assertThrows(AlreadyExistException.class, () -> themeService.create(themeToCreateDTO));
+            assertThrows(AlreadyExistException.class, () -> themeService.create(themeToUpsertDTO));
 
-            verify(themeRepository).existsByNameIgnoreCase(any(String.class));
+            verify(themeRepository).existsByNameIgnoreCase(anyString());
             verify(themeRepository, never()).save(any(Theme.class));
         }
 
@@ -224,80 +269,61 @@ public class ThemeServiceTest {
 
 
     @Nested
-    @DisplayName("Tests de la méthode update")
+    @DisplayName("Mettre à jour un thème")
     class UpdateTests {
 
         @Test
-        @DisplayName("Mettre à jour un thème existant")
+        @DisplayName("Succès")
         public void update_existingTheme() {
             // Given
-            when(themeRepository.findById(any(Long.class)))
+            when(themeRepository.findById(anyLong()))
                     .thenReturn(Optional.of(theme));
-            when(themeRepository.existsByNameIgnoreCase(any(String.class)))
+            when(themeRepository.existsByNameIgnoreCaseAndIdNot(anyString(), anyLong()))
                     .thenReturn(false);
             when(themeRepository.save(any(Theme.class)))
-                    .thenReturn(themeToUpdate);
+                    .thenReturn(theme);
 
             // When
-            ThemeAdminDTO result = themeService.update(id, themeToUpdateDTO);
+            ThemeAdminDTO result = themeService.update(id, themeToUpsertDTO);
 
             // Then
-            verify(themeRepository).findById(any(Long.class));
-            verify(themeRepository).existsByNameIgnoreCase(any(String.class));
+            verify(themeRepository).findById(anyLong());
+            verify(themeRepository).existsByNameIgnoreCaseAndIdNot(anyString(), anyLong());
             verify(themeRepository).save(any(Theme.class));
+
             assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(themeToUpdateDTO.name());
+            assertThat(result.name()).isEqualTo(theme.getName());
         }
 
         @Test
-        @DisplayName("Mettre à jour un thème sans changer le nom")
-        public void update_existingThemeWithoutChangingName() {
-            // Given
-            when(themeRepository.findById(any(Long.class)))
-                    .thenReturn(Optional.of(themeToUpdate));
-            when(themeRepository.save(any(Theme.class)))
-                    .thenReturn(themeToUpdate);
-
-            // When
-            ThemeAdminDTO result = themeService.update(id, themeToUpdateDTO);
-
-            // Then
-            verify(themeRepository).findById(any(Long.class));
-            verify(themeRepository, never()).existsByNameIgnoreCase(any(String.class));
-            verify(themeRepository).save(any(Theme.class));
-            assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(themeToUpdateDTO.name());
-        }
-
-        @Test
-        @DisplayName("Mettre à jour un thème inexistant")
+        @DisplayName("Erreur - Thème non trouvé")
         public void update_nonExistingTheme() {
             // Given
-            when(themeRepository.findById(any(Long.class)))
+            when(themeRepository.findById(anyLong()))
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.update(id, themeToUpdateDTO));
+            assertThrows(NotFoundException.class, () -> themeService.update(id, themeToUpsertDTO));
 
-            verify(themeRepository).findById(any(Long.class));
-            verify(themeRepository, never()).existsByNameIgnoreCase(any(String.class));
+            verify(themeRepository).findById(anyLong());
+            verify(themeRepository, never()).existsByNameIgnoreCase(anyString());
             verify(themeRepository, never()).save(any(Theme.class));
         }
 
         @Test
-        @DisplayName("Mettre à jour un thème avec un nom déjà existant")
+        @DisplayName("Erreur - Thème déjà existant")
         public void update_existingThemeWithExistingName() {
             // Given
-            when(themeRepository.findById(any(Long.class)))
+            when(themeRepository.findById(anyLong()))
                     .thenReturn(Optional.of(theme));
-            when(themeRepository.existsByNameIgnoreCase(any(String.class)))
+            when(themeRepository.existsByNameIgnoreCaseAndIdNot(anyString(), anyLong()))
                     .thenReturn(true);
 
             // When & Then
-            assertThrows(AlreadyExistException.class, () -> themeService.update(id, themeToUpdateDTO));
+            assertThrows(AlreadyExistException.class, () -> themeService.update(id, themeToUpsertDTO));
 
-            verify(themeRepository).findById(any(Long.class));
-            verify(themeRepository).existsByNameIgnoreCase(any(String.class));
+            verify(themeRepository).findById(anyLong());
+            verify(themeRepository).existsByNameIgnoreCaseAndIdNot(anyString(), anyLong());
             verify(themeRepository, never()).save(any(Theme.class));
         }
 
@@ -305,88 +331,107 @@ public class ThemeServiceTest {
 
 
     @Nested
-    @DisplayName("Tests de la méthode delete")
+    @DisplayName("Supprimer un thème")
     class DeleteTests {
 
         @Test
-        @DisplayName("Supprimer un thème existant")
+        @DisplayName("Succès")
         public void delete_existingTheme() {
             // Given
-            when(themeRepository.existsById(any(Long.class)))
+            when(themeRepository.existsById(anyLong()))
                     .thenReturn(true);
 
             // When
             themeService.delete(id);
 
             // Then
-            verify(themeRepository).existsById(any(Long.class));
-            verify(themeRepository).deleteById(any(Long.class));
+            verify(themeRepository).existsById(anyLong());
+            verify(themeRepository).deleteById(anyLong());
         }
 
         @Test
-        @DisplayName("Supprimer un thème inexistant")
+        @DisplayName("Erreur - Thème non trouvé")
         public void delete_nonExistingTheme() {
             // Given
-            when(themeRepository.existsById(any(Long.class)))
+            when(themeRepository.existsById(anyLong()))
                     .thenReturn(false);
 
             // When & Then
             assertThrows(NotFoundException.class, () -> themeService.delete(id));
 
-            verify(themeRepository).existsById(any(Long.class));
-            verify(themeRepository, never()).deleteById(any(Long.class));
+            verify(themeRepository).existsById(anyLong());
+            verify(themeRepository, never()).deleteById(anyLong());
         }
 
     }
 
 
     @Nested
-    @DisplayName("Tests de la méthode toggleDisable")
-    class ToggleDisableTests {
+    @DisplayName("Basculer la visibilité d'un thème")
+    class UpdateVisibilityTests {
 
         @Test
-        @DisplayName("Désactiver un thème actif")
+        @DisplayName("Succès")
         public void disable_activeTheme() {
             // Given
-            when(themeRepository.findById(any(Long.class)))
+            when(themeRepository.findById(anyLong()))
                     .thenReturn(Optional.of(theme));
 
             // When
-            themeService.toggleDisable(id, booleanRequestDTO);
+            themeService.updateVisibility(id, false);
 
             // Then
-            verify(themeRepository).findById(any(Long.class));
+            verify(themeRepository).findById(anyLong());
+            verify(themeRepository, never()).countByIdAndQuizzesDisabledAtIsNull(anyLong());
             verify(themeRepository).save(any(Theme.class));
         }
 
         @Test
-        @DisplayName("Réactiver un thème désactivé")
-        public void enable_disabledTheme() {
+        @DisplayName("RAS - Thème déjà activé")
+        public void disable_alreadyDisabledTheme() {
             // Given
-            booleanRequestDTO = new BooleanRequestDTO(false);
-            theme.setDisabledAt(theme.getCreatedAt());
-            when(themeRepository.findById(any(Long.class)))
+            when(themeRepository.findById(anyLong()))
                     .thenReturn(Optional.of(theme));
 
             // When
-            themeService.toggleDisable(id, booleanRequestDTO);
+            themeService.updateVisibility(id, true);
 
             // Then
-            verify(themeRepository).findById(any(Long.class));
-            verify(themeRepository).save(any(Theme.class));
+            verify(themeRepository).findById(anyLong());
+            verify(themeRepository, never()).countByIdAndQuizzesDisabledAtIsNull(anyLong());
+            verify(themeRepository, never()).save(any(Theme.class));
+        }
+        
+        @Test
+        @DisplayName("Erreur - Action non autorisée - Thème sans quiz actif")
+        public void enable_disabledThemeWithoutActiveQuizzes() {
+            // Given
+            theme.setDisabledAt(LocalDateTime.now());
+            when(themeRepository.findById(anyLong()))
+                    .thenReturn(Optional.of(theme));
+            when(themeRepository.countByIdAndQuizzesDisabledAtIsNull(anyLong()))
+                    .thenReturn(0);
+
+            // When & Then
+            assertThrows(ActionNotAllowedException.class, () -> themeService.updateVisibility(id, true));
+
+            verify(themeRepository).findById(anyLong());
+            verify(themeRepository).countByIdAndQuizzesDisabledAtIsNull(anyLong());
+            verify(themeRepository, never()).save(any(Theme.class));
         }
 
         @Test
-        @DisplayName("Désactiver un thème inexistant")
+        @DisplayName("Erreur - Thème non trouvé")
         public void disable_nonExistingTheme() {
             // Given
-            when(themeRepository.findById(any(Long.class)))
+            when(themeRepository.findById(anyLong()))
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.toggleDisable(id, booleanRequestDTO));
+            assertThrows(NotFoundException.class, () -> themeService.updateVisibility(id, true));
 
-            verify(themeRepository).findById(any(Long.class));
+            verify(themeRepository).findById(anyLong());
+            verify(themeRepository, never()).countByIdAndQuizzesDisabledAtIsNull(anyLong());
             verify(themeRepository, never()).save(any(Theme.class));
         }
 
