@@ -45,7 +45,7 @@ VALUES
 -- Insertion des niveaux de difficulté
 ---------------------------------------------------
 
-INSERT INTO difficulty_levels (name, max_responses, timer_seconds, points_per_question, is_reference, display_order, disabled_at)
+INSERT INTO difficulty_levels (name, max_answers, timer_seconds, points_per_question, is_reference, display_order, disabled_at)
 VALUES
     ('Facile', 2, 0, 5, false, 1, null),
     ('Intermédiaire', 4, 0, 10, true, 2, null),
