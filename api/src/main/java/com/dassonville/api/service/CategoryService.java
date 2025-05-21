@@ -2,20 +2,17 @@ package com.dassonville.api.service;
 
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
-import com.dassonville.api.dto.ToggleDisableRequestDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.CategoryMapper;
 import com.dassonville.api.model.Category;
 import com.dassonville.api.repository.CategoryRepository;
+import com.dassonville.api.repository.ThemeRepository;
+import com.dassonville.api.util.TextUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-
-import static org.springframework.util.StringUtils.capitalize;
 
 @Service
 @RequiredArgsConstructor
@@ -26,27 +23,34 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
 
+    private final ThemeRepository themeRepository;
+
+
+
 
     public CategoryAdminDTO findById(long id) {
 
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> {
-                    logger.warn("La catégorie avec l'ID {}, n'a pas été trouvée.", id);
-                    return new NotFoundException("La catégorie n'a pas été trouvée.");
-                });
+        Category category = findCategoryById(id);
 
         return categoryMapper.toAdminDTO(category);
     }
 
-    public CategoryAdminDTO create(CategoryUpsertDTO dto) {
-        Category categoryToCreate = categoryMapper.toModel(dto);
+    public CategoryAdminDTO create(long themeId, CategoryUpsertDTO dto) {
 
-        categoryToCreate.setName(capitalize(categoryToCreate.getName()));
+        if (!themeRepository.existsById(themeId)) {
+            logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", themeId);
+            throw new NotFoundException("Le thème n'a pas été trouvé.");
+        }
 
-        if (categoryRepository.existsByNameIgnoreCase(categoryToCreate.getName())) {
-            logger.warn("Une catégorie existe déjà avec le même nom : {}", categoryToCreate.getName());
+        String normalizedNewText = TextUtils.normalizeText(dto.name());
+        logger.debug("Nom normalisé : {}, depuis {}", normalizedNewText, dto.name());
+
+        if (categoryRepository.existsByNameIgnoreCase(normalizedNewText)) {
+            logger.warn("Une catégorie existe déjà avec le même nom : {}", normalizedNewText);
             throw new AlreadyExistException("Une catégorie existe déjà avec le même nom.");
         }
+
+        Category categoryToCreate = categoryMapper.toModel(dto, themeId);
 
         Category categoryCreated = categoryRepository.save(categoryToCreate);
 
@@ -55,20 +59,21 @@ public class CategoryService {
 
 
     public CategoryAdminDTO update(long id, CategoryUpsertDTO dto) {
-        Category existingCategory = categoryRepository.findById(id).orElseThrow(() -> {
-            logger.warn("La catégorie à modifier avec l'ID {}, n'a pas été trouvée.", id);
-            return new NotFoundException("La catégorie à modifier n'a pas été trouvée.");
-        });
 
-        if (!existingCategory.getName().equalsIgnoreCase(dto.name()) && categoryRepository.existsByNameIgnoreCase(dto.name())) {
-            logger.warn("Une catégorie existe déjà avec le même nom : {}", dto.name());
+        Category categoryToUpdate = findCategoryById(id);
+
+        String normalizedNewText = TextUtils.normalizeText(dto.name());
+        logger.debug("Nom normalisé : {}, depuis {}", normalizedNewText, dto.name());
+
+        if (categoryRepository.existsByNameIgnoreCaseAndIdNot(normalizedNewText, id)) {
+            logger.warn("Une catégorie existe déjà avec le même nom : {}", normalizedNewText);
             throw new AlreadyExistException("Une catégorie existe déjà avec le même nom.");
         }
 
-        existingCategory.setName(capitalize(dto.name()));
-        existingCategory.setDescription(dto.description());
+        categoryMapper.updateModelFromDTO(dto, categoryToUpdate);
 
-        Category categoryUpdated = categoryRepository.save(existingCategory);
+        Category categoryUpdated = categoryRepository.save(categoryToUpdate);
+
         return categoryMapper.toAdminDTO(categoryUpdated);
     }
 
@@ -84,15 +89,23 @@ public class CategoryService {
     }
 
 
-    public void toggleDisable(long id, ToggleDisableRequestDTO toggleDisableRequestDTO) {
-        Category category = categoryRepository.findById(id)
+    public void updateVisibility(long id, boolean visible) {
+
+        Category category = findCategoryById(id);
+
+        if (category.isVisible() == visible) return;
+
+        category.setVisible(visible);
+
+        categoryRepository.save(category);
+    }
+
+
+    private Category findCategoryById(long id) {
+        return categoryRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.warn("La catégorie avec l'ID {}, n'a pas été trouvée.", id);
                     return new NotFoundException("La catégorie n'a pas été trouvée.");
                 });
-
-        category.setDisabledAt((toggleDisableRequestDTO.isDisabled()) ? LocalDate.now() : null);
-
-        categoryRepository.save(category);
     }
 }
