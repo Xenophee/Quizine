@@ -1,6 +1,6 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, is_vip_only, id_category, id_theme)
-VALUES (4, 'Littérature gothique : symboles, héritages et curiosités', FALSE, 8, 4);
+INSERT INTO quizzes (id, title, id_category, id_theme)
+VALUES (4, 'Littérature gothique : symboles, héritages et curiosités', 8, 4);
 
 -- QUESTION 61
 INSERT INTO questions (id, text, id_quiz)

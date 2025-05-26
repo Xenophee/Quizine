@@ -1,6 +1,6 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, is_vip_only, id_category, id_theme)
-VALUES (9, 'Mythologie nordique : dieux, créatures et légendes vikings', FALSE, 14, 1);
+INSERT INTO quizzes (id, title,  id_category, id_theme)
+VALUES (9, 'Mythologie nordique : dieux, créatures et légendes vikings', 14, 1);
 
 -- QUESTION 161
 INSERT INTO questions (id, text, id_quiz)

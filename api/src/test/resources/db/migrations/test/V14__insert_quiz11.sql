@@ -1,6 +1,6 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, is_vip_only, id_category, id_theme, disabled_at)
-VALUES (11, 'Philosophie française : figures, courants et concepts majeurs', FALSE, 9, 1, CURRENT_TIMESTAMP);
+INSERT INTO quizzes (id, title, id_category, id_theme)
+VALUES (11, 'Philosophie française : figures, courants et concepts majeurs', null, 1);
 
 -- QUESTION 201
 INSERT INTO questions (id, text, id_quiz)
@@ -130,7 +130,8 @@ VALUES (853, 'Émile Durkheim', TRUE, 214),
 
 -- QUESTION 215
 INSERT INTO questions (id, text, id_quiz)
-VALUES (215, 'Quel philosophe a développé la théorie de la mémoire involontaire dans "À la recherche du temps perdu" ?', 11);
+VALUES (215, 'Quel philosophe a développé la théorie de la mémoire involontaire dans "À la recherche du temps perdu" ?',
+        11);
 INSERT INTO answers (id, text, is_correct, id_question)
 VALUES (857, 'Marcel Proust', TRUE, 215),
        (858, 'Paul Ricoeur', FALSE, 215),
@@ -165,8 +166,9 @@ VALUES (869, 'Gilles Deleuze', TRUE, 218),
        (872, 'Badiou', FALSE, 218);
 
 -- QUESTION 219
-INSERT INTO questions (id, text, id_quiz)
-VALUES (219, 'Quel philosophe a introduit la notion de "différend" et a écrit "La Condition postmoderne" ?', 11);
+INSERT INTO questions (id, text, id_quiz, disabled_at)
+VALUES (219, 'Quel philosophe a introduit la notion de "différend" et a écrit "La Condition postmoderne" ?', 11,
+        CURRENT_TIMESTAMP);
 INSERT INTO answers (id, text, is_correct, id_question)
 VALUES (873, 'Jean-François Lyotard', TRUE, 219),
        (874, 'Derrida', FALSE, 219),
@@ -176,8 +178,31 @@ VALUES (873, 'Jean-François Lyotard', TRUE, 219),
 -- QUESTION 220
 INSERT INTO questions (id, text, id_quiz)
 VALUES (220, 'Quel philosophe contemporain est connu pour sa réflexion sur l’événement et les mathématiques ?', 11);
+INSERT INTO answers (id, text, is_correct, id_question, disabled_at)
+VALUES (877, 'Alain Badiou', TRUE, 220, null),
+       (878, 'Julia Kristeva', FALSE, 220, null),
+       (879, 'Paul Ricoeur', FALSE, 220, null),
+       (880, 'Simone Weil', FALSE, 220, null),
+       (881, 'Gilles Deleuze', FALSE, 220, CURRENT_TIMESTAMP);
+
+-- QUESTION 221
+INSERT INTO questions (id, text, id_quiz)
+VALUES (221, 'Question au pif juste pour les tests', 11);
+INSERT INTO answers (id, text, is_correct, id_question, disabled_at)
+VALUES (882, 'Réponse 1', TRUE, 221, null),
+       (883, 'Réponçe, 2!', TRUE, 221, null),
+       (884, 'Réponse 3', FALSE, 221, null),
+       (885, 'Réponse 4', FALSE, 221, null),
+       (886, 'Réponse 5', FALSE, 221, null),
+       (887, 'Réponse 6', TRUE, 221, CURRENT_TIMESTAMP);
+
+
+-- QUESTION 222
+INSERT INTO questions (id, text, id_quiz)
+VALUES (222, 'Question avec que des true', 11);
 INSERT INTO answers (id, text, is_correct, id_question)
-VALUES (877, 'Alain Badiou', TRUE, 220),
-       (878, 'Julia Kristeva', FALSE, 220),
-       (879, 'Paul Ricoeur', FALSE, 220),
-       (880, 'Simone Weil', FALSE, 220);
+VALUES (888, 'Réponse 1', TRUE, 222),
+       (889, 'Réponse 2', TRUE, 222),
+       (890, 'Réponse 3', TRUE, 222),
+       (891, 'Réponse 4', TRUE, 222),
+       (892, 'Réponse 5', TRUE, 222);

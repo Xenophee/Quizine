@@ -1,6 +1,6 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, is_vip_only, id_category, id_theme, disabled_at)
-VALUES (7, 'Littérature médiévale : figures, genres et merveilles du Moyen Âge', FALSE, 13, 4, CURRENT_TIMESTAMP);
+INSERT INTO quizzes (id, title, id_category, id_theme, disabled_at)
+VALUES (7, 'Littérature médiévale : figures, genres et merveilles du Moyen Âge', 13, 4, CURRENT_TIMESTAMP);
 
 -- QUESTION 121
 INSERT INTO questions (id, text, id_quiz)

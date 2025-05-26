@@ -38,6 +38,7 @@ VALUES
     ('Expert', 0, 30, 20, false, 4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP - INTERVAL '3 MONTH'),
     ('Intermédiaire', 4, 0, 10, true, 2, null, CURRENT_TIMESTAMP - INTERVAL '3 MONTH'),
     ('Facile', 2, 0, 5, false, 1, null, CURRENT_TIMESTAMP),
-    ('Difficile', 0, 0, 15, false, 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+    ('Difficile', 0, 0, 15, false, 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('Hardcore', 0, 5, 2, false, 5, null, CURRENT_TIMESTAMP);
 
 

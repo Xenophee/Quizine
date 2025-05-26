@@ -1,6 +1,6 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, is_vip_only, id_category, id_theme)
-VALUES (5, 'Littérature médiévale : épopées, romans et fabliaux', FALSE, 13, 4);
+INSERT INTO quizzes (id, title, id_category, id_theme)
+VALUES (5, 'Littérature médiévale : épopées, romans et fabliaux', 13, 4);
 
 -- QUESTION 81
 INSERT INTO questions (id, text, id_quiz)
