@@ -71,6 +71,9 @@ public class ApiRoutes {
         public static final String ADMIN_QUESTIONS_POST = Quizzes.ADMIN_BY_ID + STRING;
         public static final String ADMIN_VISIBILITY_PATCH = ADMIN_QUESTIONS + VISIBILITY;
 
+        public static final String CHECK_ANSWER_CHOICE = "/{quizId}/questions/{questionId}/check/choice";
+        public static final String CHECK_ANSWER_TEXT = "/{quizId}/questions/{questionId}/check/text";
+
         private Questions() {}
     }
 
