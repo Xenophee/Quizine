@@ -3,7 +3,6 @@ package com.dassonville.api.controller;
 import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.dto.ThemeAdminDTO;
-import com.dassonville.api.dto.ThemeSummaryDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.service.ThemeService;
@@ -36,20 +35,6 @@ public class ThemeAdminController {
 
     public ThemeAdminController(ThemeService themeService) {
         this.themeService = themeService;
-    }
-
-
-
-    @Operation(summary = "Obtenir un récapitulatif des thèmes / catégories / quiz", description = "Obtient la liste des thèmes avec les catégories et le nombre de quiz associé.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "La liste des thèmes a été trouvée.")
-    })
-    @GetMapping(ApiRoutes.SUMMARY)
-    public ResponseEntity<List<ThemeSummaryDTO>> getThemeSummary() {
-        logger.info("Requête pour obtenir la liste des thèmes avec les catégories et les quiz associés.");
-        List<ThemeSummaryDTO> themes = themeService.getThemeSummary();
-        logger.info("Liste des thèmes récupérée.");
-        return ResponseEntity.ok(themes);
     }
 
 
