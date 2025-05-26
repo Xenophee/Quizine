@@ -7,9 +7,8 @@ import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.model.Theme;
 import com.dassonville.api.projection.PublicThemeProjection;
 import com.dassonville.api.util.DateUtils;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
+import com.dassonville.api.util.TextUtils;
+import org.mapstruct.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +21,8 @@ public interface ThemeMapper {
 
 
     @Mappings({
+            @Mapping(target = "name", expression = "java(normalizeText(dto.name()))"),
+            @Mapping(target = "description", expression = "java(normalizeText(dto.description()))"),
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "createdAt", ignore = true),
             @Mapping(target = "updatedAt", ignore = true),
@@ -31,20 +32,30 @@ public interface ThemeMapper {
     Theme toModel(ThemeUpsertDTO dto);
 
     @Mappings({
-            @Mapping(target = "isNew", expression = "java(isThemeNew(theme.getCreatedAt()))")
+            @Mapping(target = "isNew", expression = "java(isThemeNew(projection.getCreatedAt()))")
     })
-    ThemePublicDTO toPublicDTO(PublicThemeProjection theme);
+    ThemePublicDTO toPublicDTO(PublicThemeProjection projection);
 
-    List<ThemePublicDTO> toPublicDTOList(List<PublicThemeProjection> themes);
+    List<ThemePublicDTO> toPublicDTOList(List<PublicThemeProjection> projections);
 
-    ThemeAdminDTO toAdminDTO(Theme theme);
+    ThemeAdminDTO toAdminDTO(Theme model);
 
-    List<ThemeAdminDTO> toAdminDTOList(List<Theme> themes);
+    List<ThemeAdminDTO> toAdminDTOList(List<Theme> models);
 
-    ThemeUpsertDTO toUpsertDTO(Theme theme);
+
+    @Mappings({
+            @Mapping(target = "name", expression = "java(normalizeText(dto.name()))"),
+            @Mapping(target = "description", expression = "java(normalizeText(dto.description()))"),
+    })
+    void updateModelFromDTO(ThemeUpsertDTO dto, @MappingTarget Theme model);
 
 
     default boolean isThemeNew(LocalDateTime createdAt) {
         return DateUtils.isNew(createdAt, NEWNESS_THRESHOLD_DAYS);
+    }
+
+    @Named("normalizeText")
+    default String normalizeText(String input) {
+        return TextUtils.normalizeText(input);
     }
 }

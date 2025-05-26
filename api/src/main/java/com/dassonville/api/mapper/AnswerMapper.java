@@ -4,13 +4,14 @@ import com.dassonville.api.dto.AnswerAdminDTO;
 import com.dassonville.api.dto.AnswerUpsertDTO;
 import com.dassonville.api.model.Answer;
 import com.dassonville.api.model.Question;
+import com.dassonville.api.util.TextUtils;
 import org.mapstruct.*;
-import org.springframework.util.StringUtils;
 
 @Mapper(componentModel = "spring")
 public interface AnswerMapper {
 
     @Mappings({
+            @Mapping(target = "text", expression = "java(normalizeText(dto.text()))"),
             @Mapping(target = "question", expression = "java(mapQuestionIdToQuestion(questionId))"),
             @Mapping(target = "createdAt", ignore = true),
             @Mapping(target = "updatedAt", ignore = true),
@@ -19,12 +20,10 @@ public interface AnswerMapper {
     })
     Answer toModel(AnswerUpsertDTO dto, @Context long questionId);
 
-
-    AnswerUpsertDTO toUpsertDTO(Answer answer);
-
     AnswerAdminDTO toAdminDTO(Answer answer);
 
     @Mappings({
+            @Mapping(target = "text", expression = "java(normalizeText(dto.text()))"),
             @Mapping(target = "question", ignore = true),
             @Mapping(target = "createdAt", ignore = true),
             @Mapping(target = "updatedAt", ignore = true),
@@ -34,15 +33,12 @@ public interface AnswerMapper {
     void updateModelFromDTO(AnswerUpsertDTO dto, @MappingTarget Answer answer);
 
 
-    @AfterMapping
-    default void capitalizeText(@MappingTarget Answer answer) {
-        if (answer.getText() != null) {
-            answer.setText(StringUtils.capitalize(answer.getText().trim()));
-        }
-    }
-
-
     default Question mapQuestionIdToQuestion(long questionId) {
         return new Question(questionId);
+    }
+
+    @Named("normalizeText")
+    default String normalizeText(String input) {
+        return TextUtils.normalizeText(input);
     }
 }

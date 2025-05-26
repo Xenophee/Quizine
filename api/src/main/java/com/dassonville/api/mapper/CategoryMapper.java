@@ -2,37 +2,45 @@ package com.dassonville.api.mapper;
 
 
 import com.dassonville.api.dto.CategoryAdminDTO;
-import com.dassonville.api.dto.IdNameDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
 import com.dassonville.api.model.Category;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
-
-import java.util.List;
+import com.dassonville.api.model.Theme;
+import com.dassonville.api.util.TextUtils;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
 
     @Mappings({
+            @Mapping(target = "name", expression = "java(normalizeText(dto.name()))"),
+            @Mapping(target = "description", expression = "java(normalizeText(dto.description()))"),
+            @Mapping(target = "theme", expression = "java(mapThemeIdToTheme(themeId))"),
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "createdAt", ignore = true),
             @Mapping(target = "updatedAt", ignore = true),
             @Mapping(target = "disabledAt", ignore = true),
-            @Mapping(target = "theme.id", source = "themeId")
     })
-    Category toModel(CategoryUpsertDTO dto);
+    Category toModel(CategoryUpsertDTO dto, @Context long themeId);
 
     @Mappings({
             @Mapping(target = "themeId", source = "theme.id")
     })
-    CategoryAdminDTO toAdminDTO(Category category);
+    CategoryAdminDTO toAdminDTO(Category model);
 
     @Mappings({
-            @Mapping(target = "themeId", source = "theme.id")
+            @Mapping(target = "name", expression = "java(normalizeText(dto.name()))"),
+            @Mapping(target = "description", expression = "java(normalizeText(dto.description()))"),
     })
-    CategoryUpsertDTO toUpsertDTO(Category category);
+    void updateModelFromDTO(CategoryUpsertDTO dto, @MappingTarget Category model);
 
 
-    List<IdNameDTO> toDTOList(List<Category> category);
+    // Pas de @Named ici car utilisation d'un @Context
+    default Theme mapThemeIdToTheme(long themeId) {
+        return new Theme(themeId);
+    }
+
+    @Named("normalizeText")
+    default String normalizeText(String input) {
+        return TextUtils.normalizeText(input);
+    }
 }

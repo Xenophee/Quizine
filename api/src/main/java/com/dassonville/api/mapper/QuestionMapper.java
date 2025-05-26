@@ -6,13 +6,14 @@ import com.dassonville.api.dto.QuestionInsertDTO;
 import com.dassonville.api.dto.QuestionUpdateDTO;
 import com.dassonville.api.model.Question;
 import com.dassonville.api.model.Quiz;
+import com.dassonville.api.util.TextUtils;
 import org.mapstruct.*;
-import org.springframework.util.StringUtils;
 
 @Mapper(componentModel = "spring", uses = {AnswerMapper.class})
 public interface QuestionMapper {
 
     @Mappings({
+            @Mapping(target = "text", expression = "java(normalizeText(dto.text()))"),
             @Mapping(target = "quiz", expression = "java(mapQuizIdToQuiz(quizId))"),
             @Mapping(target = "answers", source = "answers"),
             @Mapping(target = "createdAt", ignore = true),
@@ -20,29 +21,26 @@ public interface QuestionMapper {
             @Mapping(target = "disabledAt", ignore = true),
             @Mapping(target = "id", ignore = true)
     })
-    Question toModel(QuestionInsertDTO questionInsertDTO, @Context long quizId);
-
-    QuestionInsertDTO toInsertDTO(Question question);
-
-    QuestionAdminDTO toAdminDTO(Question question);
+    Question toModel(QuestionInsertDTO dto, @Context long quizId);
 
     @Mappings({
+            @Mapping(target = "text", source = "text"),
+    })
+    QuestionAdminDTO toAdminDTO(Question model);
+
+
+    @Mappings({
+            @Mapping(target = "text", expression = "java(normalizeText(dto.text()))"),
             @Mapping(target = "quiz", ignore = true),
             @Mapping(target = "answers", ignore = true),
             @Mapping(target = "createdAt", ignore = true),
             @Mapping(target = "updatedAt", ignore = true),
             @Mapping(target = "disabledAt", ignore = true),
-            @Mapping(target = "id", ignore = true)
+            @Mapping(target = "id", ignore = true),
     })
-    void updateModelFromDTO(QuestionUpdateDTO questionUpdateDTO, @MappingTarget Question question);
+    void updateModelFromDTO(QuestionUpdateDTO dto, @MappingTarget Question model);
 
 
-    @AfterMapping
-    default void capitalizeText(@MappingTarget Question question) {
-        if (question.getText() != null) {
-            question.setText(StringUtils.capitalize(question.getText().trim()));
-        }
-    }
 
     @AfterMapping
     default void setQuestionInAnswers(@MappingTarget Question question) {
@@ -54,5 +52,10 @@ public interface QuestionMapper {
 
     default Quiz mapQuizIdToQuiz(long quizId) {
         return new Quiz(quizId);
+    }
+
+    @Named("normalizeText")
+    default String normalizeText(String input) {
+        return TextUtils.normalizeText(input);
     }
 }
