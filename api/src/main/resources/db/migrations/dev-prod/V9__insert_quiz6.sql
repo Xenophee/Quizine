@@ -1,6 +1,6 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, is_vip_only, id_category, id_theme)
-VALUES (6, 'Littérature médiévale : héros, légendes et formes poétiques', FALSE, 11, 4);
+INSERT INTO quizzes (id, title, id_category, id_theme)
+VALUES (6, 'Littérature médiévale : héros, légendes et formes poétiques', 11, 4);
 
 -- QUESTION 101
 INSERT INTO questions (id, text, id_quiz)

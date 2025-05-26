@@ -68,11 +68,11 @@ CREATE TABLE difficulty_levels
 (
     id                  SERIAL PRIMARY KEY,
     name                VARCHAR(50) NOT NULL UNIQUE,
-    max_answers         SMALLINT    NOT NULL,
-    timer_seconds       SMALLINT    NOT NULL DEFAULT 0,
-    points_per_question SMALLINT    NOT NULL,
+    max_answers         SMALLINT    NOT NULL DEFAULT 0 CHECK (max_answers >= 0),
+    timer_seconds       SMALLINT    NOT NULL DEFAULT 0 CHECK (timer_seconds >= 0),
+    points_per_question SMALLINT    NOT NULL DEFAULT 0 CHECK (points_per_question >= 0),
     is_reference        BOOLEAN     NOT NULL DEFAULT FALSE,
-    display_order       SMALLINT    NOT NULL UNIQUE,
+    display_order       SMALLINT    NOT NULL UNIQUE CHECK (display_order > 0),
     created_at          TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP,
     disabled_at         TIMESTAMP
@@ -85,7 +85,6 @@ CREATE TABLE quizzes
 (
     id          SERIAL PRIMARY KEY,
     title       VARCHAR(100) NOT NULL UNIQUE,
-    is_vip_only BOOLEAN      NOT NULL DEFAULT FALSE,
     created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP,
     disabled_at TIMESTAMP,

@@ -1,6 +1,6 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, is_vip_only, id_category, id_theme)
-VALUES (2, 'Littérature gothique : chefs-d’œuvre et figures marquantes (XVIIIe-XIXe siècles)', FALSE, 7, 4);
+INSERT INTO quizzes (id, title, id_category, id_theme)
+VALUES (2, 'Littérature gothique : chefs-d’œuvre et figures marquantes (XVIIIe-XIXe siècles)', 7, 4);
 
 -- QUESTION 21
 INSERT INTO questions (id, text, id_quiz)

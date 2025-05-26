@@ -1,6 +1,6 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, is_vip_only, id_category, id_theme)
-VALUES (11, 'Philosophie française : figures, courants et concepts majeurs', FALSE, 8, 5);
+INSERT INTO quizzes (id, title, id_category, id_theme)
+VALUES (11, 'Philosophie française : figures, courants et concepts majeurs', 8, 5);
 
 -- QUESTION 201
 INSERT INTO questions (id, text, id_quiz)
@@ -130,7 +130,8 @@ VALUES (853, 'Émile Durkheim', TRUE, 214),
 
 -- QUESTION 215
 INSERT INTO questions (id, text, id_quiz)
-VALUES (215, 'Quel philosophe a développé la théorie de la mémoire involontaire dans "À la recherche du temps perdu" ?', 11);
+VALUES (215, 'Quel philosophe a développé la théorie de la mémoire involontaire dans "À la recherche du temps perdu" ?',
+        11);
 INSERT INTO answers (id, text, is_correct, id_question)
 VALUES (857, 'Marcel Proust', TRUE, 215),
        (858, 'Paul Ricoeur', FALSE, 215),

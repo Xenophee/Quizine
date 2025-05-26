@@ -1,6 +1,6 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, is_vip_only, id_category, id_theme)
-VALUES (8, 'Mythologie égyptienne : dieux, légendes et symboles', FALSE, 9, 5);
+INSERT INTO quizzes (id, title, id_category, id_theme)
+VALUES (8, 'Mythologie égyptienne : dieux, légendes et symboles', 9, 5);
 
 -- QUESTION 141
 INSERT INTO questions (id, text, id_quiz)

@@ -1,6 +1,6 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, is_vip_only, id_category, id_theme)
-VALUES (1, 'Philosophie grecque : penseurs, écoles et concepts fondateurs', FALSE, 8, 5);
+INSERT INTO quizzes (id, title,id_category, id_theme)
+VALUES (1, 'Philosophie grecque : penseurs, écoles et concepts fondateurs', 8, 5);
 
 -- QUESTION 1
 INSERT INTO questions (id, text, id_quiz)

@@ -1,6 +1,6 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, is_vip_only, id_category, id_theme)
-VALUES (10, 'Philosophie allemande : courants, penseurs et concepts', FALSE, 8, 5);
+INSERT INTO quizzes (id, title, id_category, id_theme)
+VALUES (10, 'Philosophie allemande : courants, penseurs et concepts', 8, 5);
 
 -- QUESTION 181
 INSERT INTO questions (id, text, id_quiz)
