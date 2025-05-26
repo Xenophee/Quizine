@@ -12,7 +12,6 @@ public record QuizUpsertDTO(
         @NotBlank(message = "Veuillez saisir un titre pour le quiz.")
         @Size(max = 100, message = "Le titre du quiz ne doit pas dépasser 100 caractères.")
         String title,
-        boolean isVipOnly,
         Long categoryId,
         @NotNull(message = "Veuillez sélectionner un thème.")
         @Positive(message = "L'identifiant du thème doit être positif.")

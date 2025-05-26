@@ -1,7 +1,7 @@
 package com.dassonville.api.dto;
 
-public record IdNameDTO(
+public record AnswerForPlayDTO(
         long id,
-        String name
+        String text
 ) {
 }

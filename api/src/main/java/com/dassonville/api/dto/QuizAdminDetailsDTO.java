@@ -6,7 +6,6 @@ import java.util.List;
 public record QuizAdminDetailsDTO(
         long id,
         String title,
-        boolean isVipOnly,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         LocalDateTime disabledAt,
