@@ -57,30 +57,4 @@ public class ThemeControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value(themePublicDTO.name()));
     }
-
-    @Test
-    @DisplayName("Récupérer un thème par son ID")
-    public void getThemeById_shouldReturn200() throws Exception {
-        // Given
-        when(themeService.findByIdForUser(anyLong()))
-                .thenReturn(themePublicDTO);
-
-        // When & Then
-        mockMvc.perform(get(ApiRoutes.Themes.BY_ID, endpointId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(themePublicDTO.name()));
-    }
-
-    @Test
-    @DisplayName("Récupérer un thème inexistant par son ID")
-    public void getThemeById_shouldReturn404() throws Exception {
-        // Given
-        when(themeService.findByIdForUser(anyLong()))
-                .thenThrow(new NotFoundException());
-
-        // When & Then
-        mockMvc.perform(get(ApiRoutes.Themes.BY_ID, endpointId))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").exists());
-    }
 }

@@ -52,11 +52,12 @@ public class DifficultyLevelServiceIT {
             List<DifficultyLevelAdminDTO> difficultyLevels = difficultyLevelService.getAllDifficultyLevels();
 
             // Then
-            assertThat(difficultyLevels.size()).isEqualTo(4);
+            assertThat(difficultyLevels.size()).isEqualTo(5);
             assertThat(difficultyLevels.get(0).displayOrder()).isEqualTo((byte) 1);
             assertThat(difficultyLevels.get(1).displayOrder()).isEqualTo((byte) 2);
             assertThat(difficultyLevels.get(2).displayOrder()).isEqualTo((byte) 3);
             assertThat(difficultyLevels.get(3).displayOrder()).isEqualTo((byte) 4);
+            assertThat(difficultyLevels.get(4).displayOrder()).isEqualTo((byte) 5);
         }
 
         @Test
@@ -66,7 +67,7 @@ public class DifficultyLevelServiceIT {
             List<DifficultyLevelPublicDTO> difficultyLevels = difficultyLevelService.getAllActiveDifficultyLevels();
 
             // Then
-            assertThat(difficultyLevels.size()).isEqualTo(2);
+            assertThat(difficultyLevels.size()).isEqualTo(3);
             assertThat(difficultyLevels.get(0).id()).isEqualTo(3L);
             assertThat(difficultyLevels.get(1).id()).isEqualTo(2L);
 
@@ -136,7 +137,7 @@ public class DifficultyLevelServiceIT {
             assertThat(difficultyLevel.getTimerSeconds()).isEqualTo(createdDifficultyLevel.timerSeconds());
             assertThat(difficultyLevel.getPointsPerQuestion()).isEqualTo(createdDifficultyLevel.pointsPerQuestion());
             assertThat(difficultyLevel.getIsReference()).isFalse();
-            assertThat(difficultyLevel.getDisplayOrder()).isEqualTo((byte) 5);
+            assertThat(difficultyLevel.getDisplayOrder()).isEqualTo((byte) 6);
             assertThat(difficultyLevel.getCreatedAt()).isNotNull();
             assertThat(difficultyLevel.getDisabledAt()).isNotNull();
         }

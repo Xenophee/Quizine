@@ -1,10 +1,7 @@
 package com.dassonville.api.integration;
 
 
-import com.dassonville.api.dto.AnswerUpsertDTO;
-import com.dassonville.api.dto.QuestionAdminDTO;
-import com.dassonville.api.dto.QuestionInsertDTO;
-import com.dassonville.api.dto.QuestionUpdateDTO;
+import com.dassonville.api.dto.*;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.Question;
@@ -48,6 +45,131 @@ public class QuestionServiceIT {
     public void clearDatabase(@Autowired Flyway flyway) {
         flyway.clean();
         flyway.migrate();
+    }
+
+
+    @Nested
+    @DisplayName("Vérification de la réponse à une question (choix)")
+    class CheckingAnswerByChoice {
+
+        @Test
+        @DisplayName("Succès - Réponse correcte")
+        public void shouldCheckAnswerByChoice_Success() {
+            // Given
+            long quizId = 1L;
+            long questionId = 1L;
+            List<Long> submittedAnswerIds = List.of(1L); // Réponse correcte
+
+            // When
+            CheckAnswerResultDTO result = questionService.checkAnswerByChoice(quizId, questionId, submittedAnswerIds);
+
+            // Then
+            assertThat(result.isCorrect()).isTrue();
+            assertThat(result.correctAnswers().size()).isEqualTo(1);
+            assertThat(result.correctAnswers().getFirst().id()).isEqualTo(1L);
+            assertThat(result.correctAnswers().getFirst().text()).isEqualTo("Socrate");
+        }
+
+        @Test
+        @DisplayName("Succès - Réponse incorrecte")
+        public void shouldCheckAnswerByChoice_IncorrectAnswer() {
+            // Given
+            long quizId = 11L;
+            long questionId = 221L;
+            List<Long> submittedAnswerIds = List.of(882L, 883L, 884L);
+
+            // When
+            CheckAnswerResultDTO result = questionService.checkAnswerByChoice(quizId, questionId, submittedAnswerIds);
+
+            // Then
+            assertThat(result.isCorrect()).isFalse();
+            assertThat(result.correctAnswers().size()).isEqualTo(2);
+            assertThat(result.correctAnswers().getFirst().id()).isEqualTo(882L);
+            assertThat(result.correctAnswers().getFirst().text()).isEqualTo("Réponse 1");
+            assertThat(result.correctAnswers().getLast().id()).isEqualTo(883L);
+            assertThat(result.correctAnswers().getLast().text()).isEqualTo("Réponçe, 2!");
+        }
+
+        @Test
+        @DisplayName("Échec - Réponse invalide")
+        public void shouldCheckAnswerByChoice_InvalidAnswerId() {
+            // Given
+            long quizId = 11L;
+            long questionId = 221L;
+            List<Long> submittedAnswerIds = List.of(882L, 883L, 887L); // Réponse incorrecte (887 est true mais désactivée)
+
+            // When / Then
+            assertThrows(IllegalArgumentException.class, () -> questionService.checkAnswerByChoice(quizId, questionId, submittedAnswerIds));
+        }
+
+        @Test
+        @DisplayName("Échec - Question non trouvée")
+        public void shouldCheckAnswerByChoice_QuestionNotFound() {
+            // Given
+            long quizId = 1L;
+            long questionId = 9999L; // Question inexistante
+            List<Long> submittedAnswerIds = List.of(1L);
+
+            // When / Then
+            assertThrows(NotFoundException.class, () -> questionService.checkAnswerByChoice(quizId, questionId, submittedAnswerIds));
+        }
+    }
+
+
+    @Nested
+    @DisplayName("Vérification de la réponse à une question (texte)")
+    class CheckingAnswerByText {
+
+        @Test
+        @DisplayName("Succès - Réponse correcte")
+        public void shouldCheckAnswerByText_Success() {
+            // Given
+            long quizId = 11L;
+            long questionId = 221L;
+            List<String> submittedAnswers = List.of("Réponse 1", " réponce  2"); // Réponse correcte
+
+            // When
+            CheckAnswerResultDTO result = questionService.checkAnswerByText(quizId, questionId, submittedAnswers);
+
+            // Then
+            assertThat(result.isCorrect()).isTrue();
+            assertThat(result.correctAnswers().size()).isEqualTo(2);
+            assertThat(result.correctAnswers().getFirst().id()).isEqualTo(882L);
+            assertThat(result.correctAnswers().getFirst().text()).isEqualTo("Réponse 1");
+            assertThat(result.correctAnswers().getLast().id()).isEqualTo(883L);
+            assertThat(result.correctAnswers().getLast().text()).isEqualTo("Réponçe, 2!");
+        }
+
+        @Test
+        @DisplayName("Succès - Réponse incorrecte")
+        public void shouldCheckAnswerByText_IncorrectAnswer() {
+            // Given
+            long quizId = 11L;
+            long questionId = 221L;
+            List<String> submittedAnswers = List.of("Réponse 1", " réponce  2", "Réponse 6"); // Réponse incorrecte (6 est true mais désactivée)
+
+            // When
+            CheckAnswerResultDTO result = questionService.checkAnswerByText(quizId, questionId, submittedAnswers);
+
+            // Then
+            assertThat(result.isCorrect()).isFalse();
+            assertThat(result.correctAnswers().size()).isEqualTo(2);
+            assertThat(result.correctAnswers().getFirst().id()).isEqualTo(882L);
+            assertThat(result.correctAnswers().getFirst().text()).isEqualTo("Réponse 1");
+            assertThat(result.correctAnswers().getLast().id()).isEqualTo(883L);
+            assertThat(result.correctAnswers().getLast().text()).isEqualTo("Réponçe, 2!");
+        }
+
+        @Test
+        @DisplayName("Échec - Question non trouvée")
+        public void shouldCheckAnswerByText_QuestionNotFound() {
+            // Given
+            long quizId = 11L;
+            long questionId = 219L; // Question désactivée
+            List<String> submittedAnswers = List.of("Réponse");
+            // When / Then
+            assertThrows(NotFoundException.class, () -> questionService.checkAnswerByText(quizId, questionId, submittedAnswers));
+        }
     }
 
 

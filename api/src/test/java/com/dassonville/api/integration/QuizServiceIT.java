@@ -1,13 +1,16 @@
 package com.dassonville.api.integration;
 
 
+import com.dassonville.api.dto.QuestionForPlayDTO;
 import com.dassonville.api.dto.QuizAdminDetailsDTO;
+import com.dassonville.api.dto.QuizPublicDetailsDTO;
 import com.dassonville.api.dto.QuizUpsertDTO;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.Quiz;
 import com.dassonville.api.model.Theme;
+import com.dassonville.api.projection.QuestionForPlayProjection;
 import com.dassonville.api.repository.QuestionRepository;
 import com.dassonville.api.repository.QuizRepository;
 import com.dassonville.api.repository.ThemeRepository;
@@ -18,12 +21,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
@@ -68,7 +73,6 @@ public class QuizServiceIT {
             assertThat(quiz).isNotNull();
             assertThat(quiz.id()).isEqualTo(idToGet);
             assertThat(quiz.title()).isEqualTo("Philosophie grecque : penseurs, écoles et concepts fondateurs");
-            assertThat(quiz.isVipOnly()).isTrue();
             assertThat(quiz.createdAt()).isNotNull();
             assertThat(quiz.disabledAt()).isNull();
             assertThat(quiz.categoryId()).isEqualTo(9L);
@@ -84,6 +88,91 @@ public class QuizServiceIT {
             // When / Then
             assertThrows(NotFoundException.class, () -> quizService.findByIdForAdmin(idToGet));
         }
+
+        @Test
+        @DisplayName("PUBLIC - Succès - Récupération d'un quiz par ID")
+        public void shouldGetQuizPublicById_WhenExistingQuiz() {
+            // Given
+            long idToGet = 1L;
+
+            // When
+            QuizPublicDetailsDTO quiz = quizService.findByIdForUser(idToGet);
+
+            // Then
+            assertThat(quiz).isNotNull();
+            assertThat(quiz.id()).isEqualTo(idToGet);
+            assertThat(quiz.title()).isEqualTo("Philosophie grecque : penseurs, écoles et concepts fondateurs");
+            assertThat(quiz.isNew()).isTrue();
+            assertThat(quiz.numberOfQuestions()).isEqualTo(20);
+            assertThat(quiz.category()).isEqualTo("Philosophie");
+            assertThat(quiz.theme()).isEqualTo("Sciences humaines");
+        }
+
+        @Test
+        @DisplayName("PUBLIC - Erreur - Quiz non trouvé par ID")
+        public void shouldFailToGetQuizPublicById_WhenNonExistingQuiz() {
+            // Given
+            long idToGet = 9999L;
+
+            // When / Then
+            assertThrows(NotFoundException.class, () -> quizService.findByIdForUser(idToGet));
+        }
+    }
+
+
+    @Nested
+    @DisplayName("Récupération des questions d'un quiz pour le jeu")
+    class GettingQuestionsForPlay {
+
+
+        @ParameterizedTest
+        @ValueSource(longs = {2L, 5L})
+        @DisplayName("Succès - Récupération des questions d'un quiz pour le jeu")
+        public void shouldFindAllQuestionsByQuizIdForPlay_WhenExistingQuiz(long idToGetDifficulty) {
+            // Given
+            long idToGet = 11L;
+
+            // When
+            List<QuestionForPlayDTO> questions = quizService.findAllQuestionsByQuizIdForPlay(idToGet, idToGetDifficulty);
+
+            // Then
+            assertThat(questions).isNotNull();
+            assertThat(questions.size()).isEqualTo(21);
+
+            // Vérification de l'ordre des IDs
+            List<Long> originalOrder = questionRepository.findByQuizIdAndDisabledAtIsNullAndAnswersDisabledAtIsNull(idToGet)
+                    .stream()
+                    .map(QuestionForPlayProjection::getId)
+                    .toList();
+            List<Long> shuffledOrder = questions.stream()
+                    .map(QuestionForPlayDTO::id)
+                    .toList();
+
+            assertThat(shuffledOrder).isNotEqualTo(originalOrder); // Vérifie que l'ordre a changé
+            assertThat(shuffledOrder).containsExactlyInAnyOrderElementsOf(originalOrder); // Vérifie que tous les éléments sont présents
+        }
+
+        @Test
+        @DisplayName("Erreur - Quiz non trouvé")
+        public void shouldFailToFindAllQuestionsByQuizIdForPlay_WhenNonExistingQuiz() {
+            // Given
+            long idToGetQuiz = 9999L;
+            long idToGetDifficulty = 1L;
+
+            // When / Then
+            assertThrows(NotFoundException.class, () -> quizService.findAllQuestionsByQuizIdForPlay(idToGetQuiz, idToGetDifficulty));
+        }
+
+        @Test
+        @DisplayName("Erreur - Difficulté non trouvée")
+        public void shouldFailToFindAllQuestionsByQuizIdForPlay_WhenNonExistingDifficulty() {
+            // Given
+            long idToGetQuiz = 1L;
+            long idToGetDifficulty = 9999L;
+
+            // When / Then
+            assertThrows(NotFoundException.class, () -> quizService.findAllQuestionsByQuizIdForPlay(idToGetQuiz, idToGetDifficulty));
+        }
     }
 
 
@@ -97,7 +186,6 @@ public class QuizServiceIT {
             // Given
             QuizUpsertDTO quizUpsertDTO = new QuizUpsertDTO(
                     " test Quiz",
-                    false,
                     9L,
                     1L
             );
@@ -109,7 +197,6 @@ public class QuizServiceIT {
             Quiz quiz = quizRepository.findById(createdQuiz.id()).get();
             assertThat(quiz).isNotNull();
             assertThat(quiz.getTitle()).isEqualTo("Test Quiz");
-            assertThat(quiz.getIsVipOnly()).isFalse();
             assertThat(quiz.getCreatedAt()).isNotNull();
             assertThat(quiz.getDisabledAt()).isNotNull();
             assertThat(quiz.getCategory().getId()).isEqualTo(9L);
@@ -122,7 +209,6 @@ public class QuizServiceIT {
             // Given
             QuizUpsertDTO quizUpsertDTO = new QuizUpsertDTO(
                     " philosophie grecque : penseurs, écoles et concepts fondateurs",
-                    false,
                     9L,
                     1L
             );
@@ -143,7 +229,6 @@ public class QuizServiceIT {
             // Given
             QuizUpsertDTO quizUpsertDTO = new QuizUpsertDTO(
                     " test Quiz",
-                    true,
                     9L,
                     1L
             );
@@ -155,7 +240,6 @@ public class QuizServiceIT {
             Quiz quiz = quizRepository.findById(updatedQuiz.id()).get();
             assertThat(quiz).isNotNull();
             assertThat(quiz.getTitle()).isEqualTo("Test Quiz");
-            assertThat(quiz.getIsVipOnly()).isTrue();
             assertThat(quiz.getCreatedAt()).isNotNull();
             assertThat(quiz.getUpdatedAt()).isNotNull();
             assertThat(quiz.getDisabledAt()).isNull();
@@ -169,7 +253,6 @@ public class QuizServiceIT {
             // Given
             QuizUpsertDTO quizUpsertDTO = new QuizUpsertDTO(
                     " littérature gothique : motifs, personnages et influences",
-                    false,
                     9L,
                     1L
             );
@@ -184,7 +267,6 @@ public class QuizServiceIT {
             // Given
             QuizUpsertDTO quizUpsertDTO = new QuizUpsertDTO(
                     "test Quiz",
-                    false,
                     9L,
                     1L
             );

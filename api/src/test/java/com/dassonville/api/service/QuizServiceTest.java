@@ -1,16 +1,20 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.QuizAdminDetailsDTO;
-import com.dassonville.api.dto.QuizUpsertDTO;
+import com.dassonville.api.dto.*;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.QuizMapper;
 import com.dassonville.api.model.Category;
+import com.dassonville.api.model.DifficultyLevel;
 import com.dassonville.api.model.Quiz;
 import com.dassonville.api.model.Theme;
+import com.dassonville.api.projection.QuestionForPlayProjection;
+import com.dassonville.api.repository.DifficultyLevelRepository;
+import com.dassonville.api.repository.QuestionRepository;
 import com.dassonville.api.repository.QuizRepository;
+import com.dassonville.api.repository.ThemeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,8 +23,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -36,6 +46,12 @@ public class QuizServiceTest {
     private QuizRepository quizRepository;
     @Mock
     private ThemeService themeService;
+    @Mock
+    private ThemeRepository themeRepository;
+    @Mock
+    private DifficultyLevelRepository difficultyLevelRepository;
+    @Mock
+    private QuestionRepository questionRepository;
 
     private QuizService quizService;
 
@@ -49,14 +65,13 @@ public class QuizServiceTest {
 
     @BeforeEach
     void setUp() {
-        quizService = new QuizService(quizRepository, quizMapper, themeService);
+        quizService = new QuizService(quizRepository, quizMapper, themeService, difficultyLevelRepository, questionRepository, themeRepository);
 
         id = 1L;
 
         quiz = new Quiz();
         quiz.setId(id);
         quiz.setTitle("Test Quiz");
-        quiz.setIsVipOnly(true);
         quiz.setCreatedAt(LocalDateTime.now());
         quiz.setDisabledAt(LocalDateTime.now());
         quiz.setCategory(new Category(1));
@@ -64,10 +79,115 @@ public class QuizServiceTest {
 
         quizUpsertDTO = new QuizUpsertDTO(
                 " test Quiz",
-                true,
                 1L,
                 1L
         );
+    }
+
+
+    @Nested
+    @DisplayName("ADMIN - Récupérer les quiz par thème")
+    class GetQuizzesByThemeTest {
+
+        @BeforeEach
+        void setUp() {
+            quiz.setId(id);
+            quiz.setTitle("Test Quiz");
+            quiz.setCreatedAt(LocalDateTime.now());
+            quiz.setDisabledAt(LocalDateTime.now());
+            quiz.setCategory(new Category(1));
+            quiz.setTheme(new Theme(1));
+        }
+
+        @Test
+        @DisplayName("Succès - visible = null")
+        void shouldReturnAllQuizzes_WhenVisibleIsNull() {
+            // Given
+            Long themeId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+            List<Quiz> quizzes = List.of(new Quiz(), new Quiz());
+            Page<Quiz> quizPage = new PageImpl<>(quizzes);
+            when(themeRepository.existsById(themeId)).thenReturn(true);
+            when(quizRepository.findByThemeId(themeId, pageable)).thenReturn(quizPage);
+
+            // When
+            Page<QuizAdminDTO> result = quizService.findAllByThemeIdForAdmin(themeId, null, pageable);
+
+            // Then
+            verify(themeRepository).existsById(themeId);
+            verify(quizRepository).findByThemeId(themeId, pageable);
+            verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNull(anyLong(), any(Pageable.class));
+            verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNotNull(anyLong(), any(Pageable.class));
+
+            assertThat(result).isNotNull();
+            assertThat(result.getContent().size()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Succès - visible = true")
+        void shouldReturnVisibleQuizzes_WhenVisibleIsTrue() {
+            // Given
+            Long themeId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+            List<Quiz> quizzes = List.of(new Quiz());
+            Page<Quiz> quizPage = new PageImpl<>(quizzes);
+            when(themeRepository.existsById(themeId)).thenReturn(true);
+            when(quizRepository.findByThemeIdAndDisabledAtIsNull(themeId, pageable)).thenReturn(quizPage);
+
+            // When
+            Page<QuizAdminDTO> result = quizService.findAllByThemeIdForAdmin(themeId, true, pageable);
+
+            // Then
+            verify(themeRepository).existsById(themeId);
+            verify(quizRepository).findByThemeIdAndDisabledAtIsNull(themeId, pageable);
+            verify(quizRepository, never()).findByThemeId(anyLong(), any(Pageable.class));
+            verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNotNull(anyLong(), any(Pageable.class));
+
+            assertThat(result).isNotNull();
+            assertThat(result.getContent().size()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Succès - visible = false")
+        void shouldReturnDisabledQuizzes_WhenVisibleIsFalse() {
+            // Given
+            Long themeId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+            List<Quiz> quizzes = List.of(new Quiz());
+            Page<Quiz> quizPage = new PageImpl<>(quizzes);
+            when(themeRepository.existsById(themeId)).thenReturn(true);
+            when(quizRepository.findByThemeIdAndDisabledAtIsNotNull(themeId, pageable)).thenReturn(quizPage);
+
+            // When
+            Page<QuizAdminDTO> result = quizService.findAllByThemeIdForAdmin(themeId, false, pageable);
+
+            // Then
+            verify(themeRepository).existsById(themeId);
+            verify(quizRepository).findByThemeIdAndDisabledAtIsNotNull(themeId, pageable);
+            verify(quizRepository, never()).findByThemeId(anyLong(), any(Pageable.class));
+            verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNull(anyLong(), any(Pageable.class));
+
+
+            assertThat(result).isNotNull();
+            assertThat(result.getContent().size()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Erreur - Thème non trouvé")
+        void shouldThrowNotFoundException_WhenThemeNotFound() {
+            // Given
+            Long themeId = 9999L;
+            Pageable pageable = PageRequest.of(0, 10);
+            when(themeRepository.existsById(themeId)).thenReturn(false);
+
+            // When & then
+            assertThrows(NotFoundException.class, () -> quizService.findAllByThemeIdForAdmin(themeId, null, pageable));
+
+            verify(themeRepository).existsById(themeId);
+            verify(quizRepository, never()).findByThemeId(anyLong(), any(Pageable.class));
+            verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNull(anyLong(), any(Pageable.class));
+            verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNotNull(anyLong(), any(Pageable.class));
+        }
     }
 
 
@@ -102,6 +222,137 @@ public class QuizServiceTest {
             assertThrows(NotFoundException.class, () -> quizService.findByIdForAdmin(id));
 
             verify(quizRepository).findById(anyLong());
+        }
+    }
+
+
+    @Nested
+    @DisplayName("PUBLIC - Récupérer un quiz par son ID")
+    class FindByIdForUserTest {
+
+        @Test
+        @DisplayName("Succès")
+        void findByIdForUser_quizFound() {
+            // Given
+            when(quizRepository.findByIdAndDisabledAtIsNull(anyLong()))
+                    .thenReturn(Optional.of(quiz));
+
+            // When
+            QuizPublicDetailsDTO result = quizService.findByIdForUser(id);
+
+            // Then
+            verify(quizRepository).findByIdAndDisabledAtIsNull(anyLong());
+
+            assertThat(result).isNotNull();
+            assertThat(result.title()).isEqualTo(quiz.getTitle());
+        }
+
+        @Test
+        @DisplayName("Erreur - Quiz non trouvé")
+        void findByIdForUser_quizNotFound() {
+            // Given
+            when(quizRepository.findByIdAndDisabledAtIsNull(anyLong()))
+                    .thenThrow(NotFoundException.class);
+
+            // When & then
+            assertThrows(NotFoundException.class, () -> quizService.findByIdForUser(id));
+
+            verify(quizRepository).findByIdAndDisabledAtIsNull(anyLong());
+        }
+    }
+
+
+    @Nested
+    @DisplayName("Récupérer les questions d'un quiz pour jouer")
+    class FindAllQuestionsByQuizIdForPlayTest {
+
+        @Test
+        @DisplayName("Succès")
+        void shouldReturnQuestions_WhenQuizAndDifficultyExist() {
+            // Given
+            long quizId = 1L;
+            long difficultyLevelId = 1L;
+            byte maxAnswers = 3;
+
+            DifficultyLevel difficultyLevel = new DifficultyLevel();
+            difficultyLevel.setMaxAnswers(maxAnswers);
+
+            QuestionForPlayProjection.AnswersForPlay answer1 = mock(QuestionForPlayProjection.AnswersForPlay.class);
+            when(answer1.getId()).thenReturn(1L);
+            when(answer1.getText()).thenReturn("Réponse 1");
+            when(answer1.getIsCorrect()).thenReturn(true);
+
+            QuestionForPlayProjection.AnswersForPlay answer2 = mock(QuestionForPlayProjection.AnswersForPlay.class);
+            when(answer2.getId()).thenReturn(2L);
+            when(answer2.getText()).thenReturn("Réponse 2");
+            when(answer2.getIsCorrect()).thenReturn(false);
+
+            QuestionForPlayProjection question1 = mock(QuestionForPlayProjection.class);
+            when(question1.getId()).thenReturn(1L);
+            when(question1.getText()).thenReturn("Question 1");
+            when(question1.getAnswers()).thenReturn(List.of(answer1, answer2));
+
+            QuestionForPlayProjection question2 = mock(QuestionForPlayProjection.class);
+            when(question2.getId()).thenReturn(2L);
+            when(question2.getText()).thenReturn("Question 2");
+            when(question2.getAnswers()).thenReturn(List.of(answer1));
+
+            List<QuestionForPlayProjection> questions = new ArrayList<>(List.of(question1, question2));
+
+            when(quizRepository.existsByIdAndDisabledAtIsNull(quizId))
+                    .thenReturn(true);
+            when(difficultyLevelRepository.findByIdAndDisabledAtIsNull(difficultyLevelId))
+                    .thenReturn(Optional.of(difficultyLevel));
+            when(questionRepository.findByQuizIdAndDisabledAtIsNullAndAnswersDisabledAtIsNull(quizId))
+                    .thenReturn(questions);
+
+            // When
+            List<QuestionForPlayDTO> result = quizService.findAllQuestionsByQuizIdForPlay(quizId, difficultyLevelId);
+
+            // Then
+            verify(quizRepository).existsByIdAndDisabledAtIsNull(quizId);
+            verify(difficultyLevelRepository).findByIdAndDisabledAtIsNull(difficultyLevelId);
+            verify(questionRepository).findByQuizIdAndDisabledAtIsNullAndAnswersDisabledAtIsNull(quizId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.size()).isEqualTo(questions.size());
+        }
+
+        @Test
+        @DisplayName("Erreur - Quiz non trouvé")
+        void shouldThrowNotFoundException_WhenQuizDoesNotExist() {
+            // Given
+            long quizId = 1L;
+            long difficultyLevelId = 1L;
+
+            when(quizRepository.existsByIdAndDisabledAtIsNull(quizId))
+                    .thenReturn(false);
+
+            // When / Then
+            assertThrows(NotFoundException.class, () -> quizService.findAllQuestionsByQuizIdForPlay(quizId, difficultyLevelId));
+
+            verify(quizRepository).existsByIdAndDisabledAtIsNull(quizId);
+            verifyNoInteractions(difficultyLevelRepository, questionRepository);
+        }
+
+        @Test
+        @DisplayName("Erreur - Niveau de difficulté non trouvé")
+        void shouldThrowNotFoundException_WhenDifficultyLevelDoesNotExist() {
+            // Given
+            long quizId = 1L;
+            long difficultyLevelId = 1L;
+
+            when(quizRepository.existsByIdAndDisabledAtIsNull(quizId))
+                    .thenReturn(true);
+            when(difficultyLevelRepository.findByIdAndDisabledAtIsNull(difficultyLevelId))
+                    .thenReturn(Optional.empty());
+
+            // When / Then
+            assertThrows(NotFoundException.class, () -> quizService.findAllQuestionsByQuizIdForPlay(quizId, difficultyLevelId));
+
+            verify(quizRepository).existsByIdAndDisabledAtIsNull(quizId);
+            verify(difficultyLevelRepository).findByIdAndDisabledAtIsNull(difficultyLevelId);
+            verifyNoInteractions(questionRepository);
         }
     }
 
@@ -195,7 +446,7 @@ public class QuizServiceTest {
         void update_quizNotFound() {
             // Given
             when(quizRepository.findById(anyLong()))
-                    .thenThrow(NotFoundException.class);
+                    .thenReturn(Optional.empty());
 
             // When & then
             assertThrows(NotFoundException.class, () -> quizService.update(id, quizUpsertDTO));
@@ -255,7 +506,7 @@ public class QuizServiceTest {
         void delete_quizNotFound() {
             // Given
             when(quizRepository.findById(anyLong()))
-                    .thenThrow(NotFoundException.class);
+                    .thenReturn(Optional.empty());
 
             // When & then
             assertThrows(NotFoundException.class, () -> quizService.delete(id));
@@ -376,7 +627,7 @@ public class QuizServiceTest {
         void updateVisibility_quizNotFound() {
             // Given
             when(quizRepository.findById(anyLong()))
-                    .thenThrow(NotFoundException.class);
+                    .thenReturn(Optional.empty());
 
             // When & then
             assertThrows(NotFoundException.class, () -> quizService.updateVisibility(id, false));

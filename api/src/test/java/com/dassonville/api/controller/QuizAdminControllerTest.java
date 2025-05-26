@@ -3,6 +3,7 @@ package com.dassonville.api.controller;
 
 import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.BooleanRequestDTO;
+import com.dassonville.api.dto.QuizAdminDTO;
 import com.dassonville.api.dto.QuizAdminDetailsDTO;
 import com.dassonville.api.dto.QuizUpsertDTO;
 import com.dassonville.api.exception.AlreadyExistException;
@@ -23,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -53,6 +55,7 @@ public class QuizAdminControllerTest {
 
     private long endpointId;
     private BooleanRequestDTO booleanRequestDTO;
+    private QuizAdminDTO quizAdminDTO;
     private QuizAdminDetailsDTO quizAdminDetailsDTO;
     private QuizUpsertDTO quizUpsertDTO;
 
@@ -61,8 +64,9 @@ public class QuizAdminControllerTest {
     public void setUp() {
         endpointId = 1L;
         booleanRequestDTO = new BooleanRequestDTO(true);
-        quizAdminDetailsDTO = new QuizAdminDetailsDTO(1L, "Test Quiz", false, null, null, null, 9L, 1L, List.of());
-        quizUpsertDTO = new QuizUpsertDTO("Test Quiz", false, 9L, 1L);
+        quizAdminDTO = new QuizAdminDTO(1L, "Test Quiz", (byte) 15, true, LocalDateTime.now(), null, null, null);
+        quizAdminDetailsDTO = new QuizAdminDetailsDTO(1L, "Test Quiz", null, null, null, 9L, 1L, List.of());
+        quizUpsertDTO = new QuizUpsertDTO("Test Quiz", 9L, 1L);
 
         when(themeRepository.existsById(anyLong()))
                 .thenReturn(true);
@@ -142,7 +146,7 @@ public class QuizAdminControllerTest {
         @DisplayName("Erreur - Données invalides")
         public void createInvalidQuiz_shouldReturn400() throws Exception {
             // Given
-            quizUpsertDTO = new QuizUpsertDTO("", false, null, null);
+            quizUpsertDTO = new QuizUpsertDTO("", null, null);
 
             // When & Then
             mockMvc.perform(post(ApiRoutes.Quizzes.ADMIN_QUIZZES)
@@ -157,7 +161,7 @@ public class QuizAdminControllerTest {
         @DisplayName("Erreur - Catégorie invalide pour le thème")
         public void createInvalidQuizWithWrongCategoryForTheme_shouldReturn400() throws Exception {
             // Given
-            quizUpsertDTO = new QuizUpsertDTO("", false, 1L, 1L);
+            quizUpsertDTO = new QuizUpsertDTO("", 1L, 1L);
             when(categoryRepository.existsByIdAndThemeId(anyLong(), anyLong()))
                     .thenReturn(false);
 
@@ -210,7 +214,7 @@ public class QuizAdminControllerTest {
         @DisplayName("Erreur - Données invalides")
         public void updateInvalidQuiz_shouldReturn400() throws Exception {
             // Given
-            quizUpsertDTO = new QuizUpsertDTO("", false, null, null);
+            quizUpsertDTO = new QuizUpsertDTO("", null, null);
 
             // When & Then
             mockMvc.perform(put(ApiRoutes.Quizzes.ADMIN_BY_ID, endpointId)

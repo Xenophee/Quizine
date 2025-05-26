@@ -12,7 +12,6 @@ import com.dassonville.api.model.Theme;
 import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.projection.PublicThemeProjection;
 import com.dassonville.api.repository.ThemeRepository;
-import com.dassonville.api.repository.ThemeSummaryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,8 +37,6 @@ public class ThemeServiceTest {
 
     @Mock
     private ThemeRepository themeRepository;
-    @Mock
-    private ThemeSummaryRepository themeSummaryRepository;
 
     private ThemeService themeService;
 
@@ -55,7 +52,7 @@ public class ThemeServiceTest {
 
     @BeforeEach
     void setUp() {
-        themeService = new ThemeService(themeRepository, themeMapper, themeSummaryRepository);
+        themeService = new ThemeService(themeRepository, themeMapper);
 
         id = 1L;
 
@@ -130,12 +127,12 @@ public class ThemeServiceTest {
 
             assertThat(results).isNotNull();
             assertThat(results.size()).isEqualTo(1);
-            assertThat(results.get(0).id()).isEqualTo(theme.getId());
-            assertThat(results.get(0).name()).isEqualTo(theme.getName());
-            assertThat(results.get(0).description()).isEqualTo(theme.getDescription());
-            assertThat(results.get(0).createdAt()).isEqualTo(theme.getCreatedAt());
-            assertThat(results.get(0).updatedAt()).isEqualTo(theme.getUpdatedAt());
-            assertThat(results.get(0).disabledAt()).isEqualTo(theme.getDisabledAt());
+            assertThat(results.getFirst().id()).isEqualTo(theme.getId());
+            assertThat(results.getFirst().name()).isEqualTo(theme.getName());
+            assertThat(results.getFirst().description()).isEqualTo(theme.getDescription());
+            assertThat(results.getFirst().createdAt()).isEqualTo(theme.getCreatedAt());
+            assertThat(results.getFirst().updatedAt()).isEqualTo(theme.getUpdatedAt());
+            assertThat(results.getFirst().disabledAt()).isEqualTo(theme.getDisabledAt());
         }
 
         @Test
@@ -153,10 +150,10 @@ public class ThemeServiceTest {
 
             assertThat(results).isNotNull();
             assertThat(results.size()).isEqualTo(1);
-            assertThat(results.get(0).id()).isEqualTo(publicThemeProjection.getId());
-            assertThat(results.get(0).name()).isEqualTo(publicThemeProjection.getName());
-            assertThat(results.get(0).description()).isEqualTo(publicThemeProjection.getDescription());
-            assertThat(results.get(0).isNew()).isEqualTo(true);
+            assertThat(results.getFirst().id()).isEqualTo(publicThemeProjection.getId());
+            assertThat(results.getFirst().name()).isEqualTo(publicThemeProjection.getName());
+            assertThat(results.getFirst().description()).isEqualTo(publicThemeProjection.getDescription());
+            assertThat(results.getFirst().isNew()).isEqualTo(true);
         }
     }
 
@@ -164,36 +161,6 @@ public class ThemeServiceTest {
     @Nested
     @DisplayName("Récupérer un thème par son ID")
     class FindByIdTests {
-
-        @Test
-        @DisplayName("USER - Succès")
-        public void findById_existingId() {
-            // Given
-            when(themeRepository.findByIdAndDisabledAtIsNull(anyLong()))
-                    .thenReturn(Optional.of(publicThemeProjection));
-
-            // When
-            ThemePublicDTO result = themeService.findByIdForUser(id);
-
-            // Then
-            verify(themeRepository).findByIdAndDisabledAtIsNull(anyLong());
-
-            assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(publicThemeProjection.getName());
-        }
-
-        @Test
-        @DisplayName("USER - Erreur - Thème non trouvé")
-        public void findByIdForUser_nonExistingId() {
-            // Given
-            when(themeRepository.findByIdAndDisabledAtIsNull(anyLong()))
-                    .thenReturn(Optional.empty());
-
-            // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.findByIdForUser(id));
-
-            verify(themeRepository).findByIdAndDisabledAtIsNull(anyLong());
-        }
 
         @Test
         @DisplayName("ADMIN - Succès")
@@ -247,6 +214,7 @@ public class ThemeServiceTest {
             // Then
             verify(themeRepository).existsByNameIgnoreCase(anyString());
             verify(themeRepository).save(any(Theme.class));
+
             assertThat(result).isNotNull();
             assertThat(result.name()).isEqualTo(theme.getName());
         }

@@ -90,6 +90,7 @@ public class AnswerServiceTest {
             verify(questionRepository).existsById(anyLong());
             verify(answerRepository).existsByTextIgnoreCaseAndQuestionId(anyString(), anyLong());
             verify(answerRepository).save(any(Answer.class));
+
             assertThat(result).isNotNull();
             assertThat(result.text()).isEqualTo(answer.getText());
         }
@@ -153,6 +154,7 @@ public class AnswerServiceTest {
             verify(answerRepository).existsByTextIgnoreCaseAndIdNot(anyString(), anyLong());
             verify(answerRepository, never()).existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong());
             verify(answerRepository).save(any(Answer.class));
+
             assertThat(result).isNotNull();
             assertThat(result.text()).isEqualTo(answer.getText());
         }
@@ -162,7 +164,7 @@ public class AnswerServiceTest {
         void update_answerNotFound() {
             // Given
             when(answerRepository.findById(anyLong()))
-                    .thenThrow(NotFoundException.class);
+                    .thenReturn(Optional.empty());
 
             // When
             assertThrows(NotFoundException.class, () -> answerService.update(id, answerUpsertDTO));
@@ -250,7 +252,7 @@ public class AnswerServiceTest {
         void delete_answerNotFound() {
             // Given
             when(answerRepository.findById(anyLong()))
-                    .thenThrow(NotFoundException.class);
+                    .thenReturn(Optional.empty());
 
             // When
             assertThrows(NotFoundException.class, () -> answerService.delete(id));
@@ -344,7 +346,7 @@ public class AnswerServiceTest {
         void toggleVisibility_answerNotFound() {
             // Given
             when(answerRepository.findById(anyLong()))
-                    .thenThrow(NotFoundException.class);
+                    .thenReturn(Optional.empty());
 
             // When
             assertThrows(NotFoundException.class, () -> answerService.updateVisibility(id, false));

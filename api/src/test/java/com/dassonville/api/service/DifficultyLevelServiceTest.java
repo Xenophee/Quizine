@@ -53,7 +53,7 @@ public class DifficultyLevelServiceTest {
         id = 1L;
 
         difficultyLevel = new DifficultyLevel();
-        difficultyLevel.setId(1);
+        difficultyLevel.setId(1L);
         difficultyLevel.setName("Facile");
         difficultyLevel.setMaxAnswers((byte) 2);
         difficultyLevel.setTimerSeconds((short) 0);
@@ -84,12 +84,12 @@ public class DifficultyLevelServiceTest {
             
             assertThat(results).isNotNull();
             assertThat(results.size()).isEqualTo(1);
-            assertThat(results.get(0).name()).isEqualTo(difficultyLevel.getName());
-            assertThat(results.get(0).maxAnswers()).isEqualTo(difficultyLevel.getMaxAnswers());
-            assertThat(results.get(0).timerSeconds()).isEqualTo(difficultyLevel.getTimerSeconds());
-            assertThat(results.get(0).pointsPerQuestion()).isEqualTo(difficultyLevel.getPointsPerQuestion());
-            assertThat(results.get(0).createdAt()).isEqualTo(difficultyLevel.getCreatedAt());
-            assertThat(results.get(0).isReference()).isEqualTo(difficultyLevel.getIsReference());
+            assertThat(results.getFirst().name()).isEqualTo(difficultyLevel.getName());
+            assertThat(results.getFirst().maxAnswers()).isEqualTo(difficultyLevel.getMaxAnswers());
+            assertThat(results.getFirst().timerSeconds()).isEqualTo(difficultyLevel.getTimerSeconds());
+            assertThat(results.getFirst().pointsPerQuestion()).isEqualTo(difficultyLevel.getPointsPerQuestion());
+            assertThat(results.getFirst().createdAt()).isEqualTo(difficultyLevel.getCreatedAt());
+            assertThat(results.getFirst().isReference()).isEqualTo(difficultyLevel.getIsReference());
         }
 
         @Test
@@ -115,12 +115,12 @@ public class DifficultyLevelServiceTest {
 
             assertThat(results).isNotNull();
             assertThat(results.size()).isEqualTo(1);
-            assertThat(results.get(0).id()).isEqualTo(projection.getId());
-            assertThat(results.get(0).name()).isEqualTo(projection.getName());
-            assertThat(results.get(0).maxAnswers()).isEqualTo(projection.getMaxAnswers());
-            assertThat(results.get(0).timerSeconds()).isEqualTo(projection.getTimerSeconds());
-            assertThat(results.get(0).pointsPerQuestion()).isEqualTo(projection.getPointsPerQuestion());
-            assertThat(results.get(0).isNew()).isTrue();
+            assertThat(results.getFirst().id()).isEqualTo(projection.getId());
+            assertThat(results.getFirst().name()).isEqualTo(projection.getName());
+            assertThat(results.getFirst().maxAnswers()).isEqualTo(projection.getMaxAnswers());
+            assertThat(results.getFirst().timerSeconds()).isEqualTo(projection.getTimerSeconds());
+            assertThat(results.getFirst().pointsPerQuestion()).isEqualTo(projection.getPointsPerQuestion());
+            assertThat(results.getFirst().isNew()).isTrue();
         }
     }
 
@@ -299,7 +299,7 @@ public class DifficultyLevelServiceTest {
         void delete_nonExistingDifficultyLevel() {
             // Given
             when(difficultyLevelRepository.findById(anyLong()))
-                    .thenThrow(new NotFoundException());
+                    .thenReturn(Optional.empty());
 
             // When & Then
             assertThrows(NotFoundException.class, () -> difficultyLevelService.delete(id));
@@ -415,7 +415,8 @@ public class DifficultyLevelServiceTest {
                     new DifficultyLevel(2L, "Moyen", (short) 2)
             );
 
-            when(difficultyLevelRepository.findAllById(newOrder)).thenReturn(levels);
+            when(difficultyLevelRepository.findAllById(newOrder))
+                    .thenReturn(levels);
 
             // When & Then
             assertThrows(NotFoundException.class, () -> difficultyLevelService.updateDisplayOrder(newOrder));

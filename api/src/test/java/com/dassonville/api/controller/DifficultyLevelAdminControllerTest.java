@@ -141,7 +141,7 @@ public class DifficultyLevelAdminControllerTest {
         @DisplayName("Erreur - Données invalides")
         public void createDifficultyLevel_shouldReturn400() throws Exception {
             // Given
-            difficultyLevelUpsertDTO = new DifficultyLevelUpsertDTO("", null, (short) -10, 0);
+            difficultyLevelUpsertDTO = new DifficultyLevelUpsertDTO("", null, (short) -10, -10);
 
             // When & Then
             mockMvc.perform(post(ApiRoutes.DifficultyLevels.ADMIN_DIFFICULTY_LEVELS)

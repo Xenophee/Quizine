@@ -1,16 +1,14 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.AnswerUpsertDTO;
-import com.dassonville.api.dto.QuestionAdminDTO;
-import com.dassonville.api.dto.QuestionInsertDTO;
-import com.dassonville.api.dto.QuestionUpdateDTO;
+import com.dassonville.api.dto.*;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.QuestionMapper;
 import com.dassonville.api.model.Answer;
 import com.dassonville.api.model.Question;
 import com.dassonville.api.model.Quiz;
+import com.dassonville.api.repository.AnswerRepository;
 import com.dassonville.api.repository.QuestionRepository;
 import com.dassonville.api.repository.QuizRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +35,8 @@ import static org.mockito.Mockito.*;
 public class QuestionServiceTest {
 
     @Mock
+    private AnswerRepository answerRepository;
+    @Mock
     private QuestionRepository questionRepository;
     @Mock
     private QuizRepository quizRepository;
@@ -58,7 +58,7 @@ public class QuestionServiceTest {
     @BeforeEach
     void setUp() {
 
-        questionService = new QuestionService(questionRepository, questionMapper, quizRepository, quizService);
+        questionService = new QuestionService(questionRepository, questionMapper, quizRepository, quizService, answerRepository);
 
         id = 1L;
 
@@ -83,6 +83,232 @@ public class QuestionServiceTest {
                 new AnswerUpsertDTO(" answer 2", false)
         ));
         questionUpdateDTO = new QuestionUpdateDTO(" updated text");
+    }
+
+
+    @Nested
+    @DisplayName("Vérifier la réponse à une question par choix")
+    class CheckChoicesAnswer {
+
+        @Test
+        @DisplayName("Succès - Réponses correctes")
+        void shouldReturnCorrectResult_WhenAnswersAreCorrect() {
+            // Given
+            long quizId = 1L;
+            long questionId = 1L;
+            List<Long> submittedAnswerIds = List.of(101L, 102L);
+
+            when(questionRepository.existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId))
+                    .thenReturn(true);
+            when(answerRepository.countActiveValidAnswers(submittedAnswerIds, questionId))
+                    .thenReturn(submittedAnswerIds.size());
+            when(answerRepository.findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId))
+                    .thenReturn(List.of(
+                            new Answer(101L, "Answer 1", true),
+                            new Answer(102L, "Answer 2", true)
+                    ));
+
+            // When
+            CheckAnswerResultDTO result = questionService.checkAnswerByChoice(quizId, questionId, submittedAnswerIds);
+
+            // Then
+            assertThat(result.isCorrect()).isTrue();
+            assertThat(result.correctAnswers().size()).isEqualTo(2);
+
+            verify(questionRepository).existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId);
+            verify(answerRepository).countActiveValidAnswers(submittedAnswerIds, questionId);
+            verify(answerRepository).findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId);
+        }
+
+        @Test
+        @DisplayName("Succès - Réponses incorrectes")
+        void shouldReturnIncorrectResult_WhenAnswersAreIncorrect() {
+            // Given
+            long quizId = 1L;
+            long questionId = 1L;
+            List<Long> submittedAnswerIds = List.of(101L, 103L);
+
+            when(questionRepository.existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId))
+                    .thenReturn(true);
+            when(answerRepository.countActiveValidAnswers(submittedAnswerIds, questionId))
+                    .thenReturn(2);
+            when(answerRepository.findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId))
+                    .thenReturn(List.of(
+                            new Answer(101L, "Answer 1", true),
+                            new Answer(102L, "Answer 2", true)
+                    ));
+
+            // When
+            CheckAnswerResultDTO result = questionService.checkAnswerByChoice(quizId, questionId, submittedAnswerIds);
+
+            // Then
+            assertThat(result.isCorrect()).isFalse();
+            assertThat(result.correctAnswers().size()).isEqualTo(2);
+
+            verify(questionRepository).existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId);
+            verify(answerRepository).countActiveValidAnswers(submittedAnswerIds, questionId);
+            verify(answerRepository).findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId);
+        }
+
+        @Test
+        @DisplayName("Erreur - Question non trouvée")
+        void shouldThrowNotFoundException_WhenQuestionDoesNotExist() {
+            // Given
+            long quizId = 1L;
+            long questionId = 1L;
+            List<Long> submittedAnswerIds = List.of(101L, 102L);
+
+            when(questionRepository.existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId))
+                    .thenReturn(false);
+
+            // When / Then
+            assertThrows(NotFoundException.class, () -> questionService.checkAnswerByChoice(quizId, questionId, submittedAnswerIds));
+
+            verify(questionRepository).existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId);
+            verifyNoInteractions(answerRepository);
+        }
+
+        @Test
+        @DisplayName("Erreur - Réponses soumises invalides")
+        void shouldThrowIllegalArgumentException_WhenSubmittedAnswersAreInvalid() {
+            // Given
+            long quizId = 1L;
+            long questionId = 1L;
+            List<Long> submittedAnswerIds = List.of(101L, 102L);
+
+            when(questionRepository.existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId))
+                    .thenReturn(true);
+            when(answerRepository.countActiveValidAnswers(submittedAnswerIds, questionId))
+                    .thenReturn(1); // Un seul ID soumis appartient à la question
+
+            // When / Then
+            assertThrows(IllegalArgumentException.class, () -> questionService.checkAnswerByChoice(quizId, questionId, submittedAnswerIds));
+
+            verify(questionRepository).existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId);
+            verify(answerRepository).countActiveValidAnswers(submittedAnswerIds, questionId);
+            verifyNoMoreInteractions(answerRepository);
+        }
+
+        @Test
+        @DisplayName("Erreur - Pas de bonnes réponses")
+        void shouldThrowIllegalStateException_WhenNoCorrectAnswersExist() {
+            // Given
+            long quizId = 1L;
+            long questionId = 1L;
+            List<Long> submittedAnswerIds = List.of(101L, 102L);
+
+            when(questionRepository.existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId))
+                    .thenReturn(true);
+            when(answerRepository.countActiveValidAnswers(submittedAnswerIds, questionId))
+                    .thenReturn(submittedAnswerIds.size());
+            when(answerRepository.findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId))
+                    .thenReturn(List.of()); // Aucune bonne réponse
+
+            // When / Then
+            assertThrows(IllegalStateException.class, () -> questionService.checkAnswerByChoice(quizId, questionId, submittedAnswerIds));
+
+            verify(questionRepository).existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId);
+            verify(answerRepository).countActiveValidAnswers(submittedAnswerIds, questionId);
+            verify(answerRepository).findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId);
+        }
+    }
+
+
+    @Nested
+    @DisplayName("Vérifier la réponse à une question par texte")
+    class CheckTextAnswer {
+
+        @Test
+        @DisplayName("Succès - Réponses correctes")
+        void shouldReturnCorrectResult_WhenAnswersAreCorrect() {
+            // Given
+            long quizId = 1L;
+            long questionId = 1L;
+            List<String> submittedAnswers = List.of(" paris  ", " londres");
+
+            when(questionRepository.existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId))
+                    .thenReturn(true);
+            when(answerRepository.findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId))
+                    .thenReturn(List.of(
+                            new Answer(1L, "Paris", true),
+                            new Answer(2L, "Londres", true)
+                    ));
+
+            // When
+            CheckAnswerResultDTO result = questionService.checkAnswerByText(quizId, questionId, submittedAnswers);
+
+            // Then
+            assertThat(result.isCorrect()).isTrue();
+            assertThat(result.correctAnswers().size()).isEqualTo(2);
+
+            verify(questionRepository).existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId);
+            verify(answerRepository).findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId);
+        }
+
+        @Test
+        @DisplayName("Succès - Réponses incorrectes")
+        void shouldReturnIncorrectResult_WhenAnswersAreWrong() {
+            // Given
+            long quizId = 1L;
+            long questionId = 1L;
+            List<String> submittedAnswers = List.of("Berlin", " paris");
+
+            when(questionRepository.existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId))
+                    .thenReturn(true);
+            when(answerRepository.findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId))
+                    .thenReturn(List.of(
+                            new Answer(1L, "Paris", true),
+                            new Answer(2L, "Londres", true)
+                    ));
+
+            // When
+            CheckAnswerResultDTO result = questionService.checkAnswerByText(quizId, questionId, submittedAnswers);
+
+            // Then
+            assertThat(result.isCorrect()).isFalse();
+            assertThat(result.correctAnswers().size()).isEqualTo(2);
+
+            verify(questionRepository).existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId);
+            verify(answerRepository).findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId);
+        }
+
+        @Test
+        @DisplayName("Erreur - Question non trouvée")
+        void shouldThrowNotFoundException_WhenQuestionDoesNotExist() {
+            // Given
+            long quizId = 1L;
+            long questionId = 1L;
+            List<String> submittedAnswers = List.of("Paris");
+
+            when(questionRepository.existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId))
+                    .thenReturn(false);
+
+            // When / Then
+            assertThrows(NotFoundException.class, () -> questionService.checkAnswerByText(quizId, questionId, submittedAnswers));
+
+            verify(questionRepository).existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId);
+            verifyNoInteractions(answerRepository);
+        }
+
+        @Test
+        @DisplayName("Erreur - Pas de bonnes réponses")
+        void shouldThrowIllegalStateException_WhenNoCorrectAnswersExist() {
+            // Given
+            long quizId = 1L;
+            long questionId = 1L;
+            List<String> submittedAnswers = List.of("Paris");
+
+            when(questionRepository.existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId))
+                    .thenReturn(true);
+            when(answerRepository.findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId))
+                    .thenReturn(List.of());
+
+            // When / Then
+            assertThrows(IllegalStateException.class, () -> questionService.checkAnswerByText(quizId, questionId, submittedAnswers));
+
+            verify(questionRepository).existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId);
+            verify(answerRepository).findByQuestionIdAndIsCorrectTrueAndDisabledAtIsNull(questionId);
+        }
     }
 
 
@@ -183,7 +409,7 @@ public class QuestionServiceTest {
         void updateQuestion_QuestionNotFound() {
             // Given
             when(questionRepository.findById(id))
-                    .thenThrow(NotFoundException.class);
+                    .thenReturn(Optional.empty());
 
             // When
             assertThrows(NotFoundException.class, () -> questionService.update(id, questionUpdateDTO));
@@ -261,7 +487,7 @@ public class QuestionServiceTest {
         void deleteQuestion_QuestionNotFound() {
             // Given
             when(questionRepository.findById(id))
-                    .thenThrow(NotFoundException.class);
+                    .thenReturn(Optional.empty());
 
             // When
             assertThrows(NotFoundException.class, () -> questionService.delete(id));
@@ -305,7 +531,7 @@ public class QuestionServiceTest {
         void updateVisibilityQuestion_QuestionNotFound() {
             // Given
             when(questionRepository.findById(id))
-                    .thenThrow(NotFoundException.class);
+                    .thenReturn(Optional.empty());
 
             // When
             assertThrows(NotFoundException.class, () -> questionService.updateVisibility(id, true));
