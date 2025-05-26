@@ -43,6 +43,13 @@ public class GlobalExceptionHandler {
         return new Error(ex.getMessage());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Error handleIllegalArgumentException(IllegalArgumentException ex) {
+        logger.warn("Une erreur de validation a été détectée : {}", ex.getMessage());
+        return new Error(ex.getMessage());
+    }
+
 
     @ExceptionHandler(IllegalStateException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
