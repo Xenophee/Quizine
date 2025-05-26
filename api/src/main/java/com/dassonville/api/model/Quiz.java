@@ -26,9 +26,6 @@ public class Quiz {
     @Column(length = 100, nullable = false, unique = true)
     private String title;
 
-    @Column(name = "is_vip_only", nullable = false)
-    private Boolean isVipOnly;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;

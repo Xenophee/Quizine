@@ -3,6 +3,7 @@ package com.dassonville.api.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @Table(name = "answers")
 @Getter
 @Setter
+@NoArgsConstructor
 public class Answer {
 
     @Id
@@ -40,6 +42,12 @@ public class Answer {
     @JoinColumn(name = "id_question", referencedColumnName = "id", nullable = false)
     private Question question;
 
+
+    public Answer(long id, String text, boolean isCorrect) {
+        this.id = id;
+        this.text = text;
+        this.isCorrect = isCorrect;
+    }
 
 
     public void setVisible(boolean visible) {

@@ -20,25 +20,25 @@ public class DifficultyLevel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(length = 50, nullable = false, unique = true)
     private String name;
 
     @Column(name = "max_answers", nullable = false)
-    private byte maxAnswers;
+    private Byte maxAnswers;
 
     @Column(name = "timer_seconds")
-    private short timerSeconds;
+    private Short timerSeconds;
 
     @Column(name = "points_per_question", nullable = false)
-    private int pointsPerQuestion;
+    private Integer pointsPerQuestion;
 
     @Column(name = "is_reference", nullable = false)
     private Boolean isReference = false;
 
     @Column(name = "display_order", nullable = false)
-    private short displayOrder;
+    private Short displayOrder;
 
     @Column(name = "created_at", updatable = false)
     @CreationTimestamp
