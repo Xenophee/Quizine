@@ -87,7 +87,7 @@ public class CategoryServiceTest {
                     .thenReturn(List.of(idAndNameProjection));
 
             // When
-            List<IdAndNameProjection> result = categoryService.getCategoriesByTheme(1L);
+            List<IdAndNameProjection> result = categoryService.findAllByTheme(1L);
 
             // Then
             verify(themeRepository).existsById(anyLong());
@@ -107,7 +107,7 @@ public class CategoryServiceTest {
                     .thenReturn(false);
 
             // When
-            assertThrows(NotFoundException.class, () -> categoryService.getCategoriesByTheme(1L));
+            assertThrows(NotFoundException.class, () -> categoryService.findAllByTheme(1L));
 
             // Then
             verify(themeRepository).existsById(anyLong());

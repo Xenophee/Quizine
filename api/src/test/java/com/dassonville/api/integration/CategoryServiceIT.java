@@ -51,7 +51,7 @@ public class CategoryServiceIT {
             long themeId = 1L;
 
             // When
-            List<IdAndNameProjection> categories = categoryService.getCategoriesByTheme(themeId);
+            List<IdAndNameProjection> categories = categoryService.findAllByTheme(themeId);
 
             // Then
             assertThat(categories).hasSize(3);
@@ -66,7 +66,7 @@ public class CategoryServiceIT {
             long themeId = 9999L;
 
             // When / Then
-            assertThrows(NotFoundException.class, () -> categoryService.getCategoriesByTheme(themeId));
+            assertThrows(NotFoundException.class, () -> categoryService.findAllByTheme(themeId));
         }
 
         @Test

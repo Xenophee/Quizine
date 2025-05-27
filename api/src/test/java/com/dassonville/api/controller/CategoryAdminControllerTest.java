@@ -79,7 +79,7 @@ public class CategoryAdminControllerTest {
         @DisplayName("Succès - Récupérer la liste des catégories selon un thème")
         public void getCategoriesByTheme_shouldReturn200() throws Exception {
             // Given
-            when(categoryService.getCategoriesByTheme(anyLong()))
+            when(categoryService.findAllByTheme(anyLong()))
                     .thenReturn(List.of(idAndNameProjection));
 
             // When & Then
@@ -93,7 +93,7 @@ public class CategoryAdminControllerTest {
         @DisplayName("Erreur - Thème non trouvé")
         public void getCategoriesByTheme_shouldReturn404() throws Exception {
             // Given
-            when(categoryService.getCategoriesByTheme(anyLong()))
+            when(categoryService.findAllByTheme(anyLong()))
                     .thenThrow(new NotFoundException());
 
             // When & Then
