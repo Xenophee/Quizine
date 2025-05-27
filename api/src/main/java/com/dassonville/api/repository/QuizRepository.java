@@ -18,6 +18,7 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
     /**
      * Récupère une page de projections publiques des quiz actifs.
+     * Le thème et la catégorie doivent également être actifs.
      *
      * @param pageable Les informations de pagination.
      * @return Une page de projections publiques des quiz actifs.
@@ -34,31 +35,36 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
             JOIN quiz.theme theme
             LEFT JOIN quiz.questions question
             WHERE quiz.disabledAt IS NULL
+                 AND theme.disabledAt IS NULL
+                 AND category.disabledAt IS NULL
             GROUP BY quiz.id, quiz.title, quiz.createdAt, category.name, theme.name
             """)
     Page<PublicQuizProjection> findAllByDisabledAtIsNull(Pageable pageable);
 
     /**
      * Récupère une page de projections publiques des quiz actifs pour des thèmes spécifiques.
+     * Le thème et la catégorie doivent également être actifs.
      *
      * @param themeIds La liste des IDs des thèmes.
      * @param pageable Les informations de pagination.
      * @return Une page de projections publiques des quiz actifs.
      */
     @Query("""
-                SELECT quiz.id AS id,
-                       quiz.title AS title,
-                       quiz.createdAt AS createdAt,
-                       COUNT(CASE WHEN question.disabledAt IS NULL THEN question.id END) AS numberOfQuestions,
-                       category.name AS categoryName,
-                       theme.name AS themeName
-                FROM Quiz quiz
-                JOIN quiz.category category
-                JOIN quiz.theme theme
-                LEFT JOIN quiz.questions question
-                WHERE quiz.disabledAt IS NULL
-                  AND theme.id IN :themeIds
-                GROUP BY quiz.id, quiz.title, quiz.createdAt, category.name, theme.name
+            SELECT quiz.id AS id,
+                   quiz.title AS title,
+                   quiz.createdAt AS createdAt,
+                   COUNT(CASE WHEN question.disabledAt IS NULL THEN question.id END) AS numberOfQuestions,
+                   category.name AS categoryName,
+                   theme.name AS themeName
+            FROM Quiz quiz
+            JOIN quiz.category category
+            JOIN quiz.theme theme
+            LEFT JOIN quiz.questions question
+            WHERE quiz.disabledAt IS NULL
+                AND theme.disabledAt IS NULL
+                AND category.disabledAt IS NULL
+                AND theme.id IN :themeIds
+            GROUP BY quiz.id, quiz.title, quiz.createdAt, category.name, theme.name
             """)
     Page<PublicQuizProjection> findAllByDisabledAtIsNullAndThemeIdIn(List<Long> themeIds, Pageable pageable);
 
@@ -105,12 +111,12 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     int countByIdAndQuestionsDisabledAtIsNull(long id);
 
     /**
-     * Récupère un quiz actif par son ID.
+     * Récupère un quiz actif par son ID. Le thème et la catégorie doivent également être actifs.
      *
      * @param id L'ID du quiz.
-     * @return Un `Optional` contenant le quiz s'il est actif, sinon vide.
+     * @return Un {@code Optional} contenant le quiz s'il est actif, sinon vide.
      */
-    Optional<Quiz> findByIdAndDisabledAtIsNull(long id);
+    Optional<Quiz> findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(long id);
 
     /**
      * Récupère tous les quiz actifs pour un thème donné.
