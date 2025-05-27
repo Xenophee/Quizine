@@ -23,7 +23,7 @@ public class ValidMinAnswersPerQuestionValidator implements ConstraintValidator<
 
     @Override
     public boolean isValid(QuestionInsertDTO dto, ConstraintValidatorContext context) {
-        byte min = difficultyLevelRepository.findReferenceLevelMaxAnswers()
+        byte answerOptionsCount = difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel()
                 .orElseThrow(() -> {
                     logger.error("Le niveau de difficulté de référence n'a pas été trouvé.");
                     return new IllegalStateException("Le niveau de difficulté de référence n'a pas été trouvé.");
@@ -31,15 +31,15 @@ public class ValidMinAnswersPerQuestionValidator implements ConstraintValidator<
 
         if (dto.answers() == null || dto.answers().isEmpty()) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Veuillez fournir au moins " + min + " réponses.")
+            context.buildConstraintViolationWithTemplate("Veuillez fournir au moins " + answerOptionsCount + " réponses.")
                     .addPropertyNode("answers")
                     .addConstraintViolation();
             return false;
         }
 
-        if (dto.answers().size() < min) {
+        if (dto.answers().size() < answerOptionsCount) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Veuillez fournir au moins " + min + " réponses.")
+            context.buildConstraintViolationWithTemplate("Veuillez fournir au moins " + answerOptionsCount + " réponses.")
                     .addPropertyNode("answers")
                     .addConstraintViolation();
             return false;
