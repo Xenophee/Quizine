@@ -6,6 +6,7 @@ import com.dassonville.api.dto.CategoryUpsertDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.Category;
+import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.repository.CategoryRepository;
 import com.dassonville.api.service.CategoryService;
 import jakarta.transaction.Transactional;
@@ -17,7 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
@@ -40,6 +43,31 @@ public class CategoryServiceIT {
     @Nested
     @DisplayName("Récupération de catégories")
     class GettingCategories {
+
+        @Test
+        @DisplayName("Succès - Récupérer toutes les catégories selon un thème par ordre alphabétique")
+        public void shouldGetAllCategoriesByTheme() {
+            // Given
+            long themeId = 1L;
+
+            // When
+            List<IdAndNameProjection> categories = categoryService.getCategoriesByTheme(themeId);
+
+            // Then
+            assertThat(categories).hasSize(3);
+            assertThat(categories.getFirst().getId()).isEqualTo(14L);
+            assertThat(categories.getFirst().getName()).isEqualTo("Mythologie & Religion");
+        }
+
+        @Test
+        @DisplayName("Erreur - Récupérer toutes les catégories selon un thème - thème non trouvé")
+        public void shouldFailToGetAllCategoriesByTheme_WhenNonExistingTheme() {
+            // Given
+            long themeId = 9999L;
+
+            // When / Then
+            assertThrows(NotFoundException.class, () -> categoryService.getCategoriesByTheme(themeId));
+        }
 
         @Test
         @DisplayName("Succès - Récupérer une catégorie par son ID")

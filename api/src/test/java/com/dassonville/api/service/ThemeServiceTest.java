@@ -9,7 +9,6 @@ import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.ThemeMapper;
 import com.dassonville.api.model.Theme;
-import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.projection.PublicThemeProjection;
 import com.dassonville.api.repository.ThemeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +24,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -77,40 +76,6 @@ public class ThemeServiceTest {
     @Nested
     @DisplayName("Récupérer une liste de thèmes")
     class getAllThemesTest {
-
-        @Test
-        @DisplayName("ADMIN - Récupérer toutes les catégories d'un thème (ID et nom)")
-        public void getCategoriesByTheme() {
-            // Given
-            IdAndNameProjection idAndNameProjection = mock(IdAndNameProjection.class);
-
-            when(themeRepository.existsById(anyLong()))
-                    .thenReturn(true);
-            when(themeRepository.findAllCategoriesByThemeId(anyLong()))
-                    .thenReturn(List.of(idAndNameProjection));
-
-            // When
-            themeService.getCategoriesByTheme(id);
-
-            // Then
-            verify(themeRepository).existsById(anyLong());
-            verify(themeRepository).findAllCategoriesByThemeId(anyLong());
-        }
-
-        @Test
-        @DisplayName("ADMIN - Erreur - Récupérer toutes les catégories d'un thème (ID et nom) - Thème non trouvé")
-        public void getCategoriesByTheme_nonExistingTheme() {
-            // Given
-            when(themeRepository.existsById(anyLong()))
-                    .thenReturn(false);
-
-            // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.getCategoriesByTheme(id));
-
-            verify(themeRepository).existsById(anyLong());
-            verify(themeRepository, never()).findAllCategoriesByThemeId(anyLong());
-        }
-
 
         @Test
         @DisplayName("ADMIN - Récupérer tous les thèmes en détails")

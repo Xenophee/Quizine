@@ -65,7 +65,7 @@ public class QuestionAdminControllerTest {
         ));
         questionUpdateDTO = new QuestionUpdateDTO("Question");
 
-        when(difficultyLevelRepository.findReferenceLevelMaxAnswers()).thenReturn(Optional.of((byte) 2));
+        when(difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel()).thenReturn(Optional.of((byte) 2));
     }
 
 
@@ -183,7 +183,7 @@ public class QuestionAdminControllerTest {
         @DisplayName("Erreur - Données invalides (doublon de réponse)")
         void createQuestion_shouldReturn400_5() throws Exception {
             // Given
-            when(difficultyLevelRepository.findReferenceLevelMaxAnswers())
+            when(difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel())
                     .thenReturn(Optional.of((byte) 3));
 
             questionInsertDTO = new QuestionInsertDTO("Question",

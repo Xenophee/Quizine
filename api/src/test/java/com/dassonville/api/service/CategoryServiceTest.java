@@ -8,6 +8,7 @@ import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.CategoryMapper;
 import com.dassonville.api.model.Category;
 import com.dassonville.api.model.Theme;
+import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.repository.CategoryRepository;
 import com.dassonville.api.repository.ThemeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,9 +21,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -64,6 +66,53 @@ public class CategoryServiceTest {
         category.setTheme(new Theme(1L));
 
         categoryUpsertDTO = new CategoryUpsertDTO(" catégorie", " description");
+    }
+
+
+    @Nested
+    @DisplayName("Récupérer les catégories par thème")
+    class GetCategoriesByThemeTest {
+
+        @Test
+        @DisplayName("Succès")
+        void getCategoriesByTheme_existingTheme() {
+            // Given
+            IdAndNameProjection idAndNameProjection = mock(IdAndNameProjection.class);
+            when(idAndNameProjection.getId()).thenReturn(1L);
+            when(idAndNameProjection.getName()).thenReturn("Catégorie");
+
+            when(themeRepository.existsById(anyLong()))
+                    .thenReturn(true);
+            when(categoryRepository.findAllByThemeIdOrderByName(anyLong()))
+                    .thenReturn(List.of(idAndNameProjection));
+
+            // When
+            List<IdAndNameProjection> result = categoryService.getCategoriesByTheme(1L);
+
+            // Then
+            verify(themeRepository).existsById(anyLong());
+            verify(categoryRepository).findAllByThemeIdOrderByName(anyLong());
+
+            assertThat(result).isNotNull();
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst().getId()).isEqualTo(category.getId());
+            assertThat(result.getFirst().getName()).isEqualTo(category.getName());
+        }
+
+        @Test
+        @DisplayName("Erreur - Thème non trouvé")
+        void getCategoriesByTheme_nonExistingTheme() {
+            // Given
+            when(themeRepository.existsById(anyLong()))
+                    .thenReturn(false);
+
+            // When
+            assertThrows(NotFoundException.class, () -> categoryService.getCategoriesByTheme(1L));
+
+            // Then
+            verify(themeRepository).existsById(anyLong());
+            verify(categoryRepository, never()).findAllByThemeIdOrderByName(anyLong());
+        }
     }
 
 

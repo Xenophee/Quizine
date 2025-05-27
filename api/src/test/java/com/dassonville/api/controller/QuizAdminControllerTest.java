@@ -20,9 +20,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -78,6 +83,43 @@ public class QuizAdminControllerTest {
     @Nested
     @DisplayName("GET")
     class GetTests {
+
+        @Test
+        @DisplayName("Succès - Récupérer la liste des quiz par thème")
+        public void getQuizzesByTheme_shouldReturn200() throws Exception {
+            // Given
+            Page<QuizAdminDTO> quizPage = new PageImpl<>(List.of(quizAdminDTO));
+
+            when(quizService.findAllByThemeIdForAdmin(anyLong(), any(Boolean.class), any(Pageable.class)))
+                    .thenReturn(quizPage);
+
+            // When & Then
+            mockMvc.perform(get(ApiRoutes.Quizzes.ADMIN_QUIZZES)
+                            .param("themeId", "9")
+                            .param("visible", "true")
+                            .param("page", "0")
+                            .param("size", "10")
+                            .param("sort", "title"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].title").value(quizAdminDTO.title()));
+        }
+
+        @Test
+        @DisplayName("Erreur - Récupérer la liste des quiz par thème - Thème non trouvé")
+        public void getQuizzesByTheme_shouldReturn404() throws Exception {
+            // Given
+            when(quizService.findAllByThemeIdForAdmin(anyLong(), any(), any(Pageable.class)))
+                    .thenThrow(new NotFoundException());
+
+            // When & Then
+            mockMvc.perform(get(ApiRoutes.Quizzes.ADMIN_QUIZZES)
+                            .param("themeId", "999")
+                            .param("page", "0")
+                            .param("size", "10")
+                            .param("sort", "title"))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists());
+        }
 
         @Test
         @DisplayName("Succès - Récupérer un quiz par ID")

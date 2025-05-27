@@ -20,7 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
@@ -72,7 +72,7 @@ public class DifficultyLevelServiceIT {
             assertThat(difficultyLevels.get(1).id()).isEqualTo(2L);
 
             assertThat(difficultyLevels.get(0).name()).isEqualTo("Facile");
-            assertThat(difficultyLevels.get(0).maxAnswers()).isEqualTo((byte) 2);
+            assertThat(difficultyLevels.get(0).answerOptionsCount()).isEqualTo((byte) 2);
             assertThat(difficultyLevels.get(0).timerSeconds()).isEqualTo((short) 0);
             assertThat(difficultyLevels.get(0).pointsPerQuestion()).isEqualTo(5);
             assertThat(difficultyLevels.get(0).isNew()).isTrue();
@@ -92,7 +92,7 @@ public class DifficultyLevelServiceIT {
 
             // Then
             assertThat(difficultyLevel.name()).isEqualTo("Facile");
-            assertThat(difficultyLevel.maxAnswers()).isEqualTo((byte) 2);
+            assertThat(difficultyLevel.answerOptionsCount()).isEqualTo((byte) 2);
             assertThat(difficultyLevel.timerSeconds()).isEqualTo((short) 0);
             assertThat(difficultyLevel.pointsPerQuestion()).isEqualTo(5);
             assertThat(difficultyLevel.isReference()).isFalse();
@@ -133,7 +133,7 @@ public class DifficultyLevelServiceIT {
             // Then
             DifficultyLevel difficultyLevel = difficultyLevelRepository.findById(createdDifficultyLevel.id()).get();
             assertThat(difficultyLevel.getName()).isEqualTo("Volcanique");
-            assertThat(difficultyLevel.getMaxAnswers()).isEqualTo(createdDifficultyLevel.maxAnswers());
+            assertThat(difficultyLevel.getAnswerOptionsCount()).isEqualTo(createdDifficultyLevel.answerOptionsCount());
             assertThat(difficultyLevel.getTimerSeconds()).isEqualTo(createdDifficultyLevel.timerSeconds());
             assertThat(difficultyLevel.getPointsPerQuestion()).isEqualTo(createdDifficultyLevel.pointsPerQuestion());
             assertThat(difficultyLevel.getIsReference()).isFalse();
@@ -180,7 +180,7 @@ public class DifficultyLevelServiceIT {
             // Then
             DifficultyLevel difficultyLevel = difficultyLevelRepository.findById(updatedDifficultyLevel.id()).get();
             assertThat(difficultyLevel.getName()).isEqualTo("Facile");
-            assertThat(difficultyLevel.getMaxAnswers()).isEqualTo(updatedDifficultyLevel.maxAnswers());
+            assertThat(difficultyLevel.getAnswerOptionsCount()).isEqualTo(updatedDifficultyLevel.answerOptionsCount());
             assertThat(difficultyLevel.getTimerSeconds()).isEqualTo(updatedDifficultyLevel.timerSeconds());
             assertThat(difficultyLevel.getPointsPerQuestion()).isEqualTo(updatedDifficultyLevel.pointsPerQuestion());
             assertThat(difficultyLevel.getIsReference()).isFalse();

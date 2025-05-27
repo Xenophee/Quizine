@@ -20,7 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
@@ -76,31 +76,6 @@ public class ThemeServiceIT {
             assertThat(themes.size()).isEqualTo(6);
             assertThat(themes.get(0).getId()).isEqualTo(3L);
             assertThat(themes.get(0).getName()).isEqualTo("Art");
-        }
-
-        @Test
-        @DisplayName("Succès - Récupérer toutes les catégories selon un thème par ordre alphabétique")
-        public void shouldGetAllCategoriesByTheme() {
-            // Given
-            long themeId = 1L;
-
-            // When
-            List<IdAndNameProjection> categories = themeService.getCategoriesByTheme(themeId);
-
-            // Then
-            assertThat(categories.size()).isEqualTo(3);
-            assertThat(categories.get(0).getId()).isEqualTo(14L);
-            assertThat(categories.get(0).getName()).isEqualTo("Mythologie & Religion");
-        }
-
-        @Test
-        @DisplayName("Erreur - Récupérer toutes les catégories selon un thème - thème non trouvé")
-        public void shouldFailToGetAllCategoriesByTheme_WhenNonExistingTheme() {
-            // Given
-            long themeId = 9999L;
-
-            // When / Then
-            assertThrows(NotFoundException.class, () -> themeService.getCategoriesByTheme(themeId));
         }
 
         @Test

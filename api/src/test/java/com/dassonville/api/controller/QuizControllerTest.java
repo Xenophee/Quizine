@@ -13,14 +13,16 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -44,6 +46,7 @@ public class QuizControllerTest {
 
 
     private long endpointId;
+    private QuizPublicDTO quizPublicDTO;
     private QuizPublicDetailsDTO quizDetailsDTO;
     private QuestionForPlayDTO questionForPlayDTO;
     private CheckAnswerChoicesRequestDTO checkAnswerChoicesRequestDTO;
@@ -55,6 +58,8 @@ public class QuizControllerTest {
     public void setUp() {
         endpointId = 1L;
         AnswerForPlayDTO answerForPlayDTO = new AnswerForPlayDTO(1L, "Réponse");
+
+        quizPublicDTO = new QuizPublicDTO(1L, "Test Quiz", true, 5, "Category", "Theme");
 
         quizDetailsDTO = new QuizPublicDetailsDTO(1L, "Test Quiz", true, 5, "Category", "Theme");
 
@@ -69,6 +74,26 @@ public class QuizControllerTest {
     @Nested
     @DisplayName("GET")
     class GetTests {
+
+        @Test
+        @DisplayName("Succès - Obtenir la liste des quiz actifs selon des thèmes (avec pagination)")
+        public void getQuizzes() throws Exception {
+            // Given
+            List<Long> themeIds = List.of(1L, 2L, 3L);
+            Page<QuizPublicDTO> quizPage = new PageImpl<>(List.of(quizPublicDTO));
+
+            when(quizService.findAllByThemeIdsForUser(eq(themeIds), any(Pageable.class)))
+                    .thenReturn(quizPage);
+
+            // When & Then
+            mockMvc.perform(get(ApiRoutes.Quizzes.BASE)
+                            .param("themeIds", "1", "2", "3")
+                            .param("page", "0")
+                            .param("size", "10")
+                            .param("sort", "createdAt,desc"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$._embedded.quizPublicDTOList[0].title").value(quizPublicDTO.title()));
+        }
 
         @Test
         @DisplayName("Succès - Obtenir les détails d'un quiz actif")

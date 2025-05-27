@@ -10,6 +10,7 @@ import com.dassonville.api.model.Category;
 import com.dassonville.api.model.DifficultyLevel;
 import com.dassonville.api.model.Quiz;
 import com.dassonville.api.model.Theme;
+import com.dassonville.api.projection.PublicQuizProjection;
 import com.dassonville.api.projection.QuestionForPlayProjection;
 import com.dassonville.api.repository.DifficultyLevelRepository;
 import com.dassonville.api.repository.QuestionRepository;
@@ -30,10 +31,11 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -86,29 +88,114 @@ public class QuizServiceTest {
 
 
     @Nested
+    @DisplayName("PUBLIC - Récupérer les quiz par thèmes")
+    class GetQuizzesByThemeForUserTest {
+
+        @Test
+        @DisplayName("Retourne tous les quiz si la liste des thèmes est vide")
+        void shouldReturnAllQuizzesWhenThemeIdsIsEmpty() {
+            // Given
+            List<Long> themeIds = Collections.emptyList();
+            Pageable pageable = PageRequest.of(0, 5);
+
+            PublicQuizProjection quizProjection = mock(PublicQuizProjection.class);
+            when(quizProjection.getId()).thenReturn(1L);
+            when(quizProjection.getTitle()).thenReturn("Test Quiz");
+            when(quizProjection.getCreatedAt()).thenReturn(LocalDateTime.now());
+            when(quizProjection.getNumberOfQuestions()).thenReturn(10);
+            when(quizProjection.getCategoryName()).thenReturn(null);
+            when(quizProjection.getThemeName()).thenReturn("Science");
+
+            Page<PublicQuizProjection> quizPage = new PageImpl<>(List.of(quizProjection));
+
+            when(quizRepository.findAllByDisabledAtIsNull(pageable))
+                    .thenReturn(quizPage);
+
+            // When
+            Page<QuizPublicDTO> result = quizService.findAllByThemeIdsForUser(themeIds, pageable);
+
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(1);
+
+            verify(quizRepository).findAllByDisabledAtIsNull(pageable);
+            verify(themeRepository, never()).existsByDisabledAtIsNullAndIdIn(anyList());
+            verify(quizRepository, never()).findAllByDisabledAtIsNullAndThemeIdIn(anyList(), any(Pageable.class));
+        }
+
+        @Test
+        @DisplayName("Retourne une page vide si aucun thème valide n'est trouvé")
+        void shouldReturnEmptyPageWhenNoValidThemeIds() {
+            // Given
+            List<Long> themeIds = List.of(1L, 2L);
+            Pageable pageable = PageRequest.of(0, 5);
+
+            when(themeRepository.existsByDisabledAtIsNullAndIdIn(themeIds))
+                    .thenReturn(false);
+
+            // When
+            Page<QuizPublicDTO> result = quizService.findAllByThemeIdsForUser(themeIds, pageable);
+
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).isEmpty();
+
+            verify(themeRepository).existsByDisabledAtIsNullAndIdIn(themeIds);
+            verifyNoInteractions(quizRepository);
+        }
+
+        @Test
+        @DisplayName("Retourne les quiz associés aux thèmes valides")
+        void shouldReturnQuizzesForValidThemeIds() {
+            // Given
+            List<Long> themeIds = List.of(1L, 2L);
+            Pageable pageable = PageRequest.of(0, 5);
+
+            PublicQuizProjection quizProjection = mock(PublicQuizProjection.class);
+            when(quizProjection.getId()).thenReturn(1L);
+            when(quizProjection.getTitle()).thenReturn("Test Quiz");
+            when(quizProjection.getCreatedAt()).thenReturn(LocalDateTime.now());
+            when(quizProjection.getNumberOfQuestions()).thenReturn(10);
+            when(quizProjection.getCategoryName()).thenReturn(null);
+            when(quizProjection.getThemeName()).thenReturn("Science");
+
+            Page<PublicQuizProjection> quizPage = new PageImpl<>(List.of(quizProjection));
+
+            when(themeRepository.existsByDisabledAtIsNullAndIdIn(themeIds))
+                    .thenReturn(true);
+            when(quizRepository.findAllByDisabledAtIsNullAndThemeIdIn(themeIds, pageable))
+                    .thenReturn(quizPage);
+
+            // When
+            Page<QuizPublicDTO> result = quizService.findAllByThemeIdsForUser(themeIds, pageable);
+
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(1);
+
+            verify(themeRepository).existsByDisabledAtIsNullAndIdIn(themeIds);
+            verify(quizRepository).findAllByDisabledAtIsNullAndThemeIdIn(themeIds, pageable);
+        }
+    }
+
+
+    @Nested
     @DisplayName("ADMIN - Récupérer les quiz par thème")
     class GetQuizzesByThemeTest {
-
-        @BeforeEach
-        void setUp() {
-            quiz.setId(id);
-            quiz.setTitle("Test Quiz");
-            quiz.setCreatedAt(LocalDateTime.now());
-            quiz.setDisabledAt(LocalDateTime.now());
-            quiz.setCategory(new Category(1));
-            quiz.setTheme(new Theme(1));
-        }
 
         @Test
         @DisplayName("Succès - visible = null")
         void shouldReturnAllQuizzes_WhenVisibleIsNull() {
             // Given
-            Long themeId = 1L;
+            long themeId = 1L;
             Pageable pageable = PageRequest.of(0, 10);
             List<Quiz> quizzes = List.of(new Quiz(), new Quiz());
             Page<Quiz> quizPage = new PageImpl<>(quizzes);
-            when(themeRepository.existsById(themeId)).thenReturn(true);
-            when(quizRepository.findByThemeId(themeId, pageable)).thenReturn(quizPage);
+
+            when(themeRepository.existsById(themeId))
+                    .thenReturn(true);
+            when(quizRepository.findByThemeId(themeId, pageable))
+                    .thenReturn(quizPage);
 
             // When
             Page<QuizAdminDTO> result = quizService.findAllByThemeIdForAdmin(themeId, null, pageable);
@@ -120,19 +207,22 @@ public class QuizServiceTest {
             verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNotNull(anyLong(), any(Pageable.class));
 
             assertThat(result).isNotNull();
-            assertThat(result.getContent().size()).isEqualTo(2);
+            assertThat(result.getContent()).hasSize(2);
         }
 
         @Test
         @DisplayName("Succès - visible = true")
         void shouldReturnVisibleQuizzes_WhenVisibleIsTrue() {
             // Given
-            Long themeId = 1L;
+            long themeId = 1L;
             Pageable pageable = PageRequest.of(0, 10);
             List<Quiz> quizzes = List.of(new Quiz());
             Page<Quiz> quizPage = new PageImpl<>(quizzes);
-            when(themeRepository.existsById(themeId)).thenReturn(true);
-            when(quizRepository.findByThemeIdAndDisabledAtIsNull(themeId, pageable)).thenReturn(quizPage);
+
+            when(themeRepository.existsById(themeId))
+                    .thenReturn(true);
+            when(quizRepository.findByThemeIdAndDisabledAtIsNull(themeId, pageable))
+                    .thenReturn(quizPage);
 
             // When
             Page<QuizAdminDTO> result = quizService.findAllByThemeIdForAdmin(themeId, true, pageable);
@@ -144,19 +234,22 @@ public class QuizServiceTest {
             verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNotNull(anyLong(), any(Pageable.class));
 
             assertThat(result).isNotNull();
-            assertThat(result.getContent().size()).isEqualTo(1);
+            assertThat(result.getContent()).hasSize(1);
         }
 
         @Test
         @DisplayName("Succès - visible = false")
         void shouldReturnDisabledQuizzes_WhenVisibleIsFalse() {
             // Given
-            Long themeId = 1L;
+            long themeId = 1L;
             Pageable pageable = PageRequest.of(0, 10);
             List<Quiz> quizzes = List.of(new Quiz());
             Page<Quiz> quizPage = new PageImpl<>(quizzes);
-            when(themeRepository.existsById(themeId)).thenReturn(true);
-            when(quizRepository.findByThemeIdAndDisabledAtIsNotNull(themeId, pageable)).thenReturn(quizPage);
+
+            when(themeRepository.existsById(themeId))
+                    .thenReturn(true);
+            when(quizRepository.findByThemeIdAndDisabledAtIsNotNull(themeId, pageable))
+                    .thenReturn(quizPage);
 
             // When
             Page<QuizAdminDTO> result = quizService.findAllByThemeIdForAdmin(themeId, false, pageable);
@@ -169,16 +262,18 @@ public class QuizServiceTest {
 
 
             assertThat(result).isNotNull();
-            assertThat(result.getContent().size()).isEqualTo(1);
+            assertThat(result.getContent()).hasSize(1);
         }
 
         @Test
         @DisplayName("Erreur - Thème non trouvé")
         void shouldThrowNotFoundException_WhenThemeNotFound() {
             // Given
-            Long themeId = 9999L;
+            long themeId = 9999L;
             Pageable pageable = PageRequest.of(0, 10);
-            when(themeRepository.existsById(themeId)).thenReturn(false);
+
+            when(themeRepository.existsById(themeId))
+                    .thenReturn(false);
 
             // When & then
             assertThrows(NotFoundException.class, () -> quizService.findAllByThemeIdForAdmin(themeId, null, pageable));
@@ -234,14 +329,14 @@ public class QuizServiceTest {
         @DisplayName("Succès")
         void findByIdForUser_quizFound() {
             // Given
-            when(quizRepository.findByIdAndDisabledAtIsNull(anyLong()))
+            when(quizRepository.findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(anyLong()))
                     .thenReturn(Optional.of(quiz));
 
             // When
             QuizPublicDetailsDTO result = quizService.findByIdForUser(id);
 
             // Then
-            verify(quizRepository).findByIdAndDisabledAtIsNull(anyLong());
+            verify(quizRepository).findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(anyLong());
 
             assertThat(result).isNotNull();
             assertThat(result.title()).isEqualTo(quiz.getTitle());
@@ -251,13 +346,13 @@ public class QuizServiceTest {
         @DisplayName("Erreur - Quiz non trouvé")
         void findByIdForUser_quizNotFound() {
             // Given
-            when(quizRepository.findByIdAndDisabledAtIsNull(anyLong()))
+            when(quizRepository.findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(anyLong()))
                     .thenThrow(NotFoundException.class);
 
             // When & then
             assertThrows(NotFoundException.class, () -> quizService.findByIdForUser(id));
 
-            verify(quizRepository).findByIdAndDisabledAtIsNull(anyLong());
+            verify(quizRepository).findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(anyLong());
         }
     }
 
@@ -275,7 +370,7 @@ public class QuizServiceTest {
             byte maxAnswers = 3;
 
             DifficultyLevel difficultyLevel = new DifficultyLevel();
-            difficultyLevel.setMaxAnswers(maxAnswers);
+            difficultyLevel.setAnswerOptionsCount(maxAnswers);
 
             QuestionForPlayProjection.AnswersForPlay answer1 = mock(QuestionForPlayProjection.AnswersForPlay.class);
             when(answer1.getId()).thenReturn(1L);
@@ -301,8 +396,8 @@ public class QuizServiceTest {
 
             when(quizRepository.existsByIdAndDisabledAtIsNull(quizId))
                     .thenReturn(true);
-            when(difficultyLevelRepository.findByIdAndDisabledAtIsNull(difficultyLevelId))
-                    .thenReturn(Optional.of(difficultyLevel));
+            when(difficultyLevelRepository.findAnswerOptionsCountByIdAndDisabledAtIsNull(difficultyLevelId))
+                    .thenReturn(Optional.of(difficultyLevel.getAnswerOptionsCount()));
             when(questionRepository.findByQuizIdAndDisabledAtIsNullAndAnswersDisabledAtIsNull(quizId))
                     .thenReturn(questions);
 
@@ -311,7 +406,7 @@ public class QuizServiceTest {
 
             // Then
             verify(quizRepository).existsByIdAndDisabledAtIsNull(quizId);
-            verify(difficultyLevelRepository).findByIdAndDisabledAtIsNull(difficultyLevelId);
+            verify(difficultyLevelRepository).findAnswerOptionsCountByIdAndDisabledAtIsNull(difficultyLevelId);
             verify(questionRepository).findByQuizIdAndDisabledAtIsNullAndAnswersDisabledAtIsNull(quizId);
 
             assertThat(result).isNotNull();
@@ -344,14 +439,14 @@ public class QuizServiceTest {
 
             when(quizRepository.existsByIdAndDisabledAtIsNull(quizId))
                     .thenReturn(true);
-            when(difficultyLevelRepository.findByIdAndDisabledAtIsNull(difficultyLevelId))
+            when(difficultyLevelRepository.findAnswerOptionsCountByIdAndDisabledAtIsNull(difficultyLevelId))
                     .thenReturn(Optional.empty());
 
             // When / Then
             assertThrows(NotFoundException.class, () -> quizService.findAllQuestionsByQuizIdForPlay(quizId, difficultyLevelId));
 
             verify(quizRepository).existsByIdAndDisabledAtIsNull(quizId);
-            verify(difficultyLevelRepository).findByIdAndDisabledAtIsNull(difficultyLevelId);
+            verify(difficultyLevelRepository).findAnswerOptionsCountByIdAndDisabledAtIsNull(difficultyLevelId);
             verifyNoInteractions(questionRepository);
         }
     }

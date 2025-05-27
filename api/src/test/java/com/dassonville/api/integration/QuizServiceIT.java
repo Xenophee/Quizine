@@ -1,10 +1,7 @@
 package com.dassonville.api.integration;
 
 
-import com.dassonville.api.dto.QuestionForPlayDTO;
-import com.dassonville.api.dto.QuizAdminDetailsDTO;
-import com.dassonville.api.dto.QuizPublicDetailsDTO;
-import com.dassonville.api.dto.QuizUpsertDTO;
+import com.dassonville.api.dto.*;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
@@ -25,6 +22,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -55,13 +56,169 @@ public class QuizServiceIT {
     }
 
 
-    @Nested
-    @DisplayName("Récupération de quiz")
-    class GettingQuiz {
 
+    @Nested
+    @DisplayName("PUBLIC - Récupérer les quiz par thèmes")
+    class GettingQuizzesByThemeForPublic {
 
         @Test
-        @DisplayName("ADMIN - Succès - Récupération d'un quiz par ID")
+        @DisplayName("Retourne tous les quiz si la liste des thèmes est vide")
+        public void shouldFindAllQuizzesByThemeIdForPublic_WhenExistingTheme() {
+            // Given
+            List<Long> idToGet = List.of();
+            Pageable pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
+
+            // When
+            Page<QuizPublicDTO> quizzes = quizService.findAllByThemeIdsForUser(idToGet, pageable);
+
+            // Then
+            assertThat(quizzes).isNotNull();
+            assertThat(quizzes.getTotalPages()).isEqualTo(2);
+            assertThat(quizzes.getContent()).hasSize(5);
+
+            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(10L);
+            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Philosophie allemande : courants, penseurs et concepts");
+            assertThat(quizzes.getContent().getFirst().isNew()).isTrue();
+            assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 20);
+            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Philosophie");
+            assertThat(quizzes.getContent().getFirst().theme()).isEqualTo("Sciences humaines");
+        }
+
+        @Test
+        @DisplayName("Retourne une page vide si aucun thème valide n'est trouvé")
+        public void shouldFindAllQuizzesByThemeIdForPublic_WhenExistingThemeAndVisibleTrue() {
+            // Given
+            List<Long> idToGet = List.of(9999L);
+            Pageable pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
+
+            // When
+            Page<QuizPublicDTO> quizzes = quizService.findAllByThemeIdsForUser(idToGet, pageable);
+
+            // Then
+            assertThat(quizzes).isNotNull();
+            assertThat(quizzes.getTotalPages()).isEqualTo(0);
+            assertThat(quizzes.getContent()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Retourne les quiz associés aux thèmes valides")
+        public void shouldFindAllQuizzesByThemeIdForPublic_WhenExistingThemeAndVisibleFalse() {
+            // Given
+            List<Long> idToGet = List.of(3L, 4L);
+            Pageable pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
+
+            // When
+            Page<QuizPublicDTO> quizzes = quizService.findAllByThemeIdsForUser(idToGet, pageable);
+
+            // Then
+            assertThat(quizzes).isNotNull();
+            assertThat(quizzes.getTotalPages()).isEqualTo(1);
+            assertThat(quizzes.getContent()).hasSize(4);
+
+            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(6L);
+            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Littérature médiévale : héros, légendes et formes poétiques");
+            assertThat(quizzes.getContent().getFirst().isNew()).isTrue();
+            assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 20);
+            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Période littéraire");
+            assertThat(quizzes.getContent().getFirst().theme()).isEqualTo("Littérature");
+        }
+    }
+
+
+    @Nested
+    @DisplayName("ADMIN - Récupérer les quiz par thème")
+    class GettingQuizzesByThemeForAdmin {
+
+        @Test
+        @DisplayName("Succès - visible = null")
+        public void shouldFindAllQuizzesByThemeIdForAdmin_WhenExistingTheme() {
+            // Given
+            long idToGet = 1L;
+            Pageable pageable = PageRequest.of(0, 5, Sort.by("title"));
+
+            // When
+            Page<QuizAdminDTO> quizzes = quizService.findAllByThemeIdForAdmin(idToGet, null, pageable);
+
+            // Then
+            assertThat(quizzes).isNotNull();
+            assertThat(quizzes.getTotalPages()).isEqualTo(2);
+            assertThat(quizzes.getContent()).hasSize(5);
+
+            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(12L);
+            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Je suis vide");
+            assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 0);
+            assertThat(quizzes.getContent().getFirst().hasEnoughQuestionsForActivation()).isFalse();
+            assertThat(quizzes.getContent().getFirst().createdAt()).isNotNull();
+            assertThat(quizzes.getContent().getFirst().disabledAt()).isNotNull();
+            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Philosophie");
+        }
+
+        @Test
+        @DisplayName("Succès - visible = true")
+        public void shouldFindAllQuizzesByThemeIdForAdmin_WhenExistingThemeAndVisibleTrue() {
+            // Given
+            long idToGet = 1L;
+            Pageable pageable = PageRequest.of(0, 5, Sort.by("title"));
+
+            // When
+            Page<QuizAdminDTO> quizzes = quizService.findAllByThemeIdForAdmin(idToGet, true, pageable);
+
+            // Then
+            assertThat(quizzes).isNotNull();
+            assertThat(quizzes.getTotalPages()).isEqualTo(1);
+            assertThat(quizzes.getContent()).hasSize(5);
+
+            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(8L);
+            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Mythologie égyptienne : dieux, légendes et symboles");
+            assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 20);
+            assertThat(quizzes.getContent().getFirst().hasEnoughQuestionsForActivation()).isTrue();
+            assertThat(quizzes.getContent().getFirst().createdAt()).isNotNull();
+            assertThat(quizzes.getContent().getFirst().disabledAt()).isNull();
+            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Mythologie & Religion");
+        }
+
+        @Test
+        @DisplayName("Succès - visible = false")
+        public void shouldFindAllQuizzesByThemeIdForAdmin_WhenExistingThemeAndVisibleFalse() {
+            // Given
+            long idToGet = 4L;
+            Pageable pageable = PageRequest.of(0, 5, Sort.by("title"));
+
+            // When
+            Page<QuizAdminDTO> quizzes = quizService.findAllByThemeIdForAdmin(idToGet, false, pageable);
+
+            // Then
+            assertThat(quizzes).isNotNull();
+            assertThat(quizzes.getTotalPages()).isEqualTo(1);
+            assertThat(quizzes.getContent()).hasSize(3);
+
+            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(13L);
+            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Je suis vide aussi");
+            assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 0);
+            assertThat(quizzes.getContent().getFirst().hasEnoughQuestionsForActivation()).isFalse();
+            assertThat(quizzes.getContent().getFirst().createdAt()).isNotNull();
+            assertThat(quizzes.getContent().getFirst().disabledAt()).isNotNull();
+            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Courant littéraire");
+        }
+
+        @Test
+        @DisplayName("Erreur - Thème non trouvé")
+        public void shouldFailToFindAllQuizzesByThemeIdForAdmin_WhenNonExistingTheme() {
+            // Given
+            long idToGet = 9999L;
+            Pageable pageable = PageRequest.of(0, 5);
+
+            // When / Then
+            assertThrows(NotFoundException.class, () -> quizService.findAllByThemeIdForAdmin(idToGet, null, pageable));
+        }
+    }
+
+    @Nested
+    @DisplayName("Récupération de quiz par ID")
+    class GettingQuiz {
+
+        @Test
+        @DisplayName("ADMIN - Succès")
         public void shouldGetQuizAdminById_WhenExistingQuiz() {
             // Given
             long idToGet = 1L;
@@ -80,7 +237,7 @@ public class QuizServiceIT {
         }
 
         @Test
-        @DisplayName("ADMIN - Erreur - Quiz non trouvé par ID")
+        @DisplayName("ADMIN - Erreur - Quiz non trouvé")
         public void shouldFailToGetQuizAdminById_WhenNonExistingQuiz() {
             // Given
             long idToGet = 9999L;
@@ -90,7 +247,7 @@ public class QuizServiceIT {
         }
 
         @Test
-        @DisplayName("PUBLIC - Succès - Récupération d'un quiz par ID")
+        @DisplayName("PUBLIC - Succès")
         public void shouldGetQuizPublicById_WhenExistingQuiz() {
             // Given
             long idToGet = 1L;
@@ -109,7 +266,7 @@ public class QuizServiceIT {
         }
 
         @Test
-        @DisplayName("PUBLIC - Erreur - Quiz non trouvé par ID")
+        @DisplayName("PUBLIC - Erreur - Quiz non trouvé")
         public void shouldFailToGetQuizPublicById_WhenNonExistingQuiz() {
             // Given
             long idToGet = 9999L;

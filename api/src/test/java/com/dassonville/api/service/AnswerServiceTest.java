@@ -24,7 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -231,7 +231,7 @@ public class AnswerServiceTest {
                     .thenReturn(Optional.of(answer));
             when(answerRepository.countByQuestionIdAndDisabledAtIsNull(anyLong()))
                     .thenReturn(2);
-            when(difficultyLevelRepository.findReferenceLevelMaxAnswers())
+            when(difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel())
                     .thenReturn(Optional.of((byte) 1));
             when(answerRepository.existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong()))
                     .thenReturn(true);
@@ -242,7 +242,7 @@ public class AnswerServiceTest {
             // Then
             verify(answerRepository).findById(anyLong());
             verify(answerRepository).countByQuestionIdAndDisabledAtIsNull(anyLong());
-            verify(difficultyLevelRepository).findReferenceLevelMaxAnswers();
+            verify(difficultyLevelRepository).findAnswerOptionsCountByReferenceLevel();
             verify(answerRepository).existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong());
             verify(answerRepository).deleteById(anyLong());
         }
@@ -260,7 +260,7 @@ public class AnswerServiceTest {
             // Then
             verify(answerRepository).findById(anyLong());
             verify(answerRepository, never()).countByQuestionIdAndDisabledAtIsNull(anyLong());
-            verify(difficultyLevelRepository, never()).findReferenceLevelMaxAnswers();
+            verify(difficultyLevelRepository, never()).findAnswerOptionsCountByReferenceLevel();
             verify(answerRepository, never()).existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong());
             verify(answerRepository, never()).deleteById(anyLong());
         }
@@ -273,7 +273,7 @@ public class AnswerServiceTest {
                     .thenReturn(Optional.of(answer));
             when(answerRepository.countByQuestionIdAndDisabledAtIsNull(anyLong()))
                     .thenReturn(1);
-            when(difficultyLevelRepository.findReferenceLevelMaxAnswers())
+            when(difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel())
                     .thenReturn(Optional.of((byte) 2));
 
             // When
@@ -282,7 +282,7 @@ public class AnswerServiceTest {
             // Then
             verify(answerRepository).findById(anyLong());
             verify(answerRepository).countByQuestionIdAndDisabledAtIsNull(anyLong());
-            verify(difficultyLevelRepository).findReferenceLevelMaxAnswers();
+            verify(difficultyLevelRepository).findAnswerOptionsCountByReferenceLevel();
             verify(answerRepository, never()).existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong());
             verify(answerRepository, never()).deleteById(anyLong());
         }
@@ -295,7 +295,7 @@ public class AnswerServiceTest {
                     .thenReturn(Optional.of(answer));
             when(answerRepository.countByQuestionIdAndDisabledAtIsNull(anyLong()))
                     .thenReturn(2);
-            when(difficultyLevelRepository.findReferenceLevelMaxAnswers())
+            when(difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel())
                     .thenReturn(Optional.of((byte) 1));
             when(answerRepository.existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong()))
                     .thenReturn(false);
@@ -306,7 +306,7 @@ public class AnswerServiceTest {
             // Then
             verify(answerRepository).findById(anyLong());
             verify(answerRepository).countByQuestionIdAndDisabledAtIsNull(anyLong());
-            verify(difficultyLevelRepository).findReferenceLevelMaxAnswers();
+            verify(difficultyLevelRepository).findAnswerOptionsCountByReferenceLevel();
             verify(answerRepository).existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong());
             verify(answerRepository, never()).deleteById(anyLong());
         }
@@ -325,7 +325,7 @@ public class AnswerServiceTest {
                     .thenReturn(Optional.of(answer));
             when(answerRepository.countByQuestionIdAndDisabledAtIsNull(anyLong()))
                     .thenReturn(3);
-            when(difficultyLevelRepository.findReferenceLevelMaxAnswers())
+            when(difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel())
                     .thenReturn(Optional.of((byte) 2));
             when(answerRepository.existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong()))
                     .thenReturn(true);
@@ -336,7 +336,7 @@ public class AnswerServiceTest {
             // Then
             verify(answerRepository).findById(anyLong());
             verify(answerRepository).countByQuestionIdAndDisabledAtIsNull(anyLong());
-            verify(difficultyLevelRepository).findReferenceLevelMaxAnswers();
+            verify(difficultyLevelRepository).findAnswerOptionsCountByReferenceLevel();
             verify(answerRepository).existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong());
             verify(answerRepository).save(any(Answer.class));
         }
@@ -354,7 +354,7 @@ public class AnswerServiceTest {
             // Then
             verify(answerRepository).findById(anyLong());
             verify(answerRepository, never()).countByQuestionIdAndDisabledAtIsNull(anyLong());
-            verify(difficultyLevelRepository, never()).findReferenceLevelMaxAnswers();
+            verify(difficultyLevelRepository, never()).findAnswerOptionsCountByReferenceLevel();
             verify(answerRepository, never()).existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong());
             verify(answerRepository, never()).save(any(Answer.class));
         }
@@ -367,7 +367,7 @@ public class AnswerServiceTest {
                     .thenReturn(Optional.of(answer));
             when(answerRepository.countByQuestionIdAndDisabledAtIsNull(anyLong()))
                     .thenReturn(1);
-            when(difficultyLevelRepository.findReferenceLevelMaxAnswers())
+            when(difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel())
                     .thenReturn(Optional.of((byte) 2));
 
             // When
@@ -376,7 +376,7 @@ public class AnswerServiceTest {
             // Then
             verify(answerRepository).findById(anyLong());
             verify(answerRepository).countByQuestionIdAndDisabledAtIsNull(anyLong());
-            verify(difficultyLevelRepository).findReferenceLevelMaxAnswers();
+            verify(difficultyLevelRepository).findAnswerOptionsCountByReferenceLevel();
             verify(answerRepository, never()).existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong());
             verify(answerRepository, never()).save(any(Answer.class));
         }
@@ -389,7 +389,7 @@ public class AnswerServiceTest {
                     .thenReturn(Optional.of(answer));
             when(answerRepository.countByQuestionIdAndDisabledAtIsNull(anyLong()))
                     .thenReturn(3);
-            when(difficultyLevelRepository.findReferenceLevelMaxAnswers())
+            when(difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel())
                     .thenReturn(Optional.of((byte) 2));
             when(answerRepository.existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong()))
                     .thenReturn(false);
@@ -400,7 +400,7 @@ public class AnswerServiceTest {
             // Then
             verify(answerRepository).findById(anyLong());
             verify(answerRepository).countByQuestionIdAndDisabledAtIsNull(anyLong());
-            verify(difficultyLevelRepository).findReferenceLevelMaxAnswers();
+            verify(difficultyLevelRepository).findAnswerOptionsCountByReferenceLevel();
             verify(answerRepository).existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong());
             verify(answerRepository, never()).save(any(Answer.class));
         }
@@ -418,7 +418,7 @@ public class AnswerServiceTest {
             // Then
             verify(answerRepository).findById(anyLong());
             verify(answerRepository, never()).countByQuestionIdAndDisabledAtIsNull(anyLong());
-            verify(difficultyLevelRepository, never()).findReferenceLevelMaxAnswers();
+            verify(difficultyLevelRepository, never()).findAnswerOptionsCountByReferenceLevel();
             verify(answerRepository, never()).existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(anyLong(), anyLong());
             verify(answerRepository, never()).save(any(Answer.class));
         }

@@ -149,7 +149,7 @@ public class DifficultyLevelAdminControllerTest {
                             .content(objectMapper.writeValueAsString(difficultyLevelUpsertDTO)))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.name").exists())
-                    .andExpect(jsonPath("$.maxAnswers").exists())
+                    .andExpect(jsonPath("$.answerOptionsCount").exists())
                     .andExpect(jsonPath("$.timerSeconds").exists())
                     .andExpect(jsonPath("$.pointsPerQuestion").exists());
         }
@@ -217,7 +217,7 @@ public class DifficultyLevelAdminControllerTest {
                         .content(objectMapper.writeValueAsString(difficultyLevelUpsertDTO)))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.name").exists())
-                    .andExpect(jsonPath("$.maxAnswers").exists())
+                    .andExpect(jsonPath("$.answerOptionsCount").exists())
                     .andExpect(jsonPath("$.timerSeconds").exists())
                     .andExpect(jsonPath("$.pointsPerQuestion").exists());
         }

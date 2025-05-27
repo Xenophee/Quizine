@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -55,7 +55,7 @@ public class DifficultyLevelServiceTest {
         difficultyLevel = new DifficultyLevel();
         difficultyLevel.setId(1L);
         difficultyLevel.setName("Facile");
-        difficultyLevel.setMaxAnswers((byte) 2);
+        difficultyLevel.setAnswerOptionsCount((byte) 2);
         difficultyLevel.setTimerSeconds((short) 0);
         difficultyLevel.setPointsPerQuestion(5);
         difficultyLevel.setIsReference(false);
@@ -85,7 +85,7 @@ public class DifficultyLevelServiceTest {
             assertThat(results).isNotNull();
             assertThat(results.size()).isEqualTo(1);
             assertThat(results.getFirst().name()).isEqualTo(difficultyLevel.getName());
-            assertThat(results.getFirst().maxAnswers()).isEqualTo(difficultyLevel.getMaxAnswers());
+            assertThat(results.getFirst().answerOptionsCount()).isEqualTo(difficultyLevel.getAnswerOptionsCount());
             assertThat(results.getFirst().timerSeconds()).isEqualTo(difficultyLevel.getTimerSeconds());
             assertThat(results.getFirst().pointsPerQuestion()).isEqualTo(difficultyLevel.getPointsPerQuestion());
             assertThat(results.getFirst().createdAt()).isEqualTo(difficultyLevel.getCreatedAt());
@@ -98,7 +98,7 @@ public class DifficultyLevelServiceTest {
             PublicDifficultyLevelProjection projection = mock(PublicDifficultyLevelProjection.class);
             when(projection.getId()).thenReturn(1L);
             when(projection.getName()).thenReturn("Facile");
-            when(projection.getMaxAnswers()).thenReturn((byte) 0);
+            when(projection.getAnswerOptionsCount()).thenReturn((byte) 0);
             when(projection.getTimerSeconds()).thenReturn((short) 0);
             when(projection.getPointsPerQuestion()).thenReturn(5);
             when(projection.getCreatedAt()).thenReturn(LocalDateTime.now());
@@ -117,7 +117,7 @@ public class DifficultyLevelServiceTest {
             assertThat(results.size()).isEqualTo(1);
             assertThat(results.getFirst().id()).isEqualTo(projection.getId());
             assertThat(results.getFirst().name()).isEqualTo(projection.getName());
-            assertThat(results.getFirst().maxAnswers()).isEqualTo(projection.getMaxAnswers());
+            assertThat(results.getFirst().answerOptionsCount()).isEqualTo(projection.getAnswerOptionsCount());
             assertThat(results.getFirst().timerSeconds()).isEqualTo(projection.getTimerSeconds());
             assertThat(results.getFirst().pointsPerQuestion()).isEqualTo(projection.getPointsPerQuestion());
             assertThat(results.getFirst().isNew()).isTrue();
@@ -144,7 +144,7 @@ public class DifficultyLevelServiceTest {
             
             assertThat(result).isNotNull();
             assertThat(result.name()).isEqualTo(difficultyLevel.getName());
-            assertThat(result.maxAnswers()).isEqualTo(difficultyLevel.getMaxAnswers());
+            assertThat(result.answerOptionsCount()).isEqualTo(difficultyLevel.getAnswerOptionsCount());
             assertThat(result.timerSeconds()).isEqualTo(difficultyLevel.getTimerSeconds());
             assertThat(result.pointsPerQuestion()).isEqualTo(difficultyLevel.getPointsPerQuestion());
             assertThat(result.createdAt()).isEqualTo(difficultyLevel.getCreatedAt());
@@ -188,7 +188,7 @@ public class DifficultyLevelServiceTest {
 
             assertThat(result).isNotNull();
             assertThat(result.name()).isEqualTo(difficultyLevel.getName());
-            assertThat(result.maxAnswers()).isEqualTo(difficultyLevel.getMaxAnswers());
+            assertThat(result.answerOptionsCount()).isEqualTo(difficultyLevel.getAnswerOptionsCount());
             assertThat(result.timerSeconds()).isEqualTo(difficultyLevel.getTimerSeconds());
             assertThat(result.pointsPerQuestion()).isEqualTo(difficultyLevel.getPointsPerQuestion());
             assertThat(result.createdAt()).isEqualTo(difficultyLevel.getCreatedAt());
@@ -235,7 +235,7 @@ public class DifficultyLevelServiceTest {
 
             assertThat(result).isNotNull();
             assertThat(result.name()).isEqualTo(difficultyLevel.getName());
-            assertThat(result.maxAnswers()).isEqualTo(difficultyLevel.getMaxAnswers());
+            assertThat(result.answerOptionsCount()).isEqualTo(difficultyLevel.getAnswerOptionsCount());
             assertThat(result.timerSeconds()).isEqualTo(difficultyLevel.getTimerSeconds());
             assertThat(result.pointsPerQuestion()).isEqualTo(difficultyLevel.getPointsPerQuestion());
             assertThat(result.createdAt()).isEqualTo(difficultyLevel.getCreatedAt());

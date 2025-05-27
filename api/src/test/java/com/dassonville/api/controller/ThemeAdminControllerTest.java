@@ -103,33 +103,6 @@ public class ThemeAdminControllerTest {
                     .andExpect(jsonPath("$", hasSize(1)))
                     .andExpect(jsonPath("$[0].name").value("Informatique"));
         }
-
-        @Test
-        @DisplayName("Succès - Récupérer la liste des catégories selon un thème")
-        public void getCategoriesByTheme_shouldReturn200() throws Exception {
-            // Given
-            when(themeService.getCategoriesByTheme(anyLong()))
-                    .thenReturn(List.of(idAndNameProjection));
-
-            // When & Then
-            mockMvc.perform(get(ApiRoutes.Themes.ADMIN_BY_ID + ApiRoutes.Categories.STRING, endpointId))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(1)))
-                    .andExpect(jsonPath("$[0].name").value(idAndNameProjection.getName()));
-        }
-
-        @Test
-        @DisplayName("Erreur - Thème non trouvé")
-        public void getCategoriesByTheme_shouldReturn404() throws Exception {
-            // Given
-            when(themeService.getCategoriesByTheme(anyLong()))
-                    .thenThrow(new NotFoundException());
-
-            // When & Then
-            mockMvc.perform(get(ApiRoutes.Themes.ADMIN_BY_ID + ApiRoutes.Categories.STRING, endpointId))
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
-        }
     }
 
 

@@ -7,6 +7,7 @@ import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
+import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.service.CategoryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +20,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
@@ -44,6 +48,8 @@ public class CategoryAdminControllerTest {
     private BooleanRequestDTO booleanRequestDTO;
     private CategoryAdminDTO categoryAdminDTO;
     private CategoryUpsertDTO categoryUpsertDTO;
+    private IdAndNameProjection idAndNameProjection;
+
 
     @BeforeEach
     public void setUp() {
@@ -51,12 +57,50 @@ public class CategoryAdminControllerTest {
         booleanRequestDTO = new BooleanRequestDTO(true);
         categoryAdminDTO = new CategoryAdminDTO(1L, "Code", "", null, null, null, 6);
         categoryUpsertDTO = new CategoryUpsertDTO("Code", "");
+
+        idAndNameProjection = new IdAndNameProjection() {
+            @Override
+            public Long getId() {
+                return 1L;
+            }
+            @Override
+            public String getName() {
+                return "Informatique";
+            }
+        };
     }
 
 
     @Nested
     @DisplayName("GET")
     class GetTests {
+
+        @Test
+        @DisplayName("Succès - Récupérer la liste des catégories selon un thème")
+        public void getCategoriesByTheme_shouldReturn200() throws Exception {
+            // Given
+            when(categoryService.getCategoriesByTheme(anyLong()))
+                    .thenReturn(List.of(idAndNameProjection));
+
+            // When & Then
+            mockMvc.perform(get(ApiRoutes.Themes.ADMIN_BY_ID + ApiRoutes.Categories.STRING, endpointId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(1)))
+                    .andExpect(jsonPath("$[0].name").value(idAndNameProjection.getName()));
+        }
+
+        @Test
+        @DisplayName("Erreur - Thème non trouvé")
+        public void getCategoriesByTheme_shouldReturn404() throws Exception {
+            // Given
+            when(categoryService.getCategoriesByTheme(anyLong()))
+                    .thenThrow(new NotFoundException());
+
+            // When & Then
+            mockMvc.perform(get(ApiRoutes.Themes.ADMIN_BY_ID + ApiRoutes.Categories.STRING, endpointId))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists());
+        }
 
         @Test
         @DisplayName("Succès - Obtenir une catégorie par son ID")
