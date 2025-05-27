@@ -59,7 +59,7 @@ public class DifficultyLevelAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @GetMapping(ApiRoutes.ID)
-    public ResponseEntity<DifficultyLevelAdminDTO> getDifficultyLevelById(@PathVariable long id) {
+    public ResponseEntity<DifficultyLevelAdminDTO> getDifficultyLevelById(@PathVariable Long id) {
         logger.info("Requête pour obtenir le niveau de difficulté avec l'ID: {}", id);
         DifficultyLevelAdminDTO difficultyLevel = difficultyLevelService.findById(id);
         logger.info("Niveau de difficulté récupéré avec l'ID: {}", id);
@@ -101,7 +101,7 @@ public class DifficultyLevelAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PutMapping(ApiRoutes.ID)
-    public ResponseEntity<DifficultyLevelAdminDTO> updateDifficultyLevel(@PathVariable long id, @RequestBody @Valid DifficultyLevelUpsertDTO difficultyLevelUpsertDTO) {
+    public ResponseEntity<DifficultyLevelAdminDTO> updateDifficultyLevel(@PathVariable Long id, @RequestBody @Valid DifficultyLevelUpsertDTO difficultyLevelUpsertDTO) {
         logger.info("Requête pour modifier le niveau de difficulté avec l'ID: {}", id);
         DifficultyLevelAdminDTO updatedDifficultyLevel = difficultyLevelService.update(id, difficultyLevelUpsertDTO);
         logger.info("Niveau de difficulté modifié avec l'ID: {}", id);
@@ -118,7 +118,7 @@ public class DifficultyLevelAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @DeleteMapping(ApiRoutes.ID)
-    public ResponseEntity<Void> deleteDifficultyLevel(@PathVariable long id) {
+    public ResponseEntity<Void> deleteDifficultyLevel(@PathVariable Long id) {
         logger.info("Requête pour supprimer le niveau de difficulté avec l'ID: {}", id);
         difficultyLevelService.delete(id);
         logger.info("Niveau de difficulté supprimé avec l'ID: {}", id);
@@ -135,7 +135,7 @@ public class DifficultyLevelAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PatchMapping(ApiRoutes.VISIBILITY)
-    public ResponseEntity<Void> updateDifficultyLevelVisibility(@PathVariable long id, @RequestBody @Valid BooleanRequestDTO booleanRequestDTO) {
+    public ResponseEntity<Void> updateDifficultyLevelVisibility(@PathVariable Long id, @RequestBody @Valid BooleanRequestDTO booleanRequestDTO) {
         logger.info("Requête pour activer / désactiver le niveau de difficulté avec l'ID: {}", id);
         difficultyLevelService.updateVisibility(id, booleanRequestDTO.value());
         logger.info("Niveau de difficulté activé / désactivé avec l'ID: {}", id);

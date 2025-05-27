@@ -71,7 +71,7 @@ public class ThemeAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @GetMapping(ApiRoutes.ID)
-    public ResponseEntity<ThemeAdminDTO> getThemeById(@PathVariable long id) {
+    public ResponseEntity<ThemeAdminDTO> getThemeById(@PathVariable Long id) {
         logger.info("Requête pour obtenir le thème avec l'ID: {}", id);
         ThemeAdminDTO theme = themeService.findByIdForAdmin(id);
         logger.info("Thème trouvé avec l'ID: {}", id);
@@ -112,7 +112,7 @@ public class ThemeAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PutMapping(ApiRoutes.ID)
-    public ResponseEntity<ThemeAdminDTO> updateTheme(@PathVariable long id, @RequestBody @Valid ThemeUpsertDTO theme) {
+    public ResponseEntity<ThemeAdminDTO> updateTheme(@PathVariable Long id, @RequestBody @Valid ThemeUpsertDTO theme) {
         logger.info("Requête pour mettre à jour le thème avec l'ID: {}", id);
         ThemeAdminDTO updatedTheme = themeService.update(id, theme);
         logger.info("Thème mis à jour avec l'ID: {}", id);
@@ -127,7 +127,7 @@ public class ThemeAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @DeleteMapping(ApiRoutes.ID)
-    public ResponseEntity<Void> deleteTheme(@PathVariable long id) {
+    public ResponseEntity<Void> deleteTheme(@PathVariable Long id) {
         logger.info("Requête pour supprimer le thème avec l'ID: {}", id);
         themeService.delete(id);
         logger.info("Thème supprimé avec l'ID: {}", id);
@@ -144,7 +144,7 @@ public class ThemeAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PatchMapping(ApiRoutes.VISIBILITY)
-    public ResponseEntity<Void> updateThemeVisibility(@PathVariable long id, @RequestBody @Valid BooleanRequestDTO booleanRequestDTO) {
+    public ResponseEntity<Void> updateThemeVisibility(@PathVariable Long id, @RequestBody @Valid BooleanRequestDTO booleanRequestDTO) {
         logger.info("Requête pour activer / désactiver le thème avec l'ID: {}", id);
         themeService.updateVisibility(id, booleanRequestDTO.value());
         logger.info("Thème activé / désactivé avec l'ID: {}", id);

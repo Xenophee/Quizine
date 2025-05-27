@@ -19,9 +19,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 
 import java.net.URI;
 import java.util.Map;
@@ -43,8 +46,10 @@ public class QuizAdminController {
     }
 
 
-    @Operation(summary = "Obtenir la liste des quiz",
+    @Operation(summary = "Obtenir la liste des quiz (avec pagination)",
             description = "Obtient la liste des quiz actifs.<br>" +
+                    "Le nombre de quiz par thème est de 20 par défaut.<br>" +
+                    "Le tri par défaut est par titre de quiz.<br>" +
                     "Pour obtenir la liste des quiz désactivés, utilisez le paramètre <code>visible=false</code>.<br>" +
                     "Pour obtenir tous les quiz, utilisez le paramètre <code>visible=null</code>.<br>" +
                     "Le nombre de quiz par page est de 10 par défaut.<br>" +
@@ -52,18 +57,22 @@ public class QuizAdminController {
                     "Dans la démo Swagger, écrivez le <code>sort</code> de cette manière : <code>\"sort\": \"title\"</code> et non pas sous forme de tableau comme l'indique l'exemple.<br>" +
                     "Côté front, la requête doit ressembler à ceci : <code>/api/admin/quizzes?themeId=4&visible=true&sort=title</code>")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "La liste des quiz a été trouvée.")
+            @ApiResponse(responseCode = "200", description = "La liste des quiz a été trouvée."),
+            @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
+                    content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @GetMapping
-    public ResponseEntity<Page<QuizAdminDTO>> getQuizzesByTheme(
-            @RequestParam long themeId,
+    public ResponseEntity<PagedModel<EntityModel<QuizAdminDTO>>> getQuizzesByTheme(
+            @RequestParam Long themeId,
             @RequestParam(required = false) Boolean visible,
-            @PageableDefault(size = 10, sort = "title") Pageable pageable
+            @PageableDefault(size = 20, sort = "title") Pageable pageable,
+            PagedResourcesAssembler<QuizAdminDTO> assembler
     ) {
         logger.info("Requête pour obtenir la liste des quiz.");
-        Page<QuizAdminDTO> groupedQuizzes = quizService.getQuizzesByTheme(themeId, visible, pageable);
+        Page<QuizAdminDTO> groupedQuizzes = quizService.findAllByThemeIdForAdmin(themeId, visible, pageable);
+        PagedModel<EntityModel<QuizAdminDTO>> pagedModel = assembler.toModel(groupedQuizzes, EntityModel::of);
         logger.info("Liste des quiz récupérée.");
-        return ResponseEntity.ok(groupedQuizzes);
+        return ResponseEntity.ok(pagedModel);
     }
 
 
@@ -74,7 +83,7 @@ public class QuizAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @GetMapping(ApiRoutes.ID)
-    public ResponseEntity<QuizAdminDetailsDTO> getQuizById(@PathVariable long id) {
+    public ResponseEntity<QuizAdminDetailsDTO> getQuizById(@PathVariable Long id) {
         logger.info("Requête pour obtenir le quiz avec l'ID: {}", id);
         QuizAdminDetailsDTO quiz = quizService.findByIdForAdmin(id);
         logger.info("Quiz trouvé avec succès.");
@@ -116,7 +125,7 @@ public class QuizAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PutMapping(ApiRoutes.ID)
-    public ResponseEntity<QuizAdminDetailsDTO> updateQuiz(@PathVariable long id, @RequestBody @Valid QuizUpsertDTO quiz) {
+    public ResponseEntity<QuizAdminDetailsDTO> updateQuiz(@PathVariable Long id, @RequestBody @Valid QuizUpsertDTO quiz) {
         logger.info("Requête pour mettre à jour le quiz avec l'ID: {}", id);
         QuizAdminDetailsDTO updatedQuiz = quizService.update(id, quiz);
         logger.info("Quiz mis à jour avec succès.");
@@ -131,7 +140,7 @@ public class QuizAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @DeleteMapping(ApiRoutes.ID)
-    public ResponseEntity<Void> deleteQuiz(@PathVariable long id) {
+    public ResponseEntity<Void> deleteQuiz(@PathVariable Long id) {
         logger.info("Requête pour supprimer le quiz avec l'ID {}.", id);
         quizService.delete(id);
         logger.info("Quiz supprimé avec succès.");
@@ -148,7 +157,7 @@ public class QuizAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PatchMapping(ApiRoutes.VISIBILITY)
-    public ResponseEntity<Void> toggleVisibility(@PathVariable long id, @RequestBody @Valid BooleanRequestDTO request) {
+    public ResponseEntity<Void> updateVisibility(@PathVariable Long id, @RequestBody @Valid BooleanRequestDTO request) {
         logger.info("Requête pour activer / désactiver le quiz avec l'ID: {}", id);
         quizService.updateVisibility(id, request.value());
         logger.info("Quiz activé / désactivé avec l'ID: {}", id);

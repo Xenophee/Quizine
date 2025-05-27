@@ -44,7 +44,7 @@ public class AnswerAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))}),
     })
     @PostMapping(ApiRoutes.Answers.ADMIN_ANSWERS_POST)
-    public ResponseEntity<AnswerAdminDTO> createResponse(@PathVariable long id, @RequestBody @Valid AnswerUpsertDTO answer) {
+    public ResponseEntity<AnswerAdminDTO> createResponse(@PathVariable Long id, @RequestBody @Valid AnswerUpsertDTO answer) {
         logger.info("Requête pour créer une réponse.");
         AnswerAdminDTO createdAnswer = answerService.create(id, answer);
         logger.info("Réponse créée avec succès.");
@@ -68,7 +68,7 @@ public class AnswerAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))}),
     })
     @PutMapping(ApiRoutes.Answers.ADMIN_BY_ID)
-    public ResponseEntity<AnswerAdminDTO> updateResponse(@PathVariable long id, @RequestBody @Valid AnswerUpsertDTO answer) {
+    public ResponseEntity<AnswerAdminDTO> updateResponse(@PathVariable Long id, @RequestBody @Valid AnswerUpsertDTO answer) {
         logger.info("Requête pour mettre à jour la réponse avec l'ID {}.", id);
         AnswerAdminDTO updatedAnswer = answerService.update(id, answer);
         logger.info("Réponse mise à jour avec succès.");
@@ -83,7 +83,7 @@ public class AnswerAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))}),
     })
     @DeleteMapping(ApiRoutes.Answers.ADMIN_BY_ID)
-    public ResponseEntity<Void> deleteResponse(@PathVariable long id) {
+    public ResponseEntity<Void> deleteResponse(@PathVariable Long id) {
         logger.info("Requête pour supprimer la réponse avec l'ID {}.", id);
         answerService.delete(id);
         logger.info("Réponse supprimée avec succès.");
@@ -98,7 +98,7 @@ public class AnswerAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))}),
     })
     @PatchMapping(ApiRoutes.Answers.ADMIN_VISIBILITY_PATCH)
-    public ResponseEntity<Void> toggleVisibility(@PathVariable long id, @RequestBody BooleanRequestDTO request) {
+    public ResponseEntity<Void> updateVisibility(@PathVariable Long id, @RequestBody BooleanRequestDTO request) {
         logger.info("Requête pour activer / désactiver la réponse avec l'ID {}.", id);
         answerService.updateVisibility(id, request.value());
         logger.info("La réponse a été activée / désactivée avec succès.");

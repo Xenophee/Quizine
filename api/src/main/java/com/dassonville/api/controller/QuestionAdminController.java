@@ -45,7 +45,7 @@ public class QuestionAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))}),
     })
     @PostMapping(ApiRoutes.Questions.ADMIN_QUESTIONS_POST)
-    public ResponseEntity<QuestionAdminDTO> createQuestion(@PathVariable long id, @RequestBody @Valid QuestionInsertDTO question) {
+    public ResponseEntity<QuestionAdminDTO> createQuestion(@PathVariable Long id, @RequestBody @Valid QuestionInsertDTO question) {
         logger.info("Requête pour créer une question.");
         QuestionAdminDTO createdQuestion = questionService.create(id, question);
         logger.info("Question créée avec succès.");
@@ -69,7 +69,7 @@ public class QuestionAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))}),
     })
     @PutMapping(ApiRoutes.Questions.ADMIN_BY_ID)
-    public ResponseEntity<QuestionAdminDTO> updateQuestion(@PathVariable long id, @RequestBody @Valid QuestionUpdateDTO question) {
+    public ResponseEntity<QuestionAdminDTO> updateQuestion(@PathVariable Long id, @RequestBody @Valid QuestionUpdateDTO question) {
         logger.info("Requête pour mettre à jour la question avec l'ID {}.", id);
         QuestionAdminDTO updatedQuestion = questionService.update(id, question);
         logger.info("Question mise à jour avec succès.");
@@ -84,7 +84,7 @@ public class QuestionAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))}),
     })
     @DeleteMapping(ApiRoutes.Questions.ADMIN_BY_ID)
-    public ResponseEntity<Void> deleteQuestion(@PathVariable long id) {
+    public ResponseEntity<Void> deleteQuestion(@PathVariable Long id) {
         logger.info("Requête pour supprimer la question avec l'ID {}.", id);
         questionService.delete(id);
         logger.info("Question supprimée avec succès.");
@@ -99,7 +99,7 @@ public class QuestionAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))}),
     })
     @PatchMapping(ApiRoutes.Questions.ADMIN_VISIBILITY_PATCH)
-    public ResponseEntity<Void> updateQuestionVisibility(@PathVariable long id, @RequestBody BooleanRequestDTO request) {
+    public ResponseEntity<Void> updateQuestionVisibility(@PathVariable Long id, @RequestBody BooleanRequestDTO request) {
         logger.info("Requête pour activer / désactiver la question avec l'ID {}.", id);
         questionService.updateVisibility(id, request.value());
         logger.info("Question activée / désactivée avec succès.");
