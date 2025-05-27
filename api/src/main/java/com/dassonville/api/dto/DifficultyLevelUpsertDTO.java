@@ -10,14 +10,14 @@ public record DifficultyLevelUpsertDTO(
 
         @NotNull(message = "Veuillez indiquer le nombre de réponses minimum.")
         @Min(value = 0, message = "Le nombre de réponses ne doit pas être négatif.")
-        Byte maxAnswers,
+        Byte answerOptionsCount,
 
         @NotNull(message = "Veuillez indiquer le nombre nombre de secondes pour le timer.")
         @Min(value = 0, message = "Le timer ne doit pas être négatif.")
         Short timerSeconds,
 
         @NotNull(message = "Veuillez indiquer le nombre de points par bonne réponse.")
-        @Positive(message = "Le nombre de points attribué doit être supérieur à 0.")
+        @Min(value = 0, message = "Le nombre de points attribué ne doit pas être négatif.")
         Integer pointsPerQuestion
 ) {
 }

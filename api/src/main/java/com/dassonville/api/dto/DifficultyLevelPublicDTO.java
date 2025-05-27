@@ -6,7 +6,7 @@ public record DifficultyLevelPublicDTO(
         long id,
         String name,
         @Schema(type = "integer", format = "int32")
-        byte maxAnswers,
+        byte answerOptionsCount,
         short timerSeconds,
         int pointsPerQuestion,
         boolean isNew

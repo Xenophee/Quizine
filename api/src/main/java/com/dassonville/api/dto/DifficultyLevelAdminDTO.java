@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 public record DifficultyLevelAdminDTO(
         long id,
         String name,
-        byte maxAnswers,
+        byte answerOptionsCount,
         short timerSeconds,
         int pointsPerQuestion,
         boolean isReference,

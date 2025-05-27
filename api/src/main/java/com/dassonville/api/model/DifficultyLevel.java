@@ -25,8 +25,8 @@ public class DifficultyLevel {
     @Column(length = 50, nullable = false, unique = true)
     private String name;
 
-    @Column(name = "max_answers", nullable = false)
-    private Byte maxAnswers;
+    @Column(name = "answer_options_count", nullable = false)
+    private Byte answerOptionsCount;
 
     @Column(name = "timer_seconds")
     private Short timerSeconds;
