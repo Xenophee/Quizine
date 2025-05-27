@@ -5,6 +5,7 @@ import com.dassonville.api.constant.ApiRoutes;
 import com.dassonville.api.dto.BooleanRequestDTO;
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 
@@ -35,6 +37,21 @@ public class CategoryAdminController {
         this.categoryService = categoryService;
     }
 
+
+
+    @Operation(summary = "Obtenir la liste des nom de catégories par thème", description = "Obtient la liste des catégories pour un thème par son ID. Ne renvoie que l'ID et le nom de la catégorie.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "La liste des catégories a été trouvée."),
+            @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
+                    content = {@Content(schema = @Schema(implementation = Error.class))})
+    })
+    @GetMapping(ApiRoutes.Themes.ADMIN_BY_ID + ApiRoutes.Categories.STRING)
+    public ResponseEntity<List<IdAndNameProjection>> getCategoriesByTheme(@PathVariable long id) {
+        logger.info("Requête pour obtenir la liste des catégories pour le thème avec l'ID: {}", id);
+        List<IdAndNameProjection> categories = categoryService.getCategoriesByTheme(id);
+        logger.info("Liste des catégories récupérée.");
+        return ResponseEntity.ok(categories);
+    }
 
 
     @Operation(summary = "Obtenir une catégorie", description = "Obtient une catégorie par son ID")

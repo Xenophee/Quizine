@@ -78,20 +78,6 @@ public class ThemeAdminController {
         return ResponseEntity.ok(theme);
     }
 
-    @Operation(summary = "Obtenir la liste des nom de catégories par thème", description = "Obtient la liste des catégories pour un thème par son ID. Ne renvoie que l'ID et le nom de la catégorie.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "La liste des catégories a été trouvée."),
-            @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
-                    content = {@Content(schema = @Schema(implementation = Error.class))})
-    })
-    @GetMapping(ApiRoutes.ID + ApiRoutes.Categories.STRING)
-    public ResponseEntity<List<IdAndNameProjection>> getCategoriesByTheme(@PathVariable long id) {
-        logger.info("Requête pour obtenir la liste des catégories pour le thème avec l'ID: {}", id);
-        List<IdAndNameProjection> categories = themeService.getCategoriesByTheme(id);
-        logger.info("Liste des catégories récupérée.");
-        return ResponseEntity.ok(categories);
-    }
-
     @Operation(summary = "Créer un thème", description = "Crée un nouveau thème")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Le thème a été créé avec succès."),
