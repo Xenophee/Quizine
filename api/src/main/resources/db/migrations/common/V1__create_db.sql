@@ -66,16 +66,16 @@ CREATE TABLE categories
 ---------------------------------------------------
 CREATE TABLE difficulty_levels
 (
-    id                  SERIAL PRIMARY KEY,
-    name                VARCHAR(50) NOT NULL UNIQUE,
-    max_answers         SMALLINT    NOT NULL DEFAULT 0 CHECK (max_answers >= 0),
-    timer_seconds       SMALLINT    NOT NULL DEFAULT 0 CHECK (timer_seconds >= 0),
-    points_per_question SMALLINT    NOT NULL DEFAULT 0 CHECK (points_per_question >= 0),
-    is_reference        BOOLEAN     NOT NULL DEFAULT FALSE,
-    display_order       SMALLINT    NOT NULL UNIQUE CHECK (display_order > 0),
-    created_at          TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMP,
-    disabled_at         TIMESTAMP
+    id                   SERIAL PRIMARY KEY,
+    name                 VARCHAR(50) NOT NULL UNIQUE,
+    answer_options_count SMALLINT    NOT NULL DEFAULT 0 CHECK (answer_options_count >= 0),
+    timer_seconds        SMALLINT    NOT NULL DEFAULT 0 CHECK (timer_seconds >= 0),
+    points_per_question  SMALLINT    NOT NULL DEFAULT 0 CHECK (points_per_question >= 0),
+    is_reference         BOOLEAN     NOT NULL DEFAULT FALSE,
+    display_order        SMALLINT    NOT NULL UNIQUE CHECK (display_order > 0),
+    created_at           TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at           TIMESTAMP,
+    disabled_at          TIMESTAMP
 );
 
 ---------------------------------------------------
