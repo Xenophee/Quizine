@@ -3,6 +3,7 @@ package com.dassonville.api.service;
 
 import com.dassonville.api.dto.*;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.InvalidStateException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.QuestionMapper;
 import com.dassonville.api.model.Answer;
@@ -191,7 +192,7 @@ public class QuestionServiceTest {
 
         @Test
         @DisplayName("Erreur - Pas de bonnes réponses")
-        void shouldThrowIllegalStateException_WhenNoCorrectAnswersExist() {
+        void shouldThrowInvalidStateException_WhenNoCorrectAnswersExist() {
             // Given
             long quizId = 1L;
             long questionId = 1L;
@@ -205,7 +206,7 @@ public class QuestionServiceTest {
                     .thenReturn(List.of()); // Aucune bonne réponse
 
             // When / Then
-            assertThrows(IllegalStateException.class, () -> questionService.checkAnswerByChoice(quizId, questionId, submittedAnswerIds));
+            assertThrows(InvalidStateException.class, () -> questionService.checkAnswerByChoice(quizId, questionId, submittedAnswerIds));
 
             verify(questionRepository).existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId);
             verify(answerRepository).countActiveValidAnswers(submittedAnswerIds, questionId);
