@@ -1,15 +1,19 @@
 package com.dassonville.api.exception;
 
+import lombok.Getter;
+
+@Getter
 public class AlreadyExistException extends RuntimeException {
 
-    // Constructeur avec message personnalisé
-    public AlreadyExistException(String message) {
-        super(message);
+    private final ErrorCode errorCode;
+
+    public AlreadyExistException(ErrorCode errorCode, Object... messageArgs) {
+        super(String.format(errorCode.getMessage(), messageArgs));
+        this.errorCode = errorCode;
     }
 
-    // Constructeur avec message par défaut
     public AlreadyExistException() {
-        super("L'élément existe déjà !");
+        this(ErrorCode.UNEXPECTED_ERROR);
     }
 }
 

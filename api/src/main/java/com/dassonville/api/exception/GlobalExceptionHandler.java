@@ -5,15 +5,12 @@ import io.swagger.v3.oas.annotations.Hidden;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -28,41 +25,59 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Error handleNotFoundException(NotFoundException ex) {
-        return new Error(ex.getMessage());
+        return new Error(
+                ex.getErrorCode().getCode(),
+                ex.getMessage()
+        );
     }
 
     @ExceptionHandler(AlreadyExistException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public Error handleAlreadyExistException(AlreadyExistException ex) {
-        return new Error(ex.getMessage());
+        return new Error(
+                ex.getErrorCode().getCode(),
+                ex.getMessage()
+        );
     }
 
     @ExceptionHandler(ActionNotAllowedException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public Error handleAlreadyExistException(ActionNotAllowedException ex) {
-        return new Error(ex.getMessage());
+        return new Error(
+                ex.getErrorCode().getCode(),
+                ex.getMessage()
+        );
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
+    @ExceptionHandler(InvalidArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Error handleIllegalArgumentException(IllegalArgumentException ex) {
+    public Error handleInvalidArgumentException(InvalidArgumentException ex) {
         logger.warn("Une erreur de validation a été détectée : {}", ex.getMessage());
-        return new Error(ex.getMessage());
+        return new Error(
+                ex.getErrorCode().getCode(),
+                ex.getMessage()
+        );
     }
 
 
-    @ExceptionHandler(IllegalStateException.class)
+    @ExceptionHandler(InvalidStateException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Error handleIllegalStateException(IllegalStateException ex) {
+    public Error handleInvalidStateException(InvalidStateException ex) {
         logger.error("Une erreur inattendue s'est produite : {}", ex.getMessage());
-        return new Error("Une erreur inattendue s'est produite.");
+        return new Error(
+                ex.getErrorCode().getCode(),
+                ex.getMessage()
+        );
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Error handleGeneralException(Exception ex) {
         logger.error("Une erreur inattendue s'est produite : {}", ex.getMessage());
-        return new Error("Une erreur inattendue s'est produite.");
+        return new Error(
+                ErrorCode.UNEXPECTED_ERROR.getCode(),
+                ErrorCode.UNEXPECTED_ERROR.getMessage()
+        );
     }
 
 

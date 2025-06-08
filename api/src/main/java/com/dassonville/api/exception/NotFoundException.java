@@ -1,14 +1,19 @@
 package com.dassonville.api.exception;
 
-public class NotFoundException extends RuntimeException {
 
-    // Constructeur avec message personnalisé
-    public NotFoundException(String message) {
-        super(message);
+import lombok.Getter;
+
+@Getter
+public class NotFoundException extends RuntimeException {
+    private final ErrorCode errorCode;
+
+    public NotFoundException(ErrorCode errorCode, Object... messageArgs) {
+        super(String.format(errorCode.getMessage(), messageArgs));
+        this.errorCode = errorCode;
     }
 
-    // Constructeur avec message par défaut
     public NotFoundException() {
-        super("L'élément n'existe pas !");
+        this(ErrorCode.UNEXPECTED_ERROR);
     }
 }
+
