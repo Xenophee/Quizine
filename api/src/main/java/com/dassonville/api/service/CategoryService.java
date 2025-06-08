@@ -3,6 +3,7 @@ package com.dassonville.api.service;
 import com.dassonville.api.dto.CategoryAdminDTO;
 import com.dassonville.api.dto.CategoryUpsertDTO;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.CategoryMapper;
 import com.dassonville.api.model.Category;
@@ -43,7 +44,7 @@ public class CategoryService {
 
         if (!themeRepository.existsById(themeId)) {
             logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", themeId);
-            throw new NotFoundException("Le thème n'a pas été trouvé.");
+            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND, themeId);
         }
 
         return categoryRepository.findAllByThemeIdOrderByName(themeId);
@@ -84,7 +85,7 @@ public class CategoryService {
 
         if (!themeRepository.existsById(themeId)) {
             logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", themeId);
-            throw new NotFoundException("Le thème n'a pas été trouvé.");
+            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND, themeId);
         }
 
         String normalizedNewText = TextUtils.normalizeText(dto.name());
@@ -92,7 +93,7 @@ public class CategoryService {
 
         if (categoryRepository.existsByNameIgnoreCase(normalizedNewText)) {
             logger.warn("Une catégorie existe déjà avec le même nom : {}", normalizedNewText);
-            throw new AlreadyExistException("Une catégorie existe déjà avec le même nom.");
+            throw new AlreadyExistException(ErrorCode.CATEGORY_ALREADY_EXISTS, normalizedNewText);
         }
 
         Category categoryToCreate = categoryMapper.toModel(dto, themeId);
@@ -125,7 +126,7 @@ public class CategoryService {
 
         if (categoryRepository.existsByNameIgnoreCaseAndIdNot(normalizedNewText, id)) {
             logger.warn("Une catégorie existe déjà avec le même nom : {}", normalizedNewText);
-            throw new AlreadyExistException("Une catégorie existe déjà avec le même nom.");
+            throw new AlreadyExistException(ErrorCode.CATEGORY_ALREADY_EXISTS, normalizedNewText);
         }
 
         categoryMapper.updateModelFromDTO(dto, categoryToUpdate);
@@ -148,7 +149,7 @@ public class CategoryService {
 
         if (!categoryRepository.existsById(id)) {
             logger.warn("La catégorie à supprimer avec l'ID {}, n'a pas été trouvée.", id);
-            throw new NotFoundException("La catégorie à supprimer n'a pas été trouvée.");
+            throw new NotFoundException(ErrorCode.CATEGORY_NOT_FOUND, id);
         }
 
         categoryRepository.deleteById(id);
@@ -191,7 +192,7 @@ public class CategoryService {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.warn("La catégorie avec l'ID {}, n'a pas été trouvée.", id);
-                    return new NotFoundException("La catégorie n'a pas été trouvée.");
+                    return new NotFoundException(ErrorCode.CATEGORY_NOT_FOUND, id);
                 });
     }
 }

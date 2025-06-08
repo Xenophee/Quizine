@@ -4,6 +4,7 @@ package com.dassonville.api.service;
 import com.dassonville.api.dto.*;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.QuizMapper;
 import com.dassonville.api.model.Quiz;
@@ -98,7 +99,7 @@ public class QuizService {
         Quiz quiz = quizRepository.findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(id)
                 .orElseThrow(() -> {
                     logger.warn("Le quiz avec l'ID {}, n'a pas été trouvé.", id);
-                    return new NotFoundException("Le quiz n'a pas été trouvé.");
+                    return new NotFoundException(ErrorCode.QUIZ_NOT_FOUND, id);
                 });
 
         return quizMapper.toPublicDetailsDTO(quiz, questionRepository);
@@ -125,7 +126,7 @@ public class QuizService {
 
         if (!themeRepository.existsById(themeId)) {
             logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", themeId);
-            throw new NotFoundException("Le thème n'a pas été trouvé.");
+            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND, themeId);
         }
 
         Page<Quiz> quizzes;
@@ -179,13 +180,13 @@ public class QuizService {
 
         if (!quizRepository.existsByIdAndDisabledAtIsNull(id)) {
             logger.warn("Le quiz avec l'ID {}, n'a pas été trouvé.", id);
-            throw new NotFoundException("Le quiz n'a pas été trouvé.");
+            throw new NotFoundException(ErrorCode.QUIZ_NOT_FOUND, id);
         }
 
         byte answerOptionsCount = difficultyLevelRepository.findAnswerOptionsCountByIdAndDisabledAtIsNull(difficultyLevelId)
                 .orElseThrow(() -> {
                     logger.warn("Le niveau de difficulté avec l'ID {}, n'a pas été trouvé.", difficultyLevelId);
-                    return new NotFoundException("Le niveau de difficulté n'a pas été trouvé.");
+                    return new NotFoundException(ErrorCode.DIFFICULTY_NOT_FOUND, difficultyLevelId);
                 });
 
         List<QuestionForPlayProjection> questions = new ArrayList<>(questionRepository.findByQuizIdAndDisabledAtIsNullAndAnswersDisabledAtIsNull(id));
@@ -215,7 +216,7 @@ public class QuizService {
 
         if (quizRepository.existsByTitleIgnoreCase(normalizedNewText)) {
             logger.warn("Le quiz avec le titre {}, existe déjà.", normalizedNewText);
-            throw new AlreadyExistException("Le quiz existe déjà.");
+            throw new AlreadyExistException(ErrorCode.QUIZ_ALREADY_EXISTS, normalizedNewText);
         }
 
         Quiz quizToCreate = quizMapper.toModel(dto);
@@ -249,7 +250,7 @@ public class QuizService {
 
         if (quizRepository.existsByTitleIgnoreCaseAndIdNot(normalizedNewText, id)) {
             logger.warn("Le quiz avec le titre {}, existe déjà.", normalizedNewText);
-            throw new AlreadyExistException("Le quiz existe déjà.");
+            throw new AlreadyExistException(ErrorCode.QUIZ_ALREADY_EXISTS, normalizedNewText);
         }
 
         quizMapper.updateModelFromDTO(dto, quizToUpdate);
@@ -330,7 +331,7 @@ public class QuizService {
         return quizRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.warn("Le quiz avec l'ID {}, n'a pas été trouvé.", id);
-                    return new NotFoundException("Le quiz n'a pas été trouvé.");
+                    return new NotFoundException(ErrorCode.QUIZ_NOT_FOUND, id);
                 });
     }
 
@@ -349,7 +350,7 @@ public class QuizService {
 
         if (numberOfActiveQuestions < MINIMUM_QUIZ_QUESTIONS) {
             logger.warn("Le quiz avec l'ID {}, ne peut pas être activé car il n'a pas assez de questions.", id);
-            throw new ActionNotAllowedException("Le quiz ne peut pas être activé, car il ne contient pas au moins " + MINIMUM_QUIZ_QUESTIONS + " questions.");
+            throw new ActionNotAllowedException(ErrorCode.QUIZ_CONTAINS_NOT_ENOUGH_QUESTIONS, id, MINIMUM_QUIZ_QUESTIONS);
         } else {
             logger.debug("Le quiz avec l'ID {}, a suffisamment de questions : {} pour être activé.", id, numberOfActiveQuestions);
         }

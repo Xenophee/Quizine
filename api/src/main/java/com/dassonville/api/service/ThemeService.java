@@ -6,6 +6,7 @@ import com.dassonville.api.dto.ThemePublicDTO;
 import com.dassonville.api.dto.ThemeUpsertDTO;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.ThemeMapper;
 import com.dassonville.api.model.Theme;
@@ -110,7 +111,7 @@ public class ThemeService {
 
         if (themeRepository.existsByNameIgnoreCase(normalizedNewText)) {
             logger.warn("Un thème existe déjà avec le même nom : {}", normalizedNewText);
-            throw new AlreadyExistException("Un thème existe déjà avec le même nom.");
+            throw new AlreadyExistException(ErrorCode.THEME_ALREADY_EXISTS, normalizedNewText);
         }
 
         Theme themeToCreate = themeMapper.toModel(dto);
@@ -144,7 +145,7 @@ public class ThemeService {
 
         if (themeRepository.existsByNameIgnoreCaseAndIdNot(normalizedNewText, id)) {
             logger.warn("Un thème existe déjà avec le même nom : {}", normalizedNewText);
-            throw new AlreadyExistException("Un thème existe déjà avec le même nom.");
+            throw new AlreadyExistException(ErrorCode.THEME_ALREADY_EXISTS, normalizedNewText);
         }
 
         themeMapper.updateModelFromDTO(dto, themeToUpdate);
@@ -169,12 +170,12 @@ public class ThemeService {
 
         if (!themeRepository.existsById(id)) {
             logger.warn("Le thème à supprimer avec l'ID {}, n'a pas été trouvé.", id);
-            throw new NotFoundException("Le thème à supprimer n'a pas été trouvé.");
+            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND, id);
         }
 
         if (themeRepository.existsByIdAndQuizzesIsNotEmpty(id)) {
             logger.warn("Le thème à supprimer avec l'ID {}, contient des quiz.", id);
-            throw new ActionNotAllowedException("Le thème à supprimer contient des quiz.");
+            throw new ActionNotAllowedException(ErrorCode.THEME_CONTAINS_QUIZZES, id);
         }
 
         themeRepository.deleteById(id);
@@ -224,7 +225,7 @@ public class ThemeService {
         return themeRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", id);
-                    return new NotFoundException("Le thème n'a pas été trouvé.");
+                    return new NotFoundException(ErrorCode.THEME_NOT_FOUND, id);
                 });
     }
 
@@ -243,7 +244,7 @@ public class ThemeService {
 
         if (numberOfActiveQuizzes == 0) {
             logger.warn("Le thème avec l'ID {}, n'a pas de quiz actif.", id);
-            throw new ActionNotAllowedException("Le thème n'a pas de quiz actif.");
+            throw new ActionNotAllowedException(ErrorCode.THEME_CONTAINS_NO_QUIZZES, id);
         } else {
             logger.debug("Le thème avec l'ID {}, a {} quiz actifs.", id, numberOfActiveQuizzes);
         }

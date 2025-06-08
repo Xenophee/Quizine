@@ -5,6 +5,7 @@ import com.dassonville.api.dto.DifficultyLevelPublicDTO;
 import com.dassonville.api.dto.DifficultyLevelUpsertDTO;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.DifficultyLevelMapper;
 import com.dassonville.api.model.DifficultyLevel;
@@ -87,7 +88,7 @@ public class DifficultyLevelService {
 
         if (difficultyLevelRepository.existsByNameIgnoreCase(normalizedNewText)) {
             logger.warn("Un niveau de difficulté existe déjà avec le même nom : {}", normalizedNewText);
-            throw new AlreadyExistException("Un niveau de difficulté existe déjà avec le même nom.");
+            throw new AlreadyExistException(ErrorCode.DIFFICULTY_ALREADY_EXISTS, normalizedNewText);
         }
 
         DifficultyLevel difficultyLevelToCreate = difficultyLevelMapper.toModel(dto);
@@ -125,7 +126,7 @@ public class DifficultyLevelService {
 
         if (difficultyLevelRepository.existsByNameIgnoreCaseAndIdNot(normalizedNewText, id)) {
             logger.warn("Un niveau de difficulté existe déjà avec le même nom : {}", normalizedNewText);
-            throw new AlreadyExistException("Un niveau de difficulté existe déjà avec le même nom.");
+            throw new AlreadyExistException(ErrorCode.DIFFICULTY_ALREADY_EXISTS, normalizedNewText);
         }
 
         difficultyLevelMapper.updateModelFromDTO(dto, existingDifficultyLevel);
@@ -152,7 +153,7 @@ public class DifficultyLevelService {
 
         if (Boolean.TRUE.equals(difficultyLevel.getIsReference())) {
             logger.warn("Le niveau de difficulté avec l'ID {}, est une référence et ne peut pas être supprimé.", id);
-            throw new ActionNotAllowedException("Le niveau de difficulté est une référence et ne peut pas être supprimé.");
+            throw new ActionNotAllowedException(ErrorCode.DIFFICULTY_IS_REFERENCE, id);
         }
 
         difficultyLevelRepository.deleteById(id);
@@ -197,7 +198,7 @@ public class DifficultyLevelService {
         List<DifficultyLevel> levels = difficultyLevelRepository.findAllById(newOrder);
         if (levels.size() != newOrder.size()) {
             logger.warn("Certains IDs fournis ne correspondent pas à des niveaux de difficulté existants.");
-            throw new NotFoundException("Certains IDs fournis ne correspondent pas à des niveaux de difficulté existants.");
+            throw new NotFoundException(ErrorCode.DIFFICULTIES_NOT_FOUND, newOrder.toString());
         }
 
         // Étape 1 : Décale temporairement les display_order pour éviter les conflits en base
@@ -232,7 +233,7 @@ public class DifficultyLevelService {
         return difficultyLevelRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.warn("Le niveau de difficulté avec l'ID {}, n'a pas été trouvé.", id);
-                    return new NotFoundException("Le niveau de difficulté n'a pas été trouvé.");
+                    return new NotFoundException(ErrorCode.DIFFICULTY_NOT_FOUND, id);
                 });
     }
 

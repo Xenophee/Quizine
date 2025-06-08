@@ -3,6 +3,8 @@ package com.dassonville.api.validation.validator;
 
 import com.dassonville.api.dto.AnswerUpsertDTO;
 import com.dassonville.api.dto.QuestionInsertDTO;
+import com.dassonville.api.exception.ErrorCode;
+import com.dassonville.api.exception.InvalidStateException;
 import com.dassonville.api.repository.DifficultyLevelRepository;
 import com.dassonville.api.validation.annotation.ValidMinAnswersPerQuestion;
 import jakarta.validation.ConstraintValidator;
@@ -25,8 +27,8 @@ public class ValidMinAnswersPerQuestionValidator implements ConstraintValidator<
     public boolean isValid(QuestionInsertDTO dto, ConstraintValidatorContext context) {
         byte answerOptionsCount = difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel()
                 .orElseThrow(() -> {
-                    logger.error("Le niveau de difficulté de référence n'a pas été trouvé.");
-                    return new IllegalStateException("Le niveau de difficulté de référence n'a pas été trouvé.");
+                    logger.error("Le niveau de difficulté de référence n'a pas été trouvé !");
+                    return new InvalidStateException(ErrorCode.INTERNAL_ERROR);
                 });
 
         if (dto.answers() == null || dto.answers().isEmpty()) {

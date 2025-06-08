@@ -5,6 +5,7 @@ import com.dassonville.api.dto.AnswerAdminDTO;
 import com.dassonville.api.dto.AnswerUpsertDTO;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.AnswerMapper;
 import com.dassonville.api.model.Answer;
@@ -47,7 +48,7 @@ public class AnswerService {
 
         if (!questionRepository.existsById(questionId)) {
             logger.warn("La question avec l'ID {}, n'a pas été trouvée.", questionId);
-            throw new NotFoundException("La question n'a pas été trouvée.");
+            throw new NotFoundException(ErrorCode.QUESTION_NOT_FOUND, questionId);
         }
 
         String normalizedNewText = TextUtils.normalizeText(dto.text());
@@ -55,7 +56,7 @@ public class AnswerService {
 
         if (answerRepository.existsByTextIgnoreCaseAndQuestionId(normalizedNewText, questionId)) {
             logger.warn("La réponse {}, existe déjà.", normalizedNewText);
-            throw new AlreadyExistException("La réponse existe déjà.");
+            throw new AlreadyExistException(ErrorCode.ANSWER_ALREADY_EXISTS, normalizedNewText);
         }
 
         Answer answerToCreate = answerMapper.toModel(dto, questionId);
@@ -93,7 +94,7 @@ public class AnswerService {
 
         if (answerRepository.existsByTextIgnoreCaseAndIdNot(normalizedNewText, id)) {
             logger.warn("La réponse {}, existe déjà.", normalizedNewText);
-            throw new AlreadyExistException("La réponse existe déjà.");
+            throw new AlreadyExistException(ErrorCode.ANSWER_ALREADY_EXISTS, normalizedNewText);
         }
 
         if (answerToUpdate.getIsCorrect() && !dto.isCorrect()) {
@@ -182,7 +183,7 @@ public class AnswerService {
         return answerRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.warn("La réponse avec l'ID {}, n'a pas été trouvée.", id);
-                    return new NotFoundException("La réponse n'a pas été trouvée.");
+                    return new NotFoundException(ErrorCode.ANSWER_NOT_FOUND, id);
                 });
     }
 
@@ -203,7 +204,10 @@ public class AnswerService {
 
         if (!hasCorrectAnswer) {
             logger.warn("Il doit y avoir au moins une réponse correcte active pour la question avec l'ID {}.", questionId);
-            throw new ActionNotAllowedException("Il doit y avoir au moins une réponse correcte active pour cette question.");
+            throw new ActionNotAllowedException(
+                    ErrorCode.ATLEAST_ONE_CORRECT_ACTIVE_ANSWER_IS_MANDATORY,
+                    questionId
+            );
         }
     }
 
@@ -229,7 +233,11 @@ public class AnswerService {
 
         if (numberOfActiveAnswers < minimumNumberOfAnswers) {
             logger.warn("Il doit y avoir au moins {} réponses actives pour cette question.", minimumNumberOfAnswers);
-            throw new ActionNotAllowedException("Il doit y avoir au moins " + minimumNumberOfAnswers + " réponses actives pour cette question.");
+            throw new ActionNotAllowedException(
+                    ErrorCode.MINIMUM_ACTIVE_ANSWERS_NOT_REACHED,
+                    questionId,
+                    minimumNumberOfAnswers
+            );
         }
     }
 

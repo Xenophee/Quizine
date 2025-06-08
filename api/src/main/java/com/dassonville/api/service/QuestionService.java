@@ -2,8 +2,7 @@ package com.dassonville.api.service;
 
 
 import com.dassonville.api.dto.*;
-import com.dassonville.api.exception.AlreadyExistException;
-import com.dassonville.api.exception.NotFoundException;
+import com.dassonville.api.exception.*;
 import com.dassonville.api.mapper.QuestionMapper;
 import com.dassonville.api.model.Answer;
 import com.dassonville.api.model.Question;
@@ -51,21 +50,21 @@ public class QuestionService {
      * @param submittedAnswerIds les identifiants des réponses soumises
      * @return un {@link CheckAnswerResultDTO} contenant le résultat de la vérification
      * @throws NotFoundException si la question n'existe pas ou n'appartient pas au quiz
-     * @throws IllegalArgumentException si des réponses soumises ne correspondent pas à la question
-     * @throws IllegalStateException si la question n'a pas de bonne réponse
+     * @throws InvalidArgumentException si des réponses soumises ne correspondent pas à la question
+     * @throws InvalidStateException si la question n'a pas de bonne réponse
      */
     public CheckAnswerResultDTO checkAnswerByChoice(long quizId, long questionId, List<Long> submittedAnswerIds) {
         // Vérifie que la question existe et appartient au bon quiz
         if (!questionRepository.existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId)) {
             logger.warn("La question avec l'ID {}, n'appartient pas au quiz avec l'ID {}.", questionId, quizId);
-            throw new NotFoundException("La question n'appartient pas au quiz ou n'existe pas.");
+            throw new NotFoundException(ErrorCode.QUESTION_AND_QUIZ_MISMATCH, questionId, quizId);
         }
 
         // Vérifie que les réponses soumises appartiennent bien à la question
         long validCount = answerRepository.countActiveValidAnswers(submittedAnswerIds, questionId);
         if (validCount != submittedAnswerIds.size()) {
             logger.warn("Une ou plusieurs réponses soumises ne correspondent pas à la question.");
-            throw new IllegalArgumentException("Une ou plusieurs réponses ne correspondent pas à la question.");
+            throw new InvalidArgumentException(ErrorCode.ANSWERS_AND_QUESTION_MISMATCH, submittedAnswerIds, questionId);
         }
 
         // Récupère toutes les bonnes réponses
@@ -73,12 +72,12 @@ public class QuestionService {
 
         if (correctAnswers.isEmpty()) {
             logger.error("La question {} n’a pas de bonne réponse !", questionId);
-            throw new IllegalStateException("La question " + questionId + " n’a pas de bonne réponse.");
+            throw new InvalidStateException(ErrorCode.INTERNAL_ERROR);
         }
 
         // Vérifie si les réponses soumises sont correctes
         Set<Long> correctIds = correctAnswers.stream().map(Answer::getId).collect(Collectors.toSet());
-        logger.info("Les bonnes réponses pour la question {} sont : {}", questionId, correctIds.toString());
+        logger.info("Les bonnes réponses pour la question {} sont : {}", questionId, correctIds);
         boolean isCorrect = new HashSet<>(submittedAnswerIds).equals(correctIds);
 
         // Mapping des bonnes réponses à retourner
@@ -106,7 +105,7 @@ public class QuestionService {
     public CheckAnswerResultDTO checkAnswerByText(long quizId, long questionId, List<String> submittedAnswers) {
         if (!questionRepository.existsByIdAndDisabledAtIsNullAndQuizIdAndQuizDisabledAtIsNull(questionId, quizId)) {
             logger.warn("La question avec l'ID {}, n'existe pas ou n'appartient pas au quiz avec l'ID {} ou est désactivée.", questionId, quizId);
-            throw new NotFoundException("La question n'existe pas ou n'appartient pas au quiz.");
+            throw new NotFoundException(ErrorCode.QUESTION_AND_QUIZ_MISMATCH, questionId, quizId);
         }
 
         // Récupère les bonnes réponses
@@ -160,7 +159,7 @@ public class QuestionService {
 
         if (!quizRepository.existsById(quizId)) {
             logger.warn("Le quiz avec l'ID {}, n'a pas été trouvé.", quizId);
-            throw new NotFoundException("Le quiz n'a pas été trouvé.");
+            throw new NotFoundException(ErrorCode.QUIZ_NOT_FOUND, quizId);
         }
 
         String normalizedNewText = TextUtils.normalizeText(dto.text());
@@ -168,7 +167,7 @@ public class QuestionService {
 
         if (questionRepository.existsByQuizIdAndTextIgnoreCase(quizId, normalizedNewText)) {
             logger.warn("La question {}, existe déjà pour ce quiz.", normalizedNewText);
-            throw new AlreadyExistException("La question existe déjà pour ce quiz.");
+            throw new AlreadyExistException(ErrorCode.QUESTION_ALREADY_EXISTS, normalizedNewText);
         }
 
         Question questionToCreate = questionMapper.toModel(dto, quizId);
@@ -201,7 +200,7 @@ public class QuestionService {
 
         if (questionRepository.existsByQuizIdAndTextIgnoreCaseAndIdNot(questionToUpdate.getQuiz().getId(), normalizedNewText, id)) {
             logger.warn("La question {}, existe déjà.", normalizedNewText);
-            throw new AlreadyExistException("La question existe déjà.");
+            throw new AlreadyExistException(ErrorCode.QUESTION_ALREADY_EXISTS, normalizedNewText);
         }
 
         questionMapper.updateModelFromDTO(dto, questionToUpdate);
@@ -269,7 +268,7 @@ public class QuestionService {
         return questionRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.warn("La question avec l'ID {}, n'a pas été trouvée.", id);
-                    return new NotFoundException("La question n'a pas été trouvée.");
+                    return new NotFoundException(ErrorCode.QUESTION_NOT_FOUND, id);
                 });
     }
 
