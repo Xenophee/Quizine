@@ -7,6 +7,8 @@ public interface PublicQuizProjection {
     String getTitle();
     LocalDateTime getCreatedAt();
     int getNumberOfQuestions();
+    String getQuizTypeName();
+    String getMasteryLevelName();
     String getCategoryName();
     String getThemeName();
 }

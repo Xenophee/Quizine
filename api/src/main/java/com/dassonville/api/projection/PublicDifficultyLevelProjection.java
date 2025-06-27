@@ -5,8 +5,7 @@ import java.time.LocalDateTime;
 public interface PublicDifficultyLevelProjection {
     Long getId();
     String getName();
-    Byte getAnswerOptionsCount();
-    Short getTimerSeconds();
-    Integer getPointsPerQuestion();
+    String getLabel();
+    String getDescription();
     LocalDateTime getCreatedAt();
 }
