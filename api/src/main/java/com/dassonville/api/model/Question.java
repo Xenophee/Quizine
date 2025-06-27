@@ -21,10 +21,16 @@ public class Question {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
-    @Column(length = 300, nullable = false)
+    @Column(nullable = false)
     private String text;
+
+    @Column(name = "answer_explanation", nullable = false)
+    private String answerExplanation;
+
+    @Column(name = "answer_if_true_false")
+    private Boolean answerIfTrueFalse = null;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
@@ -37,12 +43,19 @@ public class Question {
     @Column(name = "disabled_at")
     private LocalDateTime disabledAt;
 
+
+    @ManyToMany(mappedBy = "questions", fetch = FetchType.LAZY)
+    private List<Quiz> quizzes = new ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_quiz", referencedColumnName = "id", nullable = false)
-    private Quiz quiz;
+    @JoinColumn(name = "question_type_code", referencedColumnName = "code", nullable = false)
+    private QuestionType questionType;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Answer> answers = new ArrayList<>();
+    private List<ClassicAnswer> classicAnswers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "question", fetch = FetchType.LAZY)
+    private List<QuizSessionQuestion> quizSessionQuestions = new ArrayList<>();
 
 
 

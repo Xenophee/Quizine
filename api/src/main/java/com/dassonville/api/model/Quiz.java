@@ -1,5 +1,6 @@
 package com.dassonville.api.model;
 
+import com.dassonville.api.constant.FieldConstraint;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,10 +22,13 @@ public class Quiz {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
-    @Column(length = 100, nullable = false, unique = true)
+    @Column(length = FieldConstraint.Quiz.TITLE_MAX, nullable = false, unique = true)
     private String title;
+
+    @Column(length = FieldConstraint.Quiz.DESCRIPTION_MAX, nullable = false)
+    private String description;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
@@ -38,16 +42,34 @@ public class Quiz {
     @CreationTimestamp
     private LocalDateTime disabledAt;
 
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "theme_id", referencedColumnName = "id", nullable = false)
+    private Theme theme;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_category", referencedColumnName = "id")
+    @JoinColumn(name = "category_id", referencedColumnName = "id")
     private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_theme", referencedColumnName = "id", nullable = false)
-    private Theme theme;
+    @JoinColumn(name = "quiz_type_code", referencedColumnName = "code", nullable = false)
+    private QuizType quizType;
 
-    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "mastery_level_id", referencedColumnName = "id", nullable = false)
+    private MasteryLevel masteryLevel;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "quiz_questions",
+            joinColumns = @JoinColumn(name = "quiz_id", referencedColumnName = "id", nullable = false),
+            inverseJoinColumns = @JoinColumn(name = "question_id", referencedColumnName = "id", nullable = false),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"quiz_id", "question_id"})
+    )
     private List<Question> questions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "quiz", fetch = FetchType.LAZY)
+    private List<QuizSession> quizSessions = new ArrayList<>();
 
 
 

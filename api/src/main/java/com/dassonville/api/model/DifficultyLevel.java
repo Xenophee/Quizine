@@ -1,6 +1,7 @@
 package com.dassonville.api.model;
 
 
+import com.dassonville.api.constant.FieldConstraint;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
@@ -22,23 +25,20 @@ public class DifficultyLevel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 50, nullable = false, unique = true)
+    @Column(length = FieldConstraint.DifficultyLevel.NAME_MAX, nullable = false, unique = true)
     private String name;
-
-    @Column(name = "answer_options_count", nullable = false)
-    private Byte answerOptionsCount;
-
-    @Column(name = "timer_seconds")
-    private Short timerSeconds;
-
-    @Column(name = "points_per_question", nullable = false)
-    private Integer pointsPerQuestion;
 
     @Column(name = "is_reference", nullable = false)
     private Boolean isReference = false;
 
-    @Column(name = "display_order", nullable = false)
-    private Short displayOrder;
+    @Column(length = 10, nullable = false)
+    private String label;
+
+    @Column(length = FieldConstraint.DifficultyLevel.DESCRIPTION_MAX, nullable = false)
+    private String description;
+
+    @Column(name = "rank")
+    private Byte rank;
 
     @Column(name = "created_at", updatable = false)
     @CreationTimestamp
@@ -49,24 +49,28 @@ public class DifficultyLevel {
     private LocalDateTime updatedAt;
 
     @Column(name = "disabled_at")
-    @CreationTimestamp
     private LocalDateTime disabledAt;
 
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "question_type_difficulty",
+            joinColumns = @JoinColumn(name = "difficulty_level_id", referencedColumnName = "id", nullable = false),
+            inverseJoinColumns = @JoinColumn(name = "question_type_code", referencedColumnName = "code", nullable = false),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"difficulty_level_id", "question_type_code"})
+    )
+    private List<QuestionType> questionTypes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "difficultyLevel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<GameRule> gameRules = new ArrayList<>();
+
+    @OneToMany(mappedBy = "difficultyLevel", fetch =  FetchType.LAZY)
+    private List<QuizSession> quizSessions = new ArrayList<>();
 
 
-    public DifficultyLevel(long id, String name, short displayOrder) {
+    public DifficultyLevel(long id, String name, byte rank) {
         this.id = id;
         this.name = name;
-        this.displayOrder = displayOrder;
-    }
-
-
-    public void setVisible(boolean visible) {
-        this.disabledAt = visible ? null : LocalDateTime.now();
-    }
-
-    public boolean isVisible() {
-        return this.disabledAt == null;
+        this.rank = rank;
     }
 }

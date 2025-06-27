@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
+// ! PROVISOIRE
 
 @Entity
 @Table(name = "users")
@@ -58,9 +59,9 @@ public class User {
 
     @ManyToMany
     @JoinTable(
-            name = "users_roles",
-            joinColumns = @JoinColumn(name = "id_user", referencedColumnName = "id", nullable = false),
-            inverseJoinColumns = @JoinColumn(name = "id_role", referencedColumnName = "id", nullable = false)
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false),
+            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id", nullable = false)
     )
     private Set<Role> roles;
 }

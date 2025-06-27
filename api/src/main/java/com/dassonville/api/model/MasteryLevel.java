@@ -4,7 +4,6 @@ package com.dassonville.api.model;
 import com.dassonville.api.constant.FieldConstraint;
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -14,21 +13,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "categories")
+@Table(name = "mastery_levels")
 @Getter
 @Setter
-@NoArgsConstructor
-public class Category {
+public class MasteryLevel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = FieldConstraint.Category.NAME_MAX, nullable = false, unique = true)
+    @Column(length = FieldConstraint.MasteryLevel.NAME_MAX, nullable = false, unique = true)
     private String name;
 
-    @Column(length = FieldConstraint.Category.DESCRIPTION_MAX, nullable = false)
+    @Column(length = FieldConstraint.MasteryLevel.DESCRIPTION_MAX, nullable = false)
     private String description;
+
+    @Column(nullable = false, unique = true)
+    private Byte rank;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
@@ -42,27 +43,9 @@ public class Category {
     private LocalDateTime disabledAt;
 
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "theme_id", referencedColumnName = "id", nullable = false)
-    private Theme theme;
-
-    @OneToMany(mappedBy = "category", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH}, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "masteryLevel", fetch = FetchType.LAZY)
     private List<Quiz> quizzes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "masteryLevel", fetch = FetchType.LAZY)
     private List<QuizSession> quizSessions = new ArrayList<>();
-
-
-
-    public Category(long id) {
-        this.id = id;
-    }
-
-    public void setVisible(boolean visible) {
-        this.disabledAt = visible ? null : LocalDateTime.now();
-    }
-
-    public boolean isVisible() {
-        return this.disabledAt == null;
-    }
 }

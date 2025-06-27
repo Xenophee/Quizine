@@ -1,8 +1,8 @@
 package com.dassonville.api.model;
 
 
+import com.dassonville.api.constant.FieldConstraint;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,13 +21,16 @@ public class Theme {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
-    @Column(length = 50, nullable = false, unique = true)
+    @Column(length = FieldConstraint.Theme.NAME_MAX, nullable = false, unique = true)
     private String name;
 
-    @Column(length = 250)
+    @Column(length = FieldConstraint.Theme.DESCRIPTION_MAX, nullable = false)
     private String description;
+
+    @Column(name = "is_default", nullable = false)
+    private Boolean isDefault = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
@@ -41,11 +44,16 @@ public class Theme {
     @CreationTimestamp
     private LocalDateTime disabledAt;
 
+
+
     @OneToMany(mappedBy = "theme", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Category> categories;
 
     @OneToMany(mappedBy = "theme", fetch = FetchType.LAZY)
     private List<Quiz> quizzes;
+
+    @OneToMany(mappedBy = "theme", fetch = FetchType.LAZY)
+    private List<QuizSession> quizSessions;
 
 
     public Theme(long id) {

@@ -11,21 +11,21 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "answers")
+@Table(name = "classic_answers")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Answer {
+public class ClassicAnswer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
-    @Column(length = 150, nullable = false)
+    @Column(nullable = false)
     private String text;
 
     @Column(name = "is_correct", nullable = false)
-    private Boolean isCorrect;
+    private Boolean isCorrect = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
@@ -39,11 +39,11 @@ public class Answer {
     private LocalDateTime disabledAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_question", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "question_id", referencedColumnName = "id", nullable = false)
     private Question question;
 
 
-    public Answer(long id, String text, boolean isCorrect) {
+    public ClassicAnswer(long id, String text, boolean isCorrect) {
         this.id = id;
         this.text = text;
         this.isCorrect = isCorrect;
