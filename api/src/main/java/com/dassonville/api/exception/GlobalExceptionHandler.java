@@ -2,8 +2,7 @@ package com.dassonville.api.exception;
 
 import com.dassonville.api.util.ValidationErrorUtils;
 import io.swagger.v3.oas.annotations.Hidden;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -14,12 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 
+@Slf4j
 @Hidden
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
 
 
     @ExceptionHandler(NotFoundException.class)
@@ -41,8 +38,17 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ActionNotAllowedException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     public Error handleAlreadyExistException(ActionNotAllowedException ex) {
+        return new Error(
+                ex.getErrorCode().getCode(),
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(MisconfiguredException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Error handleQuizMisconfiguredException(MisconfiguredException ex) {
         return new Error(
                 ex.getErrorCode().getCode(),
                 ex.getMessage()
@@ -52,7 +58,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Error handleInvalidArgumentException(InvalidArgumentException ex) {
-        logger.warn("Une erreur de validation a été détectée : {}", ex.getMessage());
+        log.warn("Une erreur de validation a été détectée : {}", ex.getMessage());
         return new Error(
                 ex.getErrorCode().getCode(),
                 ex.getMessage()
@@ -63,7 +69,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidStateException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Error handleInvalidStateException(InvalidStateException ex) {
-        logger.error("Une erreur inattendue s'est produite : {}", ex.getMessage());
+        log.error("Une erreur inattendue s'est produite : {}", ex.getMessage());
         return new Error(
                 ex.getErrorCode().getCode(),
                 ex.getMessage()
@@ -73,7 +79,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Error handleGeneralException(Exception ex) {
-        logger.error("Une erreur inattendue s'est produite : {}", ex.getMessage());
+        log.error("Une erreur inattendue s'est produite : {}", ex.getMessage());
         return new Error(
                 ErrorCode.UNEXPECTED_ERROR.getCode(),
                 ErrorCode.UNEXPECTED_ERROR.getMessage()
@@ -98,7 +104,12 @@ public class GlobalExceptionHandler {
             current.put(parts[parts.length - 1], error.getDefaultMessage());
         });
 
-        logger.warn("Les vérifications de validation ont détecté des erreurs : {}", errors);
-        return errors;
+        Map<String, Object> response = new HashMap<>();
+        response.put("code", ErrorCode.VALIDATION_ERROR.getCode());
+        response.put("message", ErrorCode.VALIDATION_ERROR.getMessage());
+        response.put("errors", errors);
+
+        log.warn("Les vérifications de validation ont détecté des erreurs : {}", errors);
+        return response;
     }
 }
