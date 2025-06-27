@@ -1,6 +1,7 @@
 package com.dassonville.api.validation.validator;
 
-import com.dassonville.api.dto.QuizUpsertDTO;
+import com.dassonville.api.constant.FieldConstraint;
+import com.dassonville.api.dto.request.QuizUpsertDTO;
 import com.dassonville.api.repository.CategoryRepository;
 import com.dassonville.api.repository.ThemeRepository;
 import com.dassonville.api.validation.annotation.ValidCategoryForTheme;
@@ -21,7 +22,7 @@ public class ValidCategoryForThemeValidator implements ConstraintValidator<Valid
 
         if (!themeRepository.existsById(dto.themeId())) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Le thème spécifié est introuvable.")
+            context.buildConstraintViolationWithTemplate(FieldConstraint.Quiz.THEME_NOT_FOUND)
                     .addPropertyNode("themeId")
                     .addConstraintViolation();
             return false;
@@ -29,7 +30,7 @@ public class ValidCategoryForThemeValidator implements ConstraintValidator<Valid
 
         if (dto.categoryId() != null && !categoryRepository.existsByIdAndThemeId(dto.categoryId(), dto.themeId())) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("La catégorie spécifiée n'appartient pas au thème.")
+            context.buildConstraintViolationWithTemplate(FieldConstraint.Quiz.CATEGORY_NOT_BELONG_TO_THEME)
                     .addPropertyNode("categoryId")
                     .addConstraintViolation();
             return false;

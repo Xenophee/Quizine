@@ -1,82 +1,78 @@
 package com.dassonville.api.validation.validator;
 
 
-import com.dassonville.api.dto.AnswerUpsertDTO;
-import com.dassonville.api.dto.QuestionInsertDTO;
+import com.dassonville.api.constant.AppConstants;
+import com.dassonville.api.constant.FieldConstraint;
+import com.dassonville.api.dto.request.ClassicAnswerUpsertDTO;
 import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.InvalidStateException;
-import com.dassonville.api.repository.DifficultyLevelRepository;
+import com.dassonville.api.repository.GameRuleRepository;
 import com.dassonville.api.validation.annotation.ValidMinAnswersPerQuestion;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 
+
+@Slf4j
 @Component
 @RequiredArgsConstructor
-public class ValidMinAnswersPerQuestionValidator implements ConstraintValidator<ValidMinAnswersPerQuestion, QuestionInsertDTO> {
+public class ValidMinAnswersPerQuestionValidator implements ConstraintValidator<ValidMinAnswersPerQuestion, List<ClassicAnswerUpsertDTO>> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ValidMinAnswersPerQuestionValidator.class);
-
-    private final DifficultyLevelRepository difficultyLevelRepository;
+    private final GameRuleRepository gameRuleRepository;
 
     @Override
-    public boolean isValid(QuestionInsertDTO dto, ConstraintValidatorContext context) {
-        byte answerOptionsCount = difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel()
+    public boolean isValid(List<ClassicAnswerUpsertDTO> answers, ConstraintValidatorContext context) {
+        byte answerOptionsCount = gameRuleRepository.findMaxAnswerOptionsCountByQuestionTypeCode(AppConstants.CLASSIC_QUESTION_TYPE)
                 .orElseThrow(() -> {
-                    logger.error("Le niveau de difficulté de référence n'a pas été trouvé !");
+                    log.error("Aucune règle de jeu trouvée pour le type de question {} !", AppConstants.CLASSIC_QUESTION_TYPE);
                     return new InvalidStateException(ErrorCode.INTERNAL_ERROR);
                 });
 
-        if (dto.answers() == null || dto.answers().isEmpty()) {
+        if (answers == null || answers.isEmpty()) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("Veuillez fournir au moins " + answerOptionsCount + " réponses.")
-                    .addPropertyNode("answers")
                     .addConstraintViolation();
             return false;
         }
 
-        if (dto.answers().size() < answerOptionsCount) {
+        if (answers.size() < answerOptionsCount) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("Veuillez fournir au moins " + answerOptionsCount + " réponses.")
-                    .addPropertyNode("answers")
                     .addConstraintViolation();
             return false;
         }
 
-        boolean hasCorrectAnswer = dto.answers().stream().anyMatch(AnswerUpsertDTO::isCorrect);
+        boolean hasCorrectAnswer = answers.stream().anyMatch(ClassicAnswerUpsertDTO::isCorrect);
         if (!hasCorrectAnswer) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Au moins une réponse correcte est requise.")
-                    .addPropertyNode("answers")
+            context.buildConstraintViolationWithTemplate(FieldConstraint.Question.AT_LEAST_ONE_CORRECT_ANSWER_REQUIRED)
                     .addConstraintViolation();
             return false;
         }
 
-        long distinctCount = dto.answers().stream()
-                .map(AnswerUpsertDTO::text)
+        long distinctCount = answers.stream()
+                .map(ClassicAnswerUpsertDTO::text)
                 .filter(text -> text != null && !text.trim().isEmpty())
                 .map(text -> text.trim().toLowerCase())
                 .distinct()
                 .count();
 
-        long validCount = dto.answers().stream()
-                .map(AnswerUpsertDTO::text)
+        long validCount = answers.stream()
+                .map(ClassicAnswerUpsertDTO::text)
                 .filter(text -> text != null && !text.trim().isEmpty())
                 .count();
 
         if (distinctCount != validCount) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Chaque réponse doit avoir un texte unique.")
-                    .addPropertyNode("answers")
+            context.buildConstraintViolationWithTemplate(FieldConstraint.Question.ONLY_UNIQUE_ANSWERS_ALLOWED)
                     .addConstraintViolation();
             return false;
         }
 
         return true;
     }
-
 }

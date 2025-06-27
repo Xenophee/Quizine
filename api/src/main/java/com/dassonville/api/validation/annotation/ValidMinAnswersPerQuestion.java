@@ -6,9 +6,12 @@ import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.PARAMETER;
+
 
 @Documented
-@Target({ElementType.TYPE})
+@Target({FIELD, PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = ValidMinAnswersPerQuestionValidator.class)
 public @interface ValidMinAnswersPerQuestion {

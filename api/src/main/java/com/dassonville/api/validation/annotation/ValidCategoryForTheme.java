@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 
 
 @Documented
-@Target({ElementType.TYPE})
+@Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = ValidCategoryForThemeValidator.class)
 public @interface ValidCategoryForTheme {
