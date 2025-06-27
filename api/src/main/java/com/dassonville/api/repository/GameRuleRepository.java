@@ -17,11 +17,11 @@ public interface GameRuleRepository extends JpaRepository<GameRule, Long> {
     /**
      * Selon l'identifiant du type de question, retourne le nombre maximal d'options de réponse pour ce type de question en interrogeant les règles disponibles.
      *
-     * @param questionTypeId L'identifiant du type de question.
+     * @param questionTypeCode L'identifiant du type de question.
      * @return un {@code Optional} contenant le nombre maximal d'options de réponse pour le type de question spécifié.
      */
-    @Query("SELECT MAX(answerOptionsCount) FROM GameRule WHERE questionType.code = :questionTypeId")
-    Optional<Byte> findMaxAnswerOptionsCountByQuestionTypeId(String questionTypeId);
+    @Query("SELECT MAX(answerOptionsCount) FROM GameRule WHERE questionType.code = :questionTypeCode")
+    Optional<Byte> findMaxAnswerOptionsCountByQuestionTypeCode(String questionTypeCode);
 
 
     /**
@@ -38,7 +38,7 @@ public interface GameRuleRepository extends JpaRepository<GameRule, Long> {
      *     <li>Les règles associées à un niveau de difficulté marqué "SPÉCIAL" peuvent être incluses ou exclues selon la valeur du paramètre {@code includeSpecial}.</li>
      * </ul>
      *
-     * @param questionTypeIds liste des identifiants de types de question pour lesquels récupérer les règles.
+     * @param questionTypeCodes liste des identifiants de types de question pour lesquels récupérer les règles.
      * @param difficultyId identifiant du niveau de difficulté sélectionné.
      * @param includeSpecial si {@code true}, les règles associées à un niveau de difficulté "SPÉCIAL" sont incluses ;
      *                       sinon, elles sont exclues.
@@ -52,7 +52,7 @@ public interface GameRuleRepository extends JpaRepository<GameRule, Long> {
                 FROM game_rules rule
                 JOIN difficulty_levels difficulty ON rule.difficulty_level_id = difficulty.id
                 JOIN difficulty_levels selected_difficulty ON selected_difficulty.id = :difficultyId
-                WHERE rule.question_type_code IN (:questionTypeIds)
+                WHERE rule.question_type_code IN (:questionTypeCodes)
                       AND rule.disabled_at IS NULL
                       AND difficulty.disabled_at IS NULL
                       AND selected_difficulty.disabled_at IS NULL
@@ -65,7 +65,7 @@ public interface GameRuleRepository extends JpaRepository<GameRule, Long> {
                       ABS(COALESCE(difficulty.rank, 0) - COALESCE(selected_difficulty.rank, 0)),
                       rule.priority DESC
             """, nativeQuery = true)
-    List<AnswerOptionsRuleProjection> findAnswerOptionsBestMatchingRulesByQuestionTypeIds(List<String> questionTypeIds, long difficultyId, boolean includeSpecial);
+    List<AnswerOptionsRuleProjection> findAnswerOptionsBestMatchingRulesByQuestionTypeCodes(List<String> questionTypeCodes, long difficultyId, boolean includeSpecial);
 
 
     /**
@@ -81,7 +81,7 @@ public interface GameRuleRepository extends JpaRepository<GameRule, Long> {
      *     <li>En cas d’égalité, la priorité définie dans la règle est utilisée pour départager les résultats.</li>
      * </ul>
      *
-     * @param questionTypeId l’identifiant du type de question concerné.
+     * @param questionTypeCode l’identifiant du type de question concerné.
      * @param difficultyId l’identifiant du niveau de difficulté sélectionné.
      * @param includeSpecial si {@code true}, les règles liées à un niveau "SPÉCIAL" sont incluses ; sinon, elles sont exclues.
      * @return un {@link Optional} contenant la règle de jeu la plus appropriée si elle existe ; sinon, un {@link Optional} vide.
@@ -91,7 +91,7 @@ public interface GameRuleRepository extends JpaRepository<GameRule, Long> {
                 FROM game_rules rule
                     JOIN difficulty_levels difficulty ON rule.difficulty_level_id = difficulty.id
                     JOIN difficulty_levels selected_difficulty ON selected_difficulty.id = :difficultyId
-                WHERE rule.question_type_code = :questionTypeId
+                WHERE rule.question_type_code = :questionTypeCode
                     AND rule.disabled_at IS NULL
                     AND difficulty.disabled_at IS NULL
                     AND selected_difficulty.disabled_at IS NULL
@@ -104,5 +104,5 @@ public interface GameRuleRepository extends JpaRepository<GameRule, Long> {
                     rule.priority DESC
                 LIMIT 1
             """, nativeQuery = true)
-    Optional<GameRule> findBestMatchingRule(String questionTypeId, long difficultyId, boolean includeSpecial);
+    Optional<GameRule> findBestMatchingRule(String questionTypeCode, long difficultyId, boolean includeSpecial);
 }
