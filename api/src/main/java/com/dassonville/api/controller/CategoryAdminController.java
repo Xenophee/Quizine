@@ -2,9 +2,9 @@ package com.dassonville.api.controller;
 
 
 import com.dassonville.api.constant.ApiRoutes;
-import com.dassonville.api.dto.BooleanRequestDTO;
-import com.dassonville.api.dto.CategoryAdminDTO;
-import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.request.BooleanRequestDTO;
+import com.dassonville.api.dto.request.CategoryUpsertDTO;
+import com.dassonville.api.dto.response.CategoryAdminDTO;
 import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,8 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -24,12 +23,10 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-
+@Slf4j
 @Tag(name = "ADMIN - Thème : Catégories", description = "Gestion des catégories pour les administrateurs")
 @RestController
 public class CategoryAdminController {
-
-    private static final Logger logger = LoggerFactory.getLogger(CategoryAdminController.class);
 
     private final CategoryService categoryService;
 
@@ -46,10 +43,10 @@ public class CategoryAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @GetMapping(ApiRoutes.Themes.ADMIN_BY_ID + ApiRoutes.Categories.STRING)
-    public ResponseEntity<List<IdAndNameProjection>> getCategoriesByTheme(@PathVariable Long id) {
-        logger.info("Requête pour obtenir la liste des catégories pour le thème avec l'ID: {}", id);
+    public ResponseEntity<List<IdAndNameProjection>> getAllByTheme(@PathVariable Long id) {
+        log.info("Requête pour obtenir la liste des catégories pour le thème avec l'ID: {}", id);
         List<IdAndNameProjection> categories = categoryService.findAllByTheme(id);
-        logger.info("Liste des catégories récupérée.");
+        log.info("Liste des catégories récupérée.");
         return ResponseEntity.ok(categories);
     }
 
@@ -61,10 +58,10 @@ public class CategoryAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @GetMapping(ApiRoutes.Categories.ADMIN_BY_ID)
-    public ResponseEntity<CategoryAdminDTO> getCategoryById(@PathVariable Long id) {
-        logger.info("Requête pour obtenir la catégorie avec l'ID: {}", id);
+    public ResponseEntity<CategoryAdminDTO> getById(@PathVariable Long id) {
+        log.info("Requête pour obtenir la catégorie avec l'ID: {}", id);
         CategoryAdminDTO category = categoryService.findById(id);
-        logger.info("Catégorie récupérée avec l'ID: {}", id);
+        log.info("Catégorie récupérée avec l'ID: {}", id);
         return ResponseEntity.ok(category);
     }
 
@@ -74,14 +71,16 @@ public class CategoryAdminController {
             @ApiResponse(responseCode = "201", description = "La catégorie a été créée."),
             @ApiResponse(responseCode = "400", description = "La catégorie avec les données spécifiées n'est pas valide.",
                     content = {@Content(schema = @Schema(implementation = Map.class))}),
+            @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
+                    content = {@Content(schema = @Schema(implementation = Error.class))}),
             @ApiResponse(responseCode = "409", description = "La catégorie avec le nom spécifié existe déjà.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PostMapping(ApiRoutes.Categories.ADMIN_QUESTIONS_POST)
-    public ResponseEntity<CategoryAdminDTO> createCategory(@PathVariable Long id, @RequestBody @Valid CategoryUpsertDTO category) {
-        logger.info("Requête pour créer une catégorie.");
+    public ResponseEntity<CategoryAdminDTO> create(@PathVariable Long id, @RequestBody @Valid CategoryUpsertDTO category) {
+        log.info("Requête pour créer une catégorie.");
         CategoryAdminDTO createdCategory = categoryService.create(id, category);
-        logger.info("Catégorie créée avec l'ID: {}", createdCategory.id());
+        log.info("Catégorie créée avec l'ID: {}", createdCategory.id());
 
         URI location = ServletUriComponentsBuilder.fromPath(ApiRoutes.Categories.ADMIN_BY_ID)
                 .buildAndExpand(createdCategory.id())
@@ -102,10 +101,10 @@ public class CategoryAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PutMapping(ApiRoutes.Categories.ADMIN_BY_ID)
-    public ResponseEntity<CategoryAdminDTO> updateCategory(@PathVariable Long id, @RequestBody @Valid CategoryUpsertDTO category) {
-        logger.info("Requête pour mettre à jour une catégorie.");
+    public ResponseEntity<CategoryAdminDTO> update(@PathVariable Long id, @RequestBody @Valid CategoryUpsertDTO category) {
+        log.info("Requête pour mettre à jour une catégorie.");
         CategoryAdminDTO categoryUpdated = categoryService.update(id, category);
-        logger.info("Catégorie mise à jour avec l'ID: {}", id);
+        log.info("Catégorie mise à jour avec l'ID: {}", id);
         return ResponseEntity.ok(categoryUpdated);
     }
 
@@ -117,10 +116,10 @@ public class CategoryAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @DeleteMapping(ApiRoutes.Categories.ADMIN_BY_ID)
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        logger.info("Requête pour supprimer une catégorie.");
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        log.info("Requête pour supprimer une catégorie.");
         categoryService.delete(id);
-        logger.info("Catégorie supprimée avec l'ID: {}", id);
+        log.info("Catégorie supprimée avec l'ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 
@@ -134,10 +133,10 @@ public class CategoryAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PatchMapping(ApiRoutes.Categories.ADMIN_VISIBILITY_PATCH)
-    public ResponseEntity<Void> updateCategoryVisibility(@PathVariable Long id, @RequestBody @Valid BooleanRequestDTO booleanRequestDTO) {
-        logger.info("Requête pour activer / désactiver la catégorie avec l'ID: {}", id);
+    public ResponseEntity<Void> updateVisibility(@PathVariable Long id, @RequestBody @Valid BooleanRequestDTO booleanRequestDTO) {
+        log.info("Requête pour activer / désactiver la catégorie avec l'ID: {}", id);
         categoryService.updateVisibility(id, booleanRequestDTO.value());
-        logger.info("Catégorie activée / désactivée avec l'ID: {}", id);
+        log.info("Catégorie activée / désactivée avec l'ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,9 +1,9 @@
 package com.dassonville.api.controller;
 
 import com.dassonville.api.constant.ApiRoutes;
-import com.dassonville.api.dto.BooleanRequestDTO;
-import com.dassonville.api.dto.ThemeAdminDTO;
-import com.dassonville.api.dto.ThemeUpsertDTO;
+import com.dassonville.api.dto.request.BooleanRequestDTO;
+import com.dassonville.api.dto.request.ThemeUpsertDTO;
+import com.dassonville.api.dto.response.ThemeAdminDTO;
 import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.service.ThemeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,8 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -24,12 +23,11 @@ import java.util.List;
 import java.util.Map;
 
 
+@Slf4j
 @Tag(name = "ADMIN - Thème", description = "Gestion des thèmes pour les administrateurs")
 @RestController
 @RequestMapping(ApiRoutes.Themes.ADMIN_THEMES)
 public class ThemeAdminController {
-
-    private static final Logger logger = LoggerFactory.getLogger(ThemeAdminController.class);
 
     private final ThemeService themeService;
 
@@ -44,10 +42,10 @@ public class ThemeAdminController {
             @ApiResponse(responseCode = "200", description = "La liste des thèmes a été trouvée.")
     })
     @GetMapping(ApiRoutes.DETAILS)
-    public ResponseEntity<List<ThemeAdminDTO>> getAllThemesDetails() {
-        logger.info("Requête pour obtenir la liste des thèmes.");
-        List<ThemeAdminDTO> themes = themeService.getAllThemesDetails();
-        logger.info("Liste des thèmes récupérée.");
+    public ResponseEntity<List<ThemeAdminDTO>> getAllDetails() {
+        log.info("Requête pour obtenir la liste des thèmes.");
+        List<ThemeAdminDTO> themes = themeService.getAllDetails();
+        log.info("Liste des thèmes récupérée.");
         return ResponseEntity.ok(themes);
     }
 
@@ -56,10 +54,10 @@ public class ThemeAdminController {
             @ApiResponse(responseCode = "200", description = "La liste des thèmes a été trouvée.")
     })
     @GetMapping
-    public ResponseEntity<List<IdAndNameProjection>> getAllThemes() {
-        logger.info("Requête pour obtenir la liste des thèmes.");
-        List<IdAndNameProjection> themes = themeService.getAllThemes();
-        logger.info("Liste des thèmes récupérée.");
+    public ResponseEntity<List<IdAndNameProjection>> getAll() {
+        log.info("Requête pour obtenir la liste des thèmes.");
+        List<IdAndNameProjection> themes = themeService.getAll();
+        log.info("Liste des thèmes récupérée.");
         return ResponseEntity.ok(themes);
     }
 
@@ -71,10 +69,10 @@ public class ThemeAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @GetMapping(ApiRoutes.ID)
-    public ResponseEntity<ThemeAdminDTO> getThemeById(@PathVariable Long id) {
-        logger.info("Requête pour obtenir le thème avec l'ID: {}", id);
+    public ResponseEntity<ThemeAdminDTO> getById(@PathVariable Long id) {
+        log.info("Requête pour obtenir le thème avec l'ID: {}", id);
         ThemeAdminDTO theme = themeService.findByIdForAdmin(id);
-        logger.info("Thème trouvé avec l'ID: {}", id);
+        log.info("Thème trouvé avec l'ID: {}", id);
         return ResponseEntity.ok(theme);
     }
 
@@ -87,10 +85,10 @@ public class ThemeAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PostMapping
-    public ResponseEntity<ThemeAdminDTO> createTheme(@RequestBody @Valid ThemeUpsertDTO theme) {
-        logger.info("Requête pour créer un nouveau thème.");
+    public ResponseEntity<ThemeAdminDTO> create(@RequestBody @Valid ThemeUpsertDTO theme) {
+        log.info("Requête pour créer un nouveau thème.");
         ThemeAdminDTO createdTheme = themeService.create(theme);
-        logger.info("Nouveau thème créé avec l'ID: {}", createdTheme.id());
+        log.info("Nouveau thème créé avec l'ID: {}", createdTheme.id());
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path(ApiRoutes.ID)
@@ -112,10 +110,10 @@ public class ThemeAdminController {
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PutMapping(ApiRoutes.ID)
-    public ResponseEntity<ThemeAdminDTO> updateTheme(@PathVariable Long id, @RequestBody @Valid ThemeUpsertDTO theme) {
-        logger.info("Requête pour mettre à jour le thème avec l'ID: {}", id);
+    public ResponseEntity<ThemeAdminDTO> update(@PathVariable Long id, @RequestBody @Valid ThemeUpsertDTO theme) {
+        log.info("Requête pour mettre à jour le thème avec l'ID: {}", id);
         ThemeAdminDTO updatedTheme = themeService.update(id, theme);
-        logger.info("Thème mis à jour avec l'ID: {}", id);
+        log.info("Thème mis à jour avec l'ID: {}", id);
         return ResponseEntity.ok(updatedTheme);
     }
 
@@ -124,13 +122,15 @@ public class ThemeAdminController {
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Le thème a été supprimé."),
             @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
+                    content = {@Content(schema = @Schema(implementation = Error.class))}),
+            @ApiResponse(responseCode = "422", description = "Le thème ne peut pas être supprimé, car il comporte encore des quiz.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @DeleteMapping(ApiRoutes.ID)
-    public ResponseEntity<Void> deleteTheme(@PathVariable Long id) {
-        logger.info("Requête pour supprimer le thème avec l'ID: {}", id);
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        log.info("Requête pour supprimer le thème avec l'ID: {}", id);
         themeService.delete(id);
-        logger.info("Thème supprimé avec l'ID: {}", id);
+        log.info("Thème supprimé avec l'ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 
@@ -141,13 +141,15 @@ public class ThemeAdminController {
             @ApiResponse(responseCode = "400", description = "Les données fournies pour activer / désactiver le thème sont invalides.",
                     content = {@Content(schema = @Schema(implementation = Map.class))}),
             @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
+                    content = {@Content(schema = @Schema(implementation = Error.class))}),
+            @ApiResponse(responseCode = "422", description = "Le thème ne peut pas être activé / désactivé, car il comporte encore des quiz.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @PatchMapping(ApiRoutes.VISIBILITY)
-    public ResponseEntity<Void> updateThemeVisibility(@PathVariable Long id, @RequestBody @Valid BooleanRequestDTO booleanRequestDTO) {
-        logger.info("Requête pour activer / désactiver le thème avec l'ID: {}", id);
+    public ResponseEntity<Void> updateVisibility(@PathVariable Long id, @RequestBody @Valid BooleanRequestDTO booleanRequestDTO) {
+        log.info("Requête pour activer / désactiver le thème avec l'ID: {}", id);
         themeService.updateVisibility(id, booleanRequestDTO.value());
-        logger.info("Thème activé / désactivé avec l'ID: {}", id);
+        log.info("Thème activé / désactivé avec l'ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 
