@@ -1,7 +1,7 @@
 package com.dassonville.api.service;
 
-import com.dassonville.api.dto.CategoryAdminDTO;
-import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.request.CategoryUpsertDTO;
+import com.dassonville.api.dto.response.CategoryAdminDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
@@ -11,18 +11,17 @@ import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.repository.CategoryRepository;
 import com.dassonville.api.repository.ThemeRepository;
 import com.dassonville.api.util.TextUtils;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
-
-    private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
 
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
@@ -43,13 +42,12 @@ public class CategoryService {
     public List<IdAndNameProjection> findAllByTheme(long themeId) {
 
         if (!themeRepository.existsById(themeId)) {
-            logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", themeId);
-            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND, themeId);
+            log.warn("Le thème avec l'ID {}, n'a pas été trouvé.", themeId);
+            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND);
         }
 
         return categoryRepository.findAllByThemeIdOrderByName(themeId);
     }
-
 
     /**
      * Récupère les détails d'une catégorie par son identifiant.
@@ -84,16 +82,16 @@ public class CategoryService {
     public CategoryAdminDTO create(long themeId, CategoryUpsertDTO dto) {
 
         if (!themeRepository.existsById(themeId)) {
-            logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", themeId);
-            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND, themeId);
+            log.warn("Le thème avec l'ID {}, n'a pas été trouvé.", themeId);
+            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND);
         }
 
         String normalizedNewText = TextUtils.normalizeText(dto.name());
-        logger.debug("Nom normalisé : {}, depuis {}", normalizedNewText, dto.name());
+        log.debug("Nom normalisé : {}, depuis {}", normalizedNewText, dto.name());
 
         if (categoryRepository.existsByNameIgnoreCase(normalizedNewText)) {
-            logger.warn("Une catégorie existe déjà avec le même nom : {}", normalizedNewText);
-            throw new AlreadyExistException(ErrorCode.CATEGORY_ALREADY_EXISTS, normalizedNewText);
+            log.warn("Une catégorie existe déjà avec le même nom : {}", normalizedNewText);
+            throw new AlreadyExistException(ErrorCode.CATEGORY_ALREADY_EXISTS);
         }
 
         Category categoryToCreate = categoryMapper.toModel(dto, themeId);
@@ -117,23 +115,22 @@ public class CategoryService {
      * @throws NotFoundException     si la catégorie avec l'ID spécifié n'existe pas
      * @throws AlreadyExistException si une autre catégorie avec le même nom existe déjà
      */
+    @Transactional
     public CategoryAdminDTO update(long id, CategoryUpsertDTO dto) {
 
-        Category categoryToUpdate = findCategoryById(id);
+        Category category = findCategoryById(id);
 
         String normalizedNewText = TextUtils.normalizeText(dto.name());
-        logger.debug("Nom normalisé : {}, depuis {}", normalizedNewText, dto.name());
+        log.debug("Nom normalisé : {}, depuis {}", normalizedNewText, dto.name());
 
         if (categoryRepository.existsByNameIgnoreCaseAndIdNot(normalizedNewText, id)) {
-            logger.warn("Une catégorie existe déjà avec le même nom : {}", normalizedNewText);
-            throw new AlreadyExistException(ErrorCode.CATEGORY_ALREADY_EXISTS, normalizedNewText);
+            log.warn("Une catégorie existe déjà avec le même nom : {}", normalizedNewText);
+            throw new AlreadyExistException(ErrorCode.CATEGORY_ALREADY_EXISTS);
         }
 
-        categoryMapper.updateModelFromDTO(dto, categoryToUpdate);
+        categoryMapper.updateModelFromDTO(dto, category);
 
-        Category categoryUpdated = categoryRepository.save(categoryToUpdate);
-
-        return categoryMapper.toAdminDTO(categoryUpdated);
+        return categoryMapper.toAdminDTO(category);
     }
 
 
@@ -148,8 +145,8 @@ public class CategoryService {
     public void delete(long id) {
 
         if (!categoryRepository.existsById(id)) {
-            logger.warn("La catégorie à supprimer avec l'ID {}, n'a pas été trouvée.", id);
-            throw new NotFoundException(ErrorCode.CATEGORY_NOT_FOUND, id);
+            log.warn("La catégorie à supprimer avec l'ID {}, n'a pas été trouvée.", id);
+            throw new NotFoundException(ErrorCode.CATEGORY_NOT_FOUND);
         }
 
         categoryRepository.deleteById(id);
@@ -166,6 +163,7 @@ public class CategoryService {
      * @param visible l'état de visibilité souhaité ({@code true} pour activer, {@code false} pour désactiver)
      * @throws NotFoundException si la catégorie avec l'ID spécifié n'existe pas
      */
+    @Transactional
     public void updateVisibility(long id, boolean visible) {
 
         Category category = findCategoryById(id);
@@ -173,8 +171,6 @@ public class CategoryService {
         if (category.isVisible() == visible) return;
 
         category.setVisible(visible);
-
-        categoryRepository.save(category);
     }
 
 
@@ -191,8 +187,8 @@ public class CategoryService {
     private Category findCategoryById(long id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> {
-                    logger.warn("La catégorie avec l'ID {}, n'a pas été trouvée.", id);
-                    return new NotFoundException(ErrorCode.CATEGORY_NOT_FOUND, id);
+                    log.warn("La catégorie avec l'ID {}, n'a pas été trouvée.", id);
+                    return new NotFoundException(ErrorCode.CATEGORY_NOT_FOUND);
                 });
     }
 }

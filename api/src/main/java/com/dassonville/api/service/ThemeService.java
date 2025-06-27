@@ -1,9 +1,9 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.ThemeAdminDTO;
-import com.dassonville.api.dto.ThemePublicDTO;
-import com.dassonville.api.dto.ThemeUpsertDTO;
+import com.dassonville.api.dto.request.ThemeUpsertDTO;
+import com.dassonville.api.dto.response.ThemeAdminDTO;
+import com.dassonville.api.dto.response.ThemePublicDTO;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.ErrorCode;
@@ -16,18 +16,16 @@ import com.dassonville.api.repository.ThemeRepository;
 import com.dassonville.api.util.TextUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ThemeService {
-
-    private static final Logger logger = LoggerFactory.getLogger(ThemeService.class);
 
     private final ThemeRepository themeRepository;
     private final ThemeMapper themeMapper;
@@ -42,8 +40,8 @@ public class ThemeService {
      *
      * @return une liste de {@link ThemePublicDTO} contenant les thèmes actifs
      */
-    public List<ThemePublicDTO> getAllActiveThemes() {
-        List<PublicThemeProjection> themes = themeRepository.findByDisabledAtIsNullOrderByName();
+    public List<ThemePublicDTO> getAllActive() {
+        List<PublicThemeProjection> themes = themeRepository.findByDisabledAtIsNullOrderByNameWithDefaultLast();
         return themeMapper.toPublicDTOList(themes);
     }
 
@@ -56,7 +54,7 @@ public class ThemeService {
      *
      * @return une liste de {@link ThemeAdminDTO} contenant les détails des thèmes
      */
-    public List<ThemeAdminDTO> getAllThemesDetails() {
+    public List<ThemeAdminDTO> getAllDetails() {
         List<Theme> themes = themeRepository.findAllByOrderByNameAndCategoryName();
         return themeMapper.toAdminDTOList(themes);
     }
@@ -70,7 +68,7 @@ public class ThemeService {
      *
      * @return une liste de {@link IdAndNameProjection} contenant les IDs et noms des thèmes
      */
-    public List<IdAndNameProjection> getAllThemes() {
+    public List<IdAndNameProjection> getAll() {
         return themeRepository.findAllByOrderByName();
     }
 
@@ -107,11 +105,11 @@ public class ThemeService {
     public ThemeAdminDTO create(ThemeUpsertDTO dto) {
 
         String normalizedNewText = TextUtils.normalizeText(dto.name());
-        logger.debug("Nom normalisé : {}, depuis {}", normalizedNewText, dto.name());
+        log.debug("Nom normalisé : {}, depuis {}", normalizedNewText, dto.name());
 
         if (themeRepository.existsByNameIgnoreCase(normalizedNewText)) {
-            logger.warn("Un thème existe déjà avec le même nom : {}", normalizedNewText);
-            throw new AlreadyExistException(ErrorCode.THEME_ALREADY_EXISTS, normalizedNewText);
+            log.warn("Un thème existe déjà avec le même nom : {}", normalizedNewText);
+            throw new AlreadyExistException(ErrorCode.THEME_ALREADY_EXISTS);
         }
 
         Theme themeToCreate = themeMapper.toModel(dto);
@@ -138,21 +136,19 @@ public class ThemeService {
     @Transactional
     public ThemeAdminDTO update(long id, ThemeUpsertDTO dto) {
 
-        Theme themeToUpdate = findThemeById(id);
+        Theme theme = findThemeById(id);
 
         String normalizedNewText = TextUtils.normalizeText(dto.name());
-        logger.debug("Nom normalisé : {}, depuis {}", normalizedNewText, dto.name());
+        log.debug("Nom normalisé : {}, depuis {}", normalizedNewText, dto.name());
 
         if (themeRepository.existsByNameIgnoreCaseAndIdNot(normalizedNewText, id)) {
-            logger.warn("Un thème existe déjà avec le même nom : {}", normalizedNewText);
-            throw new AlreadyExistException(ErrorCode.THEME_ALREADY_EXISTS, normalizedNewText);
+            log.warn("Un thème existe déjà avec le même nom : {}", normalizedNewText);
+            throw new AlreadyExistException(ErrorCode.THEME_ALREADY_EXISTS);
         }
 
-        themeMapper.updateModelFromDTO(dto, themeToUpdate);
+        themeMapper.updateModelFromDTO(dto, theme);
 
-        Theme themeUpdated = themeRepository.save(themeToUpdate);
-
-        return themeMapper.toAdminDTO(themeUpdated);
+        return themeMapper.toAdminDTO(theme);
     }
 
 
@@ -169,13 +165,13 @@ public class ThemeService {
     public void delete(long id) {
 
         if (!themeRepository.existsById(id)) {
-            logger.warn("Le thème à supprimer avec l'ID {}, n'a pas été trouvé.", id);
-            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND, id);
+            log.warn("Le thème à supprimer avec l'ID {}, n'a pas été trouvé.", id);
+            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND);
         }
 
         if (themeRepository.existsByIdAndQuizzesIsNotEmpty(id)) {
-            logger.warn("Le thème à supprimer avec l'ID {}, contient des quiz.", id);
-            throw new ActionNotAllowedException(ErrorCode.THEME_CONTAINS_QUIZZES, id);
+            log.warn("Le thème à supprimer avec l'ID {}, contient des quiz.", id);
+            throw new ActionNotAllowedException(ErrorCode.THEME_CONTAINS_QUIZZES);
         }
 
         themeRepository.deleteById(id);
@@ -193,6 +189,7 @@ public class ThemeService {
      * @throws NotFoundException si le thème avec l'ID spécifié n'existe pas
      * @throws ActionNotAllowedException si le thème ne contient pas de quiz actif
      */
+    @Transactional
     public void updateVisibility(long id, boolean visible) {
 
         Theme theme = findThemeById(id);
@@ -200,13 +197,11 @@ public class ThemeService {
         if (theme.isVisible() == visible) return;
 
         if (visible) {
-            logger.debug("Demande d'activation du thème avec l'ID {}, vérification du nombre de quiz actifs", id);
-            hasMinimumQuizzes(id);
+            log.debug("Demande d'activation du thème avec l'ID {}, vérification du nombre de quiz actifs", id);
+            assertMinimumActiveQuizzes(id);
         }
 
         theme.setVisible(visible);
-
-        themeRepository.save(theme);
     }
 
 
@@ -224,8 +219,8 @@ public class ThemeService {
     private Theme findThemeById(long id) {
         return themeRepository.findById(id)
                 .orElseThrow(() -> {
-                    logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", id);
-                    return new NotFoundException(ErrorCode.THEME_NOT_FOUND, id);
+                    log.warn("Le thème avec l'ID {}, n'a pas été trouvé.", id);
+                    return new NotFoundException(ErrorCode.THEME_NOT_FOUND);
                 });
     }
 
@@ -238,15 +233,15 @@ public class ThemeService {
      * @param id l'identifiant du thème à vérifier
      * @throws ActionNotAllowedException si le thème ne contient pas de quiz actif
      */
-    private void hasMinimumQuizzes(long id) {
+    private void assertMinimumActiveQuizzes(long id) {
 
         int numberOfActiveQuizzes = themeRepository.countByIdAndQuizzesDisabledAtIsNull(id);
 
         if (numberOfActiveQuizzes == 0) {
-            logger.warn("Le thème avec l'ID {}, n'a pas de quiz actif.", id);
-            throw new ActionNotAllowedException(ErrorCode.THEME_CONTAINS_NO_QUIZZES, id);
+            log.warn("Le thème avec l'ID {}, n'a pas de quiz actif.", id);
+            throw new ActionNotAllowedException(ErrorCode.THEME_CONTAINS_NO_QUIZZES);
         } else {
-            logger.debug("Le thème avec l'ID {}, a {} quiz actifs.", id, numberOfActiveQuizzes);
+            log.debug("Le thème avec l'ID {}, a {} quiz actifs.", id, numberOfActiveQuizzes);
         }
     }
 }

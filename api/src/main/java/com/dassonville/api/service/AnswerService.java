@@ -1,34 +1,32 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.AnswerAdminDTO;
-import com.dassonville.api.dto.AnswerUpsertDTO;
-import com.dassonville.api.exception.ActionNotAllowedException;
-import com.dassonville.api.exception.AlreadyExistException;
-import com.dassonville.api.exception.ErrorCode;
-import com.dassonville.api.exception.NotFoundException;
+import com.dassonville.api.constant.AppConstants;
+import com.dassonville.api.dto.request.ClassicAnswerUpsertDTO;
+import com.dassonville.api.dto.response.AnswerAdminDTO;
+import com.dassonville.api.exception.*;
 import com.dassonville.api.mapper.AnswerMapper;
-import com.dassonville.api.model.Answer;
-import com.dassonville.api.repository.AnswerRepository;
-import com.dassonville.api.repository.DifficultyLevelRepository;
+import com.dassonville.api.model.ClassicAnswer;
+import com.dassonville.api.model.Question;
+import com.dassonville.api.repository.ClassicAnswerRepository;
+import com.dassonville.api.repository.GameRuleRepository;
 import com.dassonville.api.repository.QuestionRepository;
 import com.dassonville.api.util.TextUtils;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AnswerService {
 
-    private static final Logger logger = LoggerFactory.getLogger(AnswerService.class);
-
-    private final AnswerRepository answerRepository;
+    private final ClassicAnswerRepository classicAnswerRepository;
     private final AnswerMapper answerMapper;
 
     private final QuestionRepository questionRepository;
-    private final DifficultyLevelRepository difficultyLevelRepository;
+    private final GameRuleRepository gameRuleRepository;
 
 
     /**
@@ -39,31 +37,37 @@ public class AnswerService {
      * crée et sauvegarde la nouvelle réponse dans la base de données.</p>
      *
      * @param questionId l'identifiant de la question à laquelle la réponse sera associée
-     * @param dto        les informations de la réponse à créer contenues dans un {@link AnswerUpsertDTO}
+     * @param dto        les informations de la réponse à créer contenues dans un {@link ClassicAnswerUpsertDTO}
      * @return un {@link AnswerAdminDTO} contenant les détails de la réponse créée
      * @throws NotFoundException     si la question avec l'ID spécifié n'existe pas
+     * @throws ActionNotAllowedException si la question n'autorise pas le type de réponse envoyé
      * @throws AlreadyExistException si une réponse avec le même texte existe déjà pour la question
      */
-    public AnswerAdminDTO create(long questionId, AnswerUpsertDTO dto) {
+    public AnswerAdminDTO create(long questionId, ClassicAnswerUpsertDTO dto) {
 
         if (!questionRepository.existsById(questionId)) {
-            logger.warn("La question avec l'ID {}, n'a pas été trouvée.", questionId);
-            throw new NotFoundException(ErrorCode.QUESTION_NOT_FOUND, questionId);
+            log.warn("La question avec l'ID {}, n'a pas été trouvée.", questionId);
+            throw new NotFoundException(ErrorCode.QUESTION_NOT_FOUND);
+        }
+
+        if (!questionRepository.existsByIdAndQuestionTypeCode(questionId, AppConstants.CLASSIC_QUESTION_TYPE)) {
+            log.warn("La question avec l'ID {}, n'autorise pas le type d'enregistrement {}.", questionId, AppConstants.CLASSIC_QUESTION_TYPE);
+            throw new ActionNotAllowedException(ErrorCode.ANSWER_TYPE_NOT_SUPPORTED);
         }
 
         String normalizedNewText = TextUtils.normalizeText(dto.text());
-        logger.debug("Titre normalisé : {}, depuis {}", normalizedNewText, dto.text());
+        log.debug("Titre normalisé : {}, depuis {}", normalizedNewText, dto.text());
 
-        if (answerRepository.existsByTextIgnoreCaseAndQuestionId(normalizedNewText, questionId)) {
-            logger.warn("La réponse {}, existe déjà.", normalizedNewText);
-            throw new AlreadyExistException(ErrorCode.ANSWER_ALREADY_EXISTS, normalizedNewText);
+        if (classicAnswerRepository.existsByTextIgnoreCaseAndQuestionId(normalizedNewText, questionId)) {
+            log.warn("La réponse {}, existe déjà.", normalizedNewText);
+            throw new AlreadyExistException(ErrorCode.ANSWER_ALREADY_EXISTS);
         }
 
-        Answer answerToCreate = answerMapper.toModel(dto, questionId);
+        ClassicAnswer classicAnswerToCreate = answerMapper.toModel(dto, questionId);
 
-        Answer answerCreated = answerRepository.save(answerToCreate);
+        ClassicAnswer classicAnswerCreated = classicAnswerRepository.save(classicAnswerToCreate);
 
-        return answerMapper.toAdminDTO(answerCreated);
+        return answerMapper.toAdminDTO(classicAnswerCreated);
     }
 
 
@@ -79,34 +83,33 @@ public class AnswerService {
      * elle s'assure qu'il existe au moins une autre réponse correcte active pour la question.</p>
      *
      * @param id  l'identifiant de la réponse à mettre à jour
-     * @param dto les nouvelles informations de la réponse contenues dans un {@link AnswerUpsertDTO}
+     * @param dto les nouvelles informations de la réponse contenues dans un {@link ClassicAnswerUpsertDTO}
      * @return un {@link AnswerAdminDTO} contenant les détails de la réponse mise à jour
      * @throws NotFoundException         si la réponse avec l'ID spécifié n'existe pas
      * @throws AlreadyExistException     si une autre réponse avec le même texte existe déjà
      * @throws ActionNotAllowedException si les contraintes sur les réponses correctes ne sont pas respectées
      */
-    public AnswerAdminDTO update(long id, AnswerUpsertDTO dto) {
+    @Transactional
+    public AnswerAdminDTO update(long id, ClassicAnswerUpsertDTO dto) {
 
-        Answer answerToUpdate = findAnswerById(id);
+        ClassicAnswer answer = findAnswerById(id);
 
         String normalizedNewText = TextUtils.normalizeText(dto.text());
-        logger.debug("Titre normalisé : {}, depuis {}", normalizedNewText, dto.text());
+        log.debug("Titre normalisé : {}, depuis {}", normalizedNewText, dto.text());
 
-        if (answerRepository.existsByTextIgnoreCaseAndIdNot(normalizedNewText, id)) {
-            logger.warn("La réponse {}, existe déjà.", normalizedNewText);
-            throw new AlreadyExistException(ErrorCode.ANSWER_ALREADY_EXISTS, normalizedNewText);
+        if (classicAnswerRepository.existsByTextIgnoreCaseAndIdNot(normalizedNewText, id)) {
+            log.warn("La réponse {}, existe déjà.", normalizedNewText);
+            throw new AlreadyExistException(ErrorCode.ANSWER_ALREADY_EXISTS);
         }
 
-        if (answerToUpdate.getIsCorrect() && !dto.isCorrect()) {
-            logger.debug("La réponse concernée est initialement correcte, vérification de l'existence d'une autre réponse correcte active.");
-            validateActiveCorrectAnswerExists(answerToUpdate.getQuestion().getId(), answerToUpdate.getId());
+        if (answer.getIsCorrect() && !dto.isCorrect()) {
+            log.debug("La réponse concernée est initialement correcte, vérification de l'existence d'une autre réponse correcte active.");
+            assertAtLeastOneActiveCorrectAnswerRemains(answer.getQuestion().getId(), answer.getId());
         }
 
-        answerMapper.updateModelFromDTO(dto, answerToUpdate);
+        answerMapper.updateModelFromDTO(dto, answer);
 
-        Answer updatedAnswer = answerRepository.save(answerToUpdate);
-
-        return answerMapper.toAdminDTO(updatedAnswer);
+        return answerMapper.toAdminDTO(answer);
     }
 
 
@@ -122,16 +125,16 @@ public class AnswerService {
      */
     public void delete(long id) {
 
-        Answer answer = findAnswerById(id);
+        ClassicAnswer classicAnswer = findAnswerById(id);
 
-        validateMinimumActiveAnswers(answer.getQuestion().getId());
+        assertMinimumActiveAnswersRemain(classicAnswer.getQuestion());
 
-        if (answer.getIsCorrect()) {
-            logger.debug("La réponse concernée est correcte, vérification de l'existence d'une autre réponse correcte active.");
-            validateActiveCorrectAnswerExists(answer.getQuestion().getId(), answer.getId());
+        if (classicAnswer.getIsCorrect()) {
+            log.debug("La réponse concernée est correcte, vérification de l'existence d'une autre réponse correcte active.");
+            assertAtLeastOneActiveCorrectAnswerRemains(classicAnswer.getQuestion().getId(), classicAnswer.getId());
         }
 
-        answerRepository.deleteById(id);
+        classicAnswerRepository.deleteById(id);
     }
 
 
@@ -148,23 +151,23 @@ public class AnswerService {
      */
     public void updateVisibility(long id, boolean visible) {
 
-        Answer answer = findAnswerById(id);
+        ClassicAnswer classicAnswer = findAnswerById(id);
 
-        if (answer.isVisible() == visible) return;
+        if (classicAnswer.isVisible() == visible) return;
 
         if (!visible) {
-            logger.debug("Désactivation demandée de la réponse avec l'ID {}, vérification du nombre de réponses actives restantes.", id);
-            validateMinimumActiveAnswers(answer.getQuestion().getId());
+            log.debug("Désactivation demandée de la réponse avec l'ID {}, vérification du nombre de réponses actives restantes.", id);
+            assertMinimumActiveAnswersRemain(classicAnswer.getQuestion());
         }
 
-        if (answer.getIsCorrect()) {
-            logger.debug("La réponse concernée est correcte, vérification de l'existence d'une autre réponse correcte active.");
-            validateActiveCorrectAnswerExists(answer.getQuestion().getId(), answer.getId());
+        if (classicAnswer.getIsCorrect()) {
+            log.debug("La réponse concernée est correcte, vérification de l'existence d'une autre réponse correcte active.");
+            assertAtLeastOneActiveCorrectAnswerRemains(classicAnswer.getQuestion().getId(), classicAnswer.getId());
         }
 
-        answer.setVisible(visible);
+        classicAnswer.setVisible(visible);
 
-        answerRepository.save(answer);
+        classicAnswerRepository.save(classicAnswer);
     }
 
 
@@ -176,14 +179,14 @@ public class AnswerService {
      * Si la réponse n'est pas trouvée, elle lève une exception.</p>
      *
      * @param id l'identifiant de la réponse à rechercher
-     * @return la {@link Answer} trouvée
+     * @return la {@link ClassicAnswer} trouvée
      * @throws NotFoundException si aucune réponse ne correspond à l'identifiant fourni
      */
-    private Answer findAnswerById(long id) {
-        return answerRepository.findById(id)
+    private ClassicAnswer findAnswerById(long id) {
+        return classicAnswerRepository.findById(id)
                 .orElseThrow(() -> {
-                    logger.warn("La réponse avec l'ID {}, n'a pas été trouvée.", id);
-                    return new NotFoundException(ErrorCode.ANSWER_NOT_FOUND, id);
+                    log.warn("La réponse avec l'ID {}, n'a pas été trouvée.", id);
+                    return new NotFoundException(ErrorCode.ANSWER_NOT_FOUND);
                 });
     }
 
@@ -198,16 +201,13 @@ public class AnswerService {
      * @param excludedAnswerId l'identifiant de la réponse à exclure de la vérification
      * @throws ActionNotAllowedException si aucune autre réponse correcte active n'est trouvée
      */
-    private void validateActiveCorrectAnswerExists(long questionId, long excludedAnswerId) {
+    private void assertAtLeastOneActiveCorrectAnswerRemains(long questionId, long excludedAnswerId) {
 
-        boolean hasCorrectAnswer = answerRepository.existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(questionId, excludedAnswerId);
+        boolean hasCorrectAnswer = classicAnswerRepository.existsByQuestionIdAndIsCorrectTrueAndIdNotAndDisabledAtIsNull(questionId, excludedAnswerId);
 
         if (!hasCorrectAnswer) {
-            logger.warn("Il doit y avoir au moins une réponse correcte active pour la question avec l'ID {}.", questionId);
-            throw new ActionNotAllowedException(
-                    ErrorCode.ATLEAST_ONE_CORRECT_ACTIVE_ANSWER_IS_MANDATORY,
-                    questionId
-            );
+            log.warn("Il doit y avoir au moins une réponse correcte active pour la question avec l'ID {}.", questionId);
+            throw new ActionNotAllowedException(ErrorCode.AT_LEAST_ONE_CORRECT_ACTIVE_ANSWER_IS_MANDATORY);
         }
     }
 
@@ -217,27 +217,24 @@ public class AnswerService {
      * <p>Cette méthode compte le nombre de réponses actives associées à une question.
      * Si ce nombre est inférieur au minimum requis, elle lève une exception.</p>
      *
-     * @param questionId l'identifiant de la question à vérifier
+     * @param question la question à vérifier
+     * @throws InvalidStateException si les règles de difficulté de référence n'ont pas été trouvées
      * @throws ActionNotAllowedException si le nombre de réponses actives est insuffisant
      */
-    private void validateMinimumActiveAnswers(long questionId) {
+    private void assertMinimumActiveAnswersRemain(Question question) {
 
-        int numberOfActiveAnswers = answerRepository.countByQuestionIdAndDisabledAtIsNull(questionId) - 1;
-        logger.debug("Nombre de réponses actives restantes pour la question {} après l'opération : {}", questionId, numberOfActiveAnswers);
+        int numberOfActiveAnswers = classicAnswerRepository.countByQuestionIdAndDisabledAtIsNull(question.getId()) - 1;
+        log.debug("Nombre de réponses actives restantes pour la question {} après l'opération : {}", question, numberOfActiveAnswers);
 
-        byte minimumNumberOfAnswers = difficultyLevelRepository.findAnswerOptionsCountByReferenceLevel()
+        byte minimumNumberOfAnswers = gameRuleRepository.findMaxAnswerOptionsCountByQuestionTypeCode(question.getQuestionType().getCode())
                 .orElseThrow(() -> {
-                    logger.error("Le niveau de difficulté de référence n'a pas été trouvé.");
-                    return new IllegalStateException("Le niveau de difficulté de référence n'a pas été trouvé.");
+                    log.error("Les règles de difficulté de référence n'ont pas été trouvées pour la question avec l'ID {}.", question);
+                    return new InvalidStateException(ErrorCode.INTERNAL_ERROR);
                 });
 
         if (numberOfActiveAnswers < minimumNumberOfAnswers) {
-            logger.warn("Il doit y avoir au moins {} réponses actives pour cette question.", minimumNumberOfAnswers);
-            throw new ActionNotAllowedException(
-                    ErrorCode.MINIMUM_ACTIVE_ANSWERS_NOT_REACHED,
-                    questionId,
-                    minimumNumberOfAnswers
-            );
+            log.warn("Il doit y avoir au moins {} réponses actives pour cette question.", minimumNumberOfAnswers);
+            throw new ActionNotAllowedException(ErrorCode.MINIMUM_ACTIVE_ANSWERS_NOT_REACHED, minimumNumberOfAnswers);
         }
     }
 

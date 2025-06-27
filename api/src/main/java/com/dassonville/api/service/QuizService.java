@@ -1,51 +1,46 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.*;
+import com.dassonville.api.dto.request.QuizUpsertDTO;
+import com.dassonville.api.dto.response.QuizAdminDTO;
+import com.dassonville.api.dto.response.QuizAdminDetailsDTO;
+import com.dassonville.api.dto.response.QuizPublicDTO;
+import com.dassonville.api.dto.response.QuizPublicDetailsDTO;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.QuizMapper;
 import com.dassonville.api.model.Quiz;
-import com.dassonville.api.projection.QuestionForPlayProjection;
-import com.dassonville.api.repository.DifficultyLevelRepository;
 import com.dassonville.api.repository.QuestionRepository;
 import com.dassonville.api.repository.QuizRepository;
 import com.dassonville.api.repository.ThemeRepository;
 import com.dassonville.api.util.TextUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.dassonville.api.constant.AppConstants.MINIMUM_QUIZ_QUESTIONS;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QuizService {
-
-    private static final Logger logger = LoggerFactory.getLogger(QuizService.class);
 
     private final QuizRepository quizRepository;
     private final QuizMapper quizMapper;
 
     private final ThemeService themeService;
 
-    private final DifficultyLevelRepository difficultyLevelRepository;
     private final QuestionRepository questionRepository;
     private final ThemeRepository themeRepository;
+
 
 
 
@@ -71,7 +66,7 @@ public class QuizService {
         boolean hasValidThemeIds = themeRepository.existsByDisabledAtIsNullAndIdIn(themeIds);
 
         if (!hasValidThemeIds) {
-            logger.warn("Aucun thème valide trouvé parmi les IDs soumis : {}", themeIds);
+            log.warn("Aucun thème valide trouvé parmi les IDs soumis : {}", themeIds);
             return Page.empty(pageable);
         }
 
@@ -96,10 +91,10 @@ public class QuizService {
      */
     @Transactional
     public QuizPublicDetailsDTO findByIdForUser(long id) {
-        Quiz quiz = quizRepository.findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(id)
+        Quiz quiz = quizRepository.findByIdAndDisabledAtIsNullEverywhere(id)
                 .orElseThrow(() -> {
-                    logger.warn("Le quiz avec l'ID {}, n'a pas été trouvé.", id);
-                    return new NotFoundException(ErrorCode.QUIZ_NOT_FOUND, id);
+                    log.warn("Le quiz avec l'ID {}, n'a pas été trouvé.", id);
+                    return new NotFoundException(ErrorCode.QUIZ_NOT_FOUND);
                 });
 
         return quizMapper.toPublicDetailsDTO(quiz, questionRepository);
@@ -125,8 +120,8 @@ public class QuizService {
     public Page<QuizAdminDTO> findAllByThemeIdForAdmin(long themeId, Boolean visible, Pageable pageable) {
 
         if (!themeRepository.existsById(themeId)) {
-            logger.warn("Le thème avec l'ID {}, n'a pas été trouvé.", themeId);
-            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND, themeId);
+            log.warn("Le thème avec l'ID {}, n'a pas été trouvé.", themeId);
+            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND);
         }
 
         Page<Quiz> quizzes;
@@ -156,46 +151,10 @@ public class QuizService {
      */
     @Transactional
     public QuizAdminDetailsDTO findByIdForAdmin(long id) {
+
         Quiz quiz = findById(id);
 
         return quizMapper.toAdminDetailsDTO(quiz);
-    }
-
-
-    /**
-     * Récupère toutes les questions d'un quiz pour le jeu, en fonction du niveau de difficulté.
-     *
-     * <p>Cette méthode recherche un quiz par son identifiant et un niveau de difficulté spécifique,
-     * puis récupère les questions associées à ce quiz. Les questions sont mélangées et mappées vers
-     * des DTOs adaptés pour le jeu, en respectant le nombre maximum de réponses affichées par le niveau
-     * de difficulté.</p>
-     *
-     * @param id l'identifiant du quiz
-     * @param difficultyLevelId l'identifiant du niveau de difficulté
-     * @return une liste de {@link QuestionForPlayDTO} contenant les questions pour le jeu
-     * @throws NotFoundException si le quiz ou le niveau de difficulté n'est pas trouvé
-     */
-    @Transactional
-    public List<QuestionForPlayDTO> findAllQuestionsByQuizIdForPlay(long id, long difficultyLevelId) {
-
-        if (!quizRepository.existsByIdAndDisabledAtIsNull(id)) {
-            logger.warn("Le quiz avec l'ID {}, n'a pas été trouvé.", id);
-            throw new NotFoundException(ErrorCode.QUIZ_NOT_FOUND, id);
-        }
-
-        byte answerOptionsCount = difficultyLevelRepository.findAnswerOptionsCountByIdAndDisabledAtIsNull(difficultyLevelId)
-                .orElseThrow(() -> {
-                    logger.warn("Le niveau de difficulté avec l'ID {}, n'a pas été trouvé.", difficultyLevelId);
-                    return new NotFoundException(ErrorCode.DIFFICULTY_NOT_FOUND, difficultyLevelId);
-                });
-
-        List<QuestionForPlayProjection> questions = new ArrayList<>(questionRepository.findByQuizIdAndDisabledAtIsNullAndAnswersDisabledAtIsNull(id));
-
-        Collections.shuffle(questions);
-
-        return questions.stream()
-                .map(question -> mapToPlayDTO(question, answerOptionsCount))
-                .toList();
     }
 
 
@@ -211,12 +170,14 @@ public class QuizService {
      */
     public QuizAdminDetailsDTO create(QuizUpsertDTO dto) {
 
+        log.debug("Type du quiz : {}", dto.type().getQuizType());
+
         String normalizedNewText = TextUtils.normalizeText(dto.title());
-        logger.debug("Titre normalisé : {}, depuis {}", normalizedNewText, dto.title());
+        log.debug("Titre normalisé : {}, depuis {}", normalizedNewText, dto.title());
 
         if (quizRepository.existsByTitleIgnoreCase(normalizedNewText)) {
-            logger.warn("Le quiz avec le titre {}, existe déjà.", normalizedNewText);
-            throw new AlreadyExistException(ErrorCode.QUIZ_ALREADY_EXISTS, normalizedNewText);
+            log.warn("Le quiz avec le titre {}, existe déjà.", normalizedNewText);
+            throw new AlreadyExistException(ErrorCode.QUIZ_ALREADY_EXISTS);
         }
 
         Quiz quizToCreate = quizMapper.toModel(dto);
@@ -243,21 +204,19 @@ public class QuizService {
     @Transactional
     public QuizAdminDetailsDTO update(long id, QuizUpsertDTO dto) {
 
-        Quiz quizToUpdate = findById(id);
+        Quiz quiz = findById(id);
 
         String normalizedNewText = TextUtils.normalizeText(dto.title());
-        logger.debug("Titre normalisé : {}, depuis {}", normalizedNewText, dto.title());
+        log.debug("Titre normalisé : {}, depuis {}", normalizedNewText, dto.title());
 
         if (quizRepository.existsByTitleIgnoreCaseAndIdNot(normalizedNewText, id)) {
-            logger.warn("Le quiz avec le titre {}, existe déjà.", normalizedNewText);
-            throw new AlreadyExistException(ErrorCode.QUIZ_ALREADY_EXISTS, normalizedNewText);
+            log.warn("Le quiz avec le titre {}, existe déjà.", normalizedNewText);
+            throw new AlreadyExistException(ErrorCode.QUIZ_ALREADY_EXISTS);
         }
 
-        quizMapper.updateModelFromDTO(dto, quizToUpdate);
+        quizMapper.updateModelFromDTO(dto, quiz);
 
-        Quiz updatedQuiz = quizRepository.save(quizToUpdate);
-
-        return quizMapper.toAdminDetailsDTO(updatedQuiz);
+        return quizMapper.toAdminDetailsDTO(quiz);
     }
 
 
@@ -270,6 +229,7 @@ public class QuizService {
      * @param id l'identifiant du quiz à supprimer
      * @throws NotFoundException si le quiz avec l'ID spécifié n'existe pas
      */
+    @Transactional
     public void delete(long id) {
 
         Quiz quiz = findById(id);
@@ -294,7 +254,10 @@ public class QuizService {
      *
      * @param id l'identifiant du quiz à mettre à jour
      * @param visible l'état de visibilité souhaité (true pour activer, false pour désactiver)
+     * @throws NotFoundException si le quiz avec l'ID spécifié n'existe pas
+     * @throws ActionNotAllowedException si le quiz ne peut pas être activé en raison d'un nombre insuffisant de questions actives
      */
+    @Transactional
     public void updateVisibility(long id, boolean visible) {
 
         Quiz quiz = findById(id);
@@ -302,16 +265,14 @@ public class QuizService {
         if (quiz.isVisible() == visible) return;
 
         if (visible) {
-            logger.debug("Demande d'activation du quiz avec l'ID {}, vérification du nombre de questions actives.", id);
-            hasMinimumQuestions(id);
+            log.debug("Demande d'activation du quiz avec l'ID {}, vérification du nombre de questions actives.", id);
+            assertMinimumActiveQuestions(id);
         }
 
         quiz.setVisible(visible);
 
-        quizRepository.save(quiz);
-
         if (!visible) {
-            logger.debug("Désactivation demandée du quiz avec l'ID {}, vérification du nombre de quiz actifs restant.", id);
+            log.debug("Désactivation demandée du quiz avec l'ID {}, vérification du nombre de quiz actifs restant.", id);
             disableThemeIfNoActiveQuizzes(quiz.getTheme().getId());
         }
     }
@@ -330,8 +291,8 @@ public class QuizService {
     private Quiz findById(long id) {
         return quizRepository.findById(id)
                 .orElseThrow(() -> {
-                    logger.warn("Le quiz avec l'ID {}, n'a pas été trouvé.", id);
-                    return new NotFoundException(ErrorCode.QUIZ_NOT_FOUND, id);
+                    log.warn("Le quiz avec l'ID {}, n'a pas été trouvé.", id);
+                    return new NotFoundException(ErrorCode.QUIZ_NOT_FOUND);
                 });
     }
 
@@ -344,15 +305,15 @@ public class QuizService {
      * @param id l'identifiant du quiz à vérifier
      * @throws ActionNotAllowedException si le quiz ne contient pas suffisamment de questions actives
      */
-    private void hasMinimumQuestions(long id) {
+    private void assertMinimumActiveQuestions(long id) {
 
         int numberOfActiveQuestions = quizRepository.countByIdAndQuestionsDisabledAtIsNull(id);
 
         if (numberOfActiveQuestions < MINIMUM_QUIZ_QUESTIONS) {
-            logger.warn("Le quiz avec l'ID {}, ne peut pas être activé car il n'a pas assez de questions.", id);
-            throw new ActionNotAllowedException(ErrorCode.QUIZ_CONTAINS_NOT_ENOUGH_QUESTIONS, id, MINIMUM_QUIZ_QUESTIONS);
+            log.warn("Le quiz avec l'ID {}, ne peut pas être activé car il n'a pas assez de questions.", id);
+            throw new ActionNotAllowedException(ErrorCode.QUIZ_CONTAINS_NOT_ENOUGH_QUESTIONS, MINIMUM_QUIZ_QUESTIONS);
         } else {
-            logger.debug("Le quiz avec l'ID {}, a suffisamment de questions : {} pour être activé.", id, numberOfActiveQuestions);
+            log.debug("Le quiz avec l'ID {}, a suffisamment de questions : {} pour être activé.", id, numberOfActiveQuestions);
         }
     }
 
@@ -367,78 +328,13 @@ public class QuizService {
      */
     private void disableThemeIfNoActiveQuizzes(long themeId) {
 
-        int numberOfActiveQuizzes = quizRepository.countByThemeIdAndDisabledAtIsNull(themeId);
+        int numberOfActiveQuizzes = themeRepository.countByIdAndQuizzesDisabledAtIsNull(themeId);
 
         if (numberOfActiveQuizzes == 0) {
-            logger.warn("Le thème avec l'ID {} n'a pas de quiz actifs et va être désactivé.", themeId);
+            log.warn("Le thème avec l'ID {} n'a pas de quiz actifs et va être désactivé.", themeId);
             themeService.updateVisibility(themeId, false);
         } else {
-            logger.debug("Le thème avec l'ID {} a {} quiz actifs et reste donc actif.", themeId, numberOfActiveQuizzes);
+            log.debug("Le thème avec l'ID {} a {} quiz actifs et reste donc actif.", themeId, numberOfActiveQuizzes);
         }
     }
-
-
-    /**
-     * Mappe les informations d'une question pour le jeu à partir d'une projection.
-     *
-     * <p>Cette méthode prend une projection de question et un nombre maximum de réponses,
-     * puis crée un DTO de question pour le jeu en filtrant les réponses correctes et incorrectes,
-     * en limitant le nombre de bonnes réponses si nécessaire, et en mélangeant les réponses finales.</p>
-     *
-     * @param question la {@link QuestionForPlayProjection} de la question à mapper
-     * @param answerOptionsCount le nombre maximum de réponses à inclure dans le DTO
-     * @return un {@link QuestionForPlayDTO} contenant les détails de la question et ses réponses
-     */
-    private QuestionForPlayDTO mapToPlayDTO(QuestionForPlayProjection question, byte answerOptionsCount) {
-        List<QuestionForPlayProjection.AnswersForPlay> allAnswers = question.getAnswers();
-
-        // Filtre les réponses correctes
-        List<QuestionForPlayProjection.AnswersForPlay> correctAnswers = allAnswers.stream()
-                .filter(QuestionForPlayProjection.AnswersForPlay::getIsCorrect)
-                .toList();
-
-        if (correctAnswers.isEmpty()) {
-            logger.error("La question {} n'a pas de réponse correcte.", question.getId());
-            throw new IllegalStateException("La question " + question.getId() + " n’a pas de réponse correcte.");
-        }
-
-        if (answerOptionsCount == 0) { // Réponse libre
-            return new QuestionForPlayDTO(question.getId(), question.getText(), List.of());
-        }
-
-        // Réponses incorrectes
-        List<QuestionForPlayProjection.AnswersForPlay> incorrects = allAnswers.stream()
-                .filter(answer -> !answer.getIsCorrect())
-                .toList();
-
-        // Calcul du nombre restant de places pour les mauvaises réponses
-        int slotsForIncorrects = answerOptionsCount - correctAnswers.size();
-
-        // Si trop de bonnes réponses, on les limite (rare cas, mais à gérer)
-        List<QuestionForPlayProjection.AnswersForPlay> limitedCorrects = correctAnswers.size() > answerOptionsCount
-                ? correctAnswers.subList(0, answerOptionsCount)
-                : correctAnswers;
-
-        // Sélection d'un nombre aléatoire d'incorrects s’il reste des slots
-        List<QuestionForPlayProjection.AnswersForPlay> selectedIncorrects = slotsForIncorrects > 0
-                ? incorrects.stream().sorted((a, b) -> ThreadLocalRandom.current().nextInt(-1, 2))
-                .limit(slotsForIncorrects)
-                .toList()
-                : List.of();
-
-        // Fusion et mapping
-        List<AnswerForPlayDTO> finalAnswers = Stream.concat(
-                        limitedCorrects.stream(),
-                        selectedIncorrects.stream()
-                )
-                .map(answer -> new AnswerForPlayDTO(answer.getId(), answer.getText()))
-                .collect(Collectors.toList());
-
-        // Mélange
-        Collections.shuffle(finalAnswers);
-
-        return new QuestionForPlayDTO(question.getId(), question.getText(), finalAnswers);
-    }
-
-
 }
