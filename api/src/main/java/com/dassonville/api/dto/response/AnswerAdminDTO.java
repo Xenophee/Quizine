@@ -1,4 +1,4 @@
-package com.dassonville.api.dto;
+package com.dassonville.api.dto.response;
 
 import java.time.LocalDateTime;
 

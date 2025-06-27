@@ -1,4 +1,4 @@
-package com.dassonville.api.dto;
+package com.dassonville.api.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 public record QuizAdminDTO(
         long id,
         String title,
+        String quizType,
+        String masteryLevel,
         @Schema(type = "integer", format = "int32")
         byte numberOfQuestions,
         boolean hasEnoughQuestionsForActivation,

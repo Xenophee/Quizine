@@ -1,14 +1,15 @@
-package com.dassonville.api.dto;
+package com.dassonville.api.dto.response;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record QuestionAdminDTO(
+public record ThemeAdminDTO(
         long id,
-        String text,
+        String name,
+        String description,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         LocalDateTime disabledAt,
-        List<AnswerAdminDTO> answers
+        List<CategoryInfoThemeAdminDTO> categories
 ) {
 }
