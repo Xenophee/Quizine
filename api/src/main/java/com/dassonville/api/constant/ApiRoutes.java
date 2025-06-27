@@ -8,7 +8,6 @@ public class ApiRoutes {
     public static final String VISIBILITY = ID + "/visibility";
     public static final String DETAILS = "/details";
     public static final String SUMMARY = "/summary";
-    public static final String REORDER = "/reorder";
 
     private ApiRoutes() {}
 
@@ -49,6 +48,30 @@ public class ApiRoutes {
         private DifficultyLevels() {}
     }
 
+    public static class MasteryLevels {
+        public static final String STRING = "/mastery-levels";
+        public static final String BASE = API + STRING;
+        public static final String BY_ID = BASE + ID;
+        public static final String ADMIN_MASTERY_LEVELS = API_ADMIN + STRING;
+        public static final String ADMIN_BY_ID = ADMIN_MASTERY_LEVELS + ID;
+
+        public static final String ADMIN_VISIBILITY_PATCH = ADMIN_MASTERY_LEVELS + VISIBILITY;
+
+        private MasteryLevels() {}
+    }
+
+    public static class QuizTypes {
+        public static final String STRING = "/quiz-types";
+        public static final String BASE = API + STRING;
+        public static final String BY_ID = BASE + ID;
+        public static final String ADMIN_QUIZ_TYPES = API_ADMIN + STRING;
+        public static final String ADMIN_BY_ID = ADMIN_QUIZ_TYPES + ID;
+
+        public static final String ADMIN_VISIBILITY_PATCH = ADMIN_QUIZ_TYPES + VISIBILITY;
+
+        private QuizTypes() {}
+    }
+
     public static class Quizzes {
         public static final String STRING = "/quizzes";
         public static final String BASE = API + STRING;
@@ -71,9 +94,6 @@ public class ApiRoutes {
         public static final String ADMIN_QUESTIONS_POST = Quizzes.ADMIN_BY_ID + STRING;
         public static final String ADMIN_VISIBILITY_PATCH = ADMIN_QUESTIONS + VISIBILITY;
 
-        public static final String CHECK_ANSWER_CHOICE = "/{quizId}/questions/{questionId}/check/choice";
-        public static final String CHECK_ANSWER_TEXT = "/{quizId}/questions/{questionId}/check/text";
-
         private Questions() {}
     }
 
@@ -88,5 +108,11 @@ public class ApiRoutes {
         public static final String ADMIN_VISIBILITY_PATCH = ADMIN_ANSWERS + VISIBILITY;
 
         private Answers() {}
+    }
+
+    public static class Others {
+        public static final String CHECK_ANSWER = API + "/quizzes/questions/check-answer";
+
+        private Others() {}
     }
 }
