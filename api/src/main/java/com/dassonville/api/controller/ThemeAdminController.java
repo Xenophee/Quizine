@@ -123,7 +123,7 @@ public class ThemeAdminController {
             @ApiResponse(responseCode = "204", description = "Le thème a été supprimé."),
             @ApiResponse(responseCode = "404", description = "Le thème avec l'ID spécifié n'a pas été trouvé.",
                     content = {@Content(schema = @Schema(implementation = Error.class))}),
-            @ApiResponse(responseCode = "422", description = "Le thème ne peut pas être supprimé, car il comporte encore des quiz.",
+            @ApiResponse(responseCode = "422", description = "Le thème ne peut pas être supprimé, car c'est celui par défaut ou il comporte encore des quiz.",
                     content = {@Content(schema = @Schema(implementation = Error.class))})
     })
     @DeleteMapping(ApiRoutes.ID)

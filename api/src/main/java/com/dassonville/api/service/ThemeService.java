@@ -160,13 +160,18 @@ public class ThemeService {
      *
      * @param id l'identifiant du thème à supprimer
      * @throws NotFoundException si le thème avec l'ID spécifié n'existe pas
-     * @throws ActionNotAllowedException si le thème contient des quiz
+     * @throws ActionNotAllowedException s'il s'agit du thème par défaut ou si le thème contient des quiz
      */
     public void delete(long id) {
 
         if (!themeRepository.existsById(id)) {
             log.warn("Le thème à supprimer avec l'ID {}, n'a pas été trouvé.", id);
             throw new NotFoundException(ErrorCode.THEME_NOT_FOUND);
+        }
+
+        if (themeRepository.existsByIdAndIsDefaultTrue(id)) {
+            log.warn("Le thème à supprimer avec l'ID {}, est le thème par défaut.", id);
+            throw new ActionNotAllowedException(ErrorCode.THEME_IS_DEFAULT);
         }
 
         if (themeRepository.existsByIdAndQuizzesIsNotEmpty(id)) {

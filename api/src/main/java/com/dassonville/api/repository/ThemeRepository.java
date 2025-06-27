@@ -32,10 +32,18 @@ public interface ThemeRepository extends JpaRepository<Theme, Long> {
     boolean existsByNameIgnoreCaseAndIdNot(String name, long id);
 
     /**
+     * Vérifie si un thème existe avec l'ID spécifié et s'il est le thème par défaut.
+     *
+     * @param id L'ID du thème.
+     * @return {@code true} si le thème existe, sinon {@code false}.
+     */
+    boolean existsByIdAndIsDefaultTrue(long id);
+
+    /**
      * Vérifie si un thème existe avec des quiz associés.
      *
      * @param id L'ID du thème.
-     * @return {@code true} si un thème existe avec des quiz, sinon {@code false}.
+     * @return {@code true} si le thème existe avec des quiz, sinon {@code false}.
      */
     boolean existsByIdAndQuizzesIsNotEmpty(long id);
 

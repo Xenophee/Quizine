@@ -7,6 +7,7 @@ public enum ErrorCode {
     THEME_NOT_FOUND("THEME_NOT_FOUND", "Le thème est introuvable."),
     THEME_ALREADY_EXISTS("THEME_ALREADY_EXISTS", "Un thème avec le même nom existe déjà."),
     THEME_CONTAINS_QUIZZES("THEME_CONTAINS_QUIZZES", "Le thème contient des quiz et ne peut pas être supprimé."),
+    THEME_IS_DEFAULT("THEME_IS_DEFAULT", "Le thème est celui par défaut et ne peut pas être supprimé."),
     THEME_CONTAINS_NO_QUIZZES("THEME_CONTAINS_NO_QUIZZES", "Le thème ne contient aucun quiz actif pour être activé."),
 
     CATEGORY_NOT_FOUND("CATEGORY_NOT_FOUND", "La catégorie est introuvable."),
