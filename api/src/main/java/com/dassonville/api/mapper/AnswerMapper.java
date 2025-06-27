@@ -1,8 +1,8 @@
 package com.dassonville.api.mapper;
 
-import com.dassonville.api.dto.AnswerAdminDTO;
-import com.dassonville.api.dto.AnswerUpsertDTO;
-import com.dassonville.api.model.Answer;
+import com.dassonville.api.dto.response.AnswerAdminDTO;
+import com.dassonville.api.dto.request.ClassicAnswerUpsertDTO;
+import com.dassonville.api.model.ClassicAnswer;
 import com.dassonville.api.model.Question;
 import com.dassonville.api.util.TextUtils;
 import org.mapstruct.*;
@@ -18,9 +18,9 @@ public interface AnswerMapper {
             @Mapping(target = "disabledAt", ignore = true),
             @Mapping(target = "id", ignore = true)
     })
-    Answer toModel(AnswerUpsertDTO dto, @Context long questionId);
+    ClassicAnswer toModel(ClassicAnswerUpsertDTO dto, @Context long questionId);
 
-    AnswerAdminDTO toAdminDTO(Answer answer);
+    AnswerAdminDTO toAdminDTO(ClassicAnswer classicAnswer);
 
     @Mappings({
             @Mapping(target = "text", expression = "java(normalizeText(dto.text()))"),
@@ -30,7 +30,7 @@ public interface AnswerMapper {
             @Mapping(target = "disabledAt", ignore = true),
             @Mapping(target = "id", ignore = true)
     })
-    void updateModelFromDTO(AnswerUpsertDTO dto, @MappingTarget Answer answer);
+    void updateModelFromDTO(ClassicAnswerUpsertDTO dto, @MappingTarget ClassicAnswer classicAnswer);
 
 
     default Question mapQuestionIdToQuestion(long questionId) {

@@ -1,6 +1,11 @@
 package com.dassonville.api.mapper;
 
-import com.dassonville.api.dto.*;
+import com.dassonville.api.constant.GameType;
+import com.dassonville.api.dto.request.QuizUpsertDTO;
+import com.dassonville.api.dto.response.QuizAdminDTO;
+import com.dassonville.api.dto.response.QuizAdminDetailsDTO;
+import com.dassonville.api.dto.response.QuizPublicDTO;
+import com.dassonville.api.dto.response.QuizPublicDetailsDTO;
 import com.dassonville.api.model.Question;
 import com.dassonville.api.model.Quiz;
 import com.dassonville.api.projection.PublicQuizProjection;
@@ -16,11 +21,13 @@ import static com.dassonville.api.constant.AppConstants.MINIMUM_QUIZ_QUESTIONS;
 import static com.dassonville.api.constant.AppConstants.NEWNESS_THRESHOLD_DAYS;
 
 
-@Mapper(componentModel = "spring", uses = {CategoryMapper.class, ThemeMapper.class})
+@Mapper(componentModel = "spring", uses = {CategoryMapper.class, ThemeMapper.class, QuestionMapper.class, GameType.class})
 public interface QuizMapper {
 
     @Mappings({
             @Mapping(target = "title", expression = "java(normalizeText(dto.title()))"),
+            @Mapping(target = "quizType.code", source = "type", qualifiedByName = "mapGameTypeToCode"), // ! Exemple à suivre
+            @Mapping(target = "masteryLevel.id", source = "masteryLevelId"),
             @Mapping(target = "category.id", source = "categoryId"),
             @Mapping(target = "theme.id", source = "themeId"),
             @Mapping(target = "createdAt", ignore = true),
@@ -34,6 +41,8 @@ public interface QuizMapper {
     @Mappings({
             @Mapping(target = "theme", source = "themeName"),
             @Mapping(target = "category", source = "categoryName"),
+            @Mapping(target = "quizType", source = "quizTypeName"),
+            @Mapping(target = "masteryLevel", source = "masteryLevelName"),
             @Mapping(target = "isNew", expression = "java(isQuizNew(projection.getCreatedAt()))")
     })
     QuizPublicDTO toPublicDTO(PublicQuizProjection projection);
@@ -41,13 +50,17 @@ public interface QuizMapper {
     @Mappings({
             @Mapping(target = "theme", source = "theme.name"),
             @Mapping(target = "category", source = "category.name"),
+            @Mapping(target = "quizType", source = "quizType.name"),
+            @Mapping(target = "masteryLevel", source = "masteryLevel.name"),
             @Mapping(target = "isNew", expression = "java(isQuizNew(model.getCreatedAt()))"),
-            @Mapping(target = "numberOfQuestions", expression = "java(questionRepository.countByQuizIdAndDisabledAtIsNull(model.getId()))"),
+            @Mapping(target = "numberOfQuestions", expression = "java(questionRepository.countByQuizzesIdAndDisabledAtIsNull(model.getId()))"),
     })
     QuizPublicDetailsDTO toPublicDetailsDTO(Quiz model, @Context QuestionRepository questionRepository);
 
     @Mappings({
             @Mapping(target = "category", source = "category.name"),
+            @Mapping(target = "quizType", source = "quizType.name"),
+            @Mapping(target = "masteryLevel", source = "masteryLevel.name"),
             @Mapping(target = "numberOfQuestions", source = "model.questions", qualifiedByName = "mapNumberOfQuestions"),
             @Mapping(target = "hasEnoughQuestionsForActivation", source = "model.questions", qualifiedByName = "mapHasEnoughQuestionsForActivation"),
     })
@@ -55,7 +68,9 @@ public interface QuizMapper {
 
     @Mappings({
             @Mapping(target = "categoryId", source = "category.id"),
-            @Mapping(target = "themeId", source = "theme.id")
+            @Mapping(target = "themeId", source = "theme.id"),
+            @Mapping(target = "masteryLevelId", source = "masteryLevel.id"),
+            @Mapping(target = "quizType", source = "quizType.name"),
     })
     QuizAdminDetailsDTO toAdminDetailsDTO(Quiz model);
 
@@ -91,4 +106,10 @@ public interface QuizMapper {
     default String normalizeText(String input) {
         return TextUtils.normalizeText(input);
     }
+
+    @Named("mapGameTypeToCode")
+    default String mapGameTypeToCode(GameType type) {
+        return type.getQuizType();
+    }
+
 }

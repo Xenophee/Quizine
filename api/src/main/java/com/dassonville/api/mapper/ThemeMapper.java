@@ -1,9 +1,9 @@
 package com.dassonville.api.mapper;
 
 
-import com.dassonville.api.dto.ThemeAdminDTO;
-import com.dassonville.api.dto.ThemePublicDTO;
-import com.dassonville.api.dto.ThemeUpsertDTO;
+import com.dassonville.api.dto.response.ThemeAdminDTO;
+import com.dassonville.api.dto.response.ThemePublicDTO;
+import com.dassonville.api.dto.request.ThemeUpsertDTO;
 import com.dassonville.api.model.Theme;
 import com.dassonville.api.projection.PublicThemeProjection;
 import com.dassonville.api.util.DateUtils;

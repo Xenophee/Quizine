@@ -1,8 +1,8 @@
 package com.dassonville.api.mapper;
 
 
-import com.dassonville.api.dto.CategoryAdminDTO;
-import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.response.CategoryAdminDTO;
+import com.dassonville.api.dto.request.CategoryUpsertDTO;
 import com.dassonville.api.model.Category;
 import com.dassonville.api.model.Theme;
 import com.dassonville.api.util.TextUtils;
