@@ -1,14 +1,17 @@
 
-
--- Met à jour automatiquement la séquence de chaque table en fonction de la valeur max actuelle
 DO $$
+    DECLARE
+        seq RECORD;
     BEGIN
-        -- Pour quizzes
-        PERFORM setval('quizzes_id_seq', COALESCE((SELECT MAX(id) FROM quizzes), 0) + 1, false);
-
-        -- Pour questions
-        PERFORM setval('questions_id_seq', COALESCE((SELECT MAX(id) FROM questions), 0) + 1, false);
-
-        -- Pour answers
-        PERFORM setval('answers_id_seq', COALESCE((SELECT MAX(id) FROM answers), 0) + 1, false);
+        FOR seq IN
+            SELECT relname AS sequence_name
+            FROM pg_class
+            WHERE relkind = 'S'
+            LOOP
+                EXECUTE format(
+                        'SELECT setval(''%s'', COALESCE((SELECT MAX(id) FROM %s), 0) + 1, false)',
+                        seq.sequence_name,
+                        regexp_replace(seq.sequence_name, '_id_seq$', '')
+                        );
+            END LOOP;
     END $$;
