@@ -18,7 +18,7 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
     /**
      * Récupère une page de projections publiques des quiz actifs.
-     * Le thème et la catégorie doivent également être actifs.
+     * Le thème, la catégorie, le niveau de maîtrise et le type de quiz doivent également être actifs.
      *
      * @param pageable Les informations de pagination.
      * @return Une page de projections publiques des quiz actifs.
@@ -28,22 +28,28 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
                    quiz.title AS title,
                    quiz.createdAt AS createdAt,
                    COUNT(CASE WHEN question.disabledAt IS NULL THEN question.id END) AS numberOfQuestions,
+                   quizType.name AS quizTypeName,
+                   masteryLevel.name AS masteryLevelName,
                    category.name AS categoryName,
                    theme.name AS themeName
             FROM Quiz quiz
-            JOIN quiz.category category
-            JOIN quiz.theme theme
-            LEFT JOIN quiz.questions question
+                JOIN quiz.quizType quizType
+                JOIN quiz.masteryLevel masteryLevel
+                LEFT JOIN quiz.category category
+                JOIN quiz.theme theme
+                JOIN quiz.questions question
             WHERE quiz.disabledAt IS NULL
+                 AND quizType.disabledAt IS NULL
+                 AND masteryLevel.disabledAt IS NULL
                  AND theme.disabledAt IS NULL
                  AND category.disabledAt IS NULL
-            GROUP BY quiz.id, quiz.title, quiz.createdAt, category.name, theme.name
+            GROUP BY quiz.id, quiz.title, quiz.createdAt, quizType.name, masteryLevel.name, category.name, theme.name
             """)
     Page<PublicQuizProjection> findAllByDisabledAtIsNull(Pageable pageable);
 
     /**
      * Récupère une page de projections publiques des quiz actifs pour des thèmes spécifiques.
-     * Le thème et la catégorie doivent également être actifs.
+     * Le thème, la catégorie, le niveau de maîtrise et le type de quiz doivent également être actifs.
      *
      * @param themeIds La liste des IDs des thèmes.
      * @param pageable Les informations de pagination.
@@ -54,27 +60,47 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
                    quiz.title AS title,
                    quiz.createdAt AS createdAt,
                    COUNT(CASE WHEN question.disabledAt IS NULL THEN question.id END) AS numberOfQuestions,
+                   quizType.name AS quizTypeName,
+                   masteryLevel.name AS masteryLevelName,
                    category.name AS categoryName,
                    theme.name AS themeName
             FROM Quiz quiz
-            JOIN quiz.category category
-            JOIN quiz.theme theme
-            LEFT JOIN quiz.questions question
+                JOIN quiz.quizType quizType
+                JOIN quiz.masteryLevel masteryLevel
+                LEFT JOIN quiz.category category
+                JOIN quiz.theme theme
+                JOIN quiz.questions question
             WHERE quiz.disabledAt IS NULL
+                AND quizType.disabledAt IS NULL
+                AND masteryLevel.disabledAt IS NULL
                 AND theme.disabledAt IS NULL
                 AND category.disabledAt IS NULL
                 AND theme.id IN :themeIds
-            GROUP BY quiz.id, quiz.title, quiz.createdAt, category.name, theme.name
+            GROUP BY quiz.id, quiz.title, quiz.createdAt, quizType.name, masteryLevel.name, category.name, theme.name
             """)
     Page<PublicQuizProjection> findAllByDisabledAtIsNullAndThemeIdIn(List<Long> themeIds, Pageable pageable);
 
-
     /**
      * Vérifie si un quiz actif existe avec un ID spécifique.
+     * Le thème, la catégorie, le type de quiz et le niveau de maîtrise doivent également être actifs.
      *
      * @param id L'ID du quiz.
      * @return {@code true} si un quiz actif existe, sinon {@code false}.
      */
+    @Query("""
+            SELECT CASE WHEN COUNT(quiz) > 0 THEN TRUE ELSE FALSE END
+            FROM Quiz quiz
+                JOIN quiz.theme theme
+                LEFT JOIN quiz.category category
+                JOIN quiz.quizType quizType
+                JOIN quiz.masteryLevel masteryLevel
+            WHERE quiz.id = :id
+                AND quiz.disabledAt IS NULL
+                AND theme.disabledAt IS NULL
+                AND category.disabledAt IS NULL
+                AND quizType.disabledAt IS NULL
+                AND masteryLevel.disabledAt IS NULL
+            """)
     boolean existsByIdAndDisabledAtIsNull(long id);
 
     /**
@@ -95,14 +121,6 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     boolean existsByTitleIgnoreCaseAndIdNot(String title, long id);
 
     /**
-     * Compte le nombre de quiz actifs pour un thème donné.
-     *
-     * @param themeId L'ID du thème.
-     * @return Le nombre de quiz actifs.
-     */
-    int countByThemeIdAndDisabledAtIsNull(long themeId);
-
-    /**
      * Compte le nombre de questions actives pour un quiz donné.
      *
      * @param id L'ID du quiz.
@@ -111,12 +129,22 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     int countByIdAndQuestionsDisabledAtIsNull(long id);
 
     /**
-     * Récupère un quiz actif par son ID. Le thème et la catégorie doivent également être actifs.
+     * Récupère un quiz actif par son ID, en s'assurant que le thème, la catégorie, le type de quiz et le niveau de maîtrise sont également actifs.
      *
      * @param id L'ID du quiz.
      * @return Un {@code Optional} contenant le quiz s'il est actif, sinon vide.
      */
-    Optional<Quiz> findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(long id);
+    @Query("""
+            SELECT quiz
+            FROM Quiz quiz
+            WHERE quiz.id = :id
+              AND quiz.disabledAt IS NULL
+              AND quiz.theme.disabledAt IS NULL
+              AND quiz.category.disabledAt IS NULL
+              AND quiz.quizType.disabledAt IS NULL
+              AND quiz.masteryLevel.disabledAt IS NULL
+            """)
+    Optional<Quiz> findByIdAndDisabledAtIsNullEverywhere(long id);
 
     /**
      * Récupère tous les quiz actifs pour un thème donné.

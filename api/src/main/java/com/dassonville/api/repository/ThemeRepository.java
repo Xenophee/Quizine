@@ -53,14 +53,31 @@ public interface ThemeRepository extends JpaRepository<Theme, Long> {
      * @param id L'ID du thème.
      * @return Le nombre de quiz actifs.
      */
+    @Query("""
+            SELECT COUNT(quiz)
+            FROM Quiz quiz
+                JOIN quiz.category category
+                JOIN quiz.masteryLevel masteryLevel
+                JOIN quiz.quizType quizType
+            WHERE quiz.theme.id = :id
+                AND quiz.disabledAt IS NULL
+                AND quizType.disabledAt IS NULL
+                AND category.disabledAt IS NULL
+                AND masteryLevel.disabledAt IS NULL
+            """)
     int countByIdAndQuizzesDisabledAtIsNull(long id);
 
     /**
-     * Récupère les projections publiques des thèmes actifs, triés par nom.
+     * Récupère les projections publiques des thèmes actifs, en plaçant le thème par défaut en dernier.
      *
-     * @return La liste des projections publiques des thèmes actifs.
+     * @return La liste des projections publiques des thèmes actifs, avec le thème par défaut en dernier.
      */
-    List<PublicThemeProjection> findByDisabledAtIsNullOrderByName();
+    @Query("""
+            SELECT theme FROM Theme theme
+            WHERE theme.disabledAt IS NULL
+            ORDER BY CASE WHEN theme.isDefault = true THEN 1 ELSE 0 END, theme.name
+            """)
+    List<PublicThemeProjection> findByDisabledAtIsNullOrderByNameWithDefaultLast();
 
     /**
      * Récupère les projections des IDs et noms de tous les thèmes, triés par nom.
@@ -72,9 +89,13 @@ public interface ThemeRepository extends JpaRepository<Theme, Long> {
     /**
      * Récupère tous les thèmes avec leurs catégories, triés par nom de thème et de catégorie.
      *
-     * @return La liste des thèmes avec leurs catégories.
+     * @return La liste des thèmes avec leurs catégories. Le thème par défaut est placé en dernier.
      */
     @EntityGraph(attributePaths = {"categories"})
-    @Query("SELECT t FROM Theme t LEFT JOIN FETCH t.categories c ORDER BY t.name, c.name")
+    @Query("""
+            SELECT theme FROM Theme theme
+            LEFT JOIN theme.categories category
+            ORDER BY CASE WHEN theme.isDefault = true THEN 1 ELSE 0 END, theme.name, category.name
+            """)
     List<Theme> findAllByOrderByNameAndCategoryName();
 }
