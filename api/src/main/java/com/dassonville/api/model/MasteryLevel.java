@@ -3,8 +3,7 @@ package com.dassonville.api.model;
 
 import com.dassonville.api.constant.FieldConstraint;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -16,6 +15,9 @@ import java.util.List;
 @Table(name = "mastery_levels")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MasteryLevel {
 
     @Id
@@ -48,4 +50,9 @@ public class MasteryLevel {
 
     @OneToMany(mappedBy = "masteryLevel", fetch = FetchType.LAZY)
     private List<QuizSession> quizSessions = new ArrayList<>();
+
+
+    public MasteryLevel(long id) {
+        this.id = id;
+    }
 }

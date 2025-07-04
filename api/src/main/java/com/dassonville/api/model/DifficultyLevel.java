@@ -3,12 +3,11 @@ package com.dassonville.api.model;
 
 import com.dassonville.api.constant.FieldConstraint;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +17,9 @@ import java.util.List;
 @Table(name = "difficulty_levels")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class DifficultyLevel {
 
     @Id
@@ -39,6 +40,15 @@ public class DifficultyLevel {
 
     @Column(name = "rank")
     private Byte rank;
+
+    @Column(name = "starts_at")
+    private LocalDate startsAt; // Date de début de validité de la difficulté
+
+    @Column(name = "ends_at")
+    private LocalDate endsAt; // Date de fin de validité de la difficulté
+
+    @Column(name = "is_recurring", nullable = false)
+    private Boolean isRecurring = false;
 
     @Column(name = "created_at", updatable = false)
     @CreationTimestamp
