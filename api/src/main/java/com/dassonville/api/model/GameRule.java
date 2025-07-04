@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Table(name = "game_rules",
         uniqueConstraints = {
         @UniqueConstraint(columnNames = {"question_type_code", "difficulty_level_id"}),
-        @UniqueConstraint(columnNames = {"tag", "question_type_code", "difficulty_level_id"})
+        @UniqueConstraint(columnNames = {"question_type_code", "difficulty_level_id"})
 })
 @Getter
 @Setter
@@ -22,12 +22,6 @@ public class GameRule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(length = 50)
-    private String tag; // Null s'il s'agit d'une règle générique
-
-    @Column(name = "is_reference", nullable = false)
-    private Boolean isReference = false;
 
     @Column(name = "answer_options_count", nullable = false)
     private Byte answerOptionsCount;
@@ -58,15 +52,6 @@ public class GameRule {
 
     @Column(name = "combo_5_bonus", nullable = false)
     private Short combo5Bonus;
-
-    @Column(name = "starts_at")
-    private LocalDateTime startsAt; // Date de début de validité de la règle
-
-    @Column(name = "ends_at")
-    private LocalDateTime endsAt; // Date de fin de validité de la règle
-
-    @Column(nullable = false)
-    private Byte priority;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
