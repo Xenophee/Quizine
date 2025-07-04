@@ -2,6 +2,7 @@ package com.dassonville.api.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -14,6 +15,7 @@ import java.util.List;
 @Table(name = "quiz_types")
 @Getter
 @Setter
+@NoArgsConstructor
 public class QuizType {
 
     @Id
@@ -54,6 +56,10 @@ public class QuizType {
     @OneToMany(mappedBy = "quizType", fetch = FetchType.LAZY)
     private List<QuizSession> quizSessions = new ArrayList<>();
 
+
+    public QuizType(String code) {
+        this.code = code;
+    }
 
     public void setVisible(boolean visible) {
         this.disabledAt = visible ? null : LocalDateTime.now();
