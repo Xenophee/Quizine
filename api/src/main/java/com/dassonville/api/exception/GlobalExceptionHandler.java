@@ -4,6 +4,7 @@ import com.dassonville.api.util.ValidationErrorUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -17,6 +18,16 @@ import java.util.Map;
 @Hidden
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Map<String, Integer> CONSTRAINT_PRIORITY = Map.of(
+            "NotBlank", 1,
+            "NotNull", 1,
+            "NotEmpty", 1,
+            "Size", 2,
+            "Pattern", 3,
+            "Email", 4
+    );
+
 
 
     @ExceptionHandler(NotFoundException.class)
@@ -90,19 +101,35 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, Object> handleValidationException(MethodArgumentNotValidException ex) {
+        log.warn("Erreurs de validation détectées : {}", ex.getMessage());
+
+        Map<String, FieldError> fieldErrorsByPriority = new HashMap<>();
+
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            String field = error.getField();
+            String code = error.getCode();
+
+            int priority = CONSTRAINT_PRIORITY.getOrDefault(code, Integer.MAX_VALUE);
+
+            if (!fieldErrorsByPriority.containsKey(field) ||
+                    priority < CONSTRAINT_PRIORITY.getOrDefault(fieldErrorsByPriority.get(field).getCode(), Integer.MAX_VALUE)) {
+                fieldErrorsByPriority.put(field, error);
+            }
+        }
 
         Map<String, Object> errors = new HashMap<>();
 
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            String[] parts = error.getField().split("\\.");
+        for (Map.Entry<String, FieldError> entry : fieldErrorsByPriority.entrySet()) {
+            String[] parts = entry.getKey().split("\\.");
             Map<String, Object> current = errors;
 
             for (int i = 0; i < parts.length - 1; i++) {
                 current = ValidationErrorUtils.navigateOrCreate(current, parts[i]);
             }
 
-            current.put(parts[parts.length - 1], error.getDefaultMessage());
-        });
+            current.put(parts[parts.length - 1], entry.getValue().getDefaultMessage());
+        }
+
 
         Map<String, Object> response = new HashMap<>();
         response.put("code", ErrorCode.VALIDATION_ERROR.getCode());
