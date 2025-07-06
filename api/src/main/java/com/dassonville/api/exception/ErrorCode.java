@@ -36,6 +36,15 @@ public enum ErrorCode {
 
     QUIZ_MISCONFIGURED("QUIZ_MISCONFIGURED", "Le quiz ne réunit pas les conditions nécessaires pour proposer des niveaux de difficulté."),
 
+
+
+    ALREADY_EXIST("ALREADY_EXIST", "Une entité avec les mêmes informations existe déjà."),
+    NOT_FOUND("NOT_FOUND", "L'entité demandée est introuvable."),
+    ACTION_NOT_ALLOWED("ACTION_NOT_ALLOWED", "L'action demandée n'est pas autorisée pour cette entité."),
+    INVALID_ARGUMENT("INVALID_ARGUMENT", "Un ou plusieurs arguments sont invalides."),
+    INVALID_STATE("INVALID_STATE", "L'état de l'entité ne permet pas de réaliser l'action demandée."),
+    MISCONFIGURED("MISCONFIGURED", "L'entité n'est pas correctement configurée pour réaliser l'action demandée."),
+
     VALIDATION_ERROR("VALIDATION_ERROR", "Une ou plusieurs erreurs de validation ont été détectées."),
     INTERNAL_ERROR("INTERNAL_ERROR", "Une erreur interne empêche de traiter la requête."),
     UNEXPECTED_ERROR("UNEXPECTED_ERROR", "Une erreur inattendue s'est produite.");
