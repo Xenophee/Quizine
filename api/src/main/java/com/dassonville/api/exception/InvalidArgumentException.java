@@ -13,6 +13,6 @@ public class InvalidArgumentException extends RuntimeException {
     }
 
     public InvalidArgumentException() {
-        this(ErrorCode.UNEXPECTED_ERROR);
+        this(ErrorCode.INVALID_ARGUMENT);
     }
 }

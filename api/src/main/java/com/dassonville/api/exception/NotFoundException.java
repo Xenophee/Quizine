@@ -13,7 +13,7 @@ public class NotFoundException extends RuntimeException {
     }
 
     public NotFoundException() {
-        this(ErrorCode.UNEXPECTED_ERROR);
+        this(ErrorCode.NOT_FOUND);
     }
 }
 

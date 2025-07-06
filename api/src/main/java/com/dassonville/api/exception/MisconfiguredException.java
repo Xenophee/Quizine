@@ -12,6 +12,6 @@ public class MisconfiguredException extends RuntimeException {
     }
 
     public MisconfiguredException() {
-        this(ErrorCode.UNEXPECTED_ERROR);
+        this(ErrorCode.MISCONFIGURED);
     }
 }

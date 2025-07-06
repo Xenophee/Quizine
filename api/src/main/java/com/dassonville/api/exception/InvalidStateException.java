@@ -13,6 +13,6 @@ public class InvalidStateException extends RuntimeException {
     }
 
     public InvalidStateException() {
-        this(ErrorCode.UNEXPECTED_ERROR);
+        this(ErrorCode.INVALID_STATE);
     }
 }

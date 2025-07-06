@@ -13,7 +13,7 @@ public class AlreadyExistException extends RuntimeException {
     }
 
     public AlreadyExistException() {
-        this(ErrorCode.UNEXPECTED_ERROR);
+        this(ErrorCode.ALREADY_EXIST);
     }
 }
 

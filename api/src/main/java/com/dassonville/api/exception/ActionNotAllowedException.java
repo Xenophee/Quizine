@@ -12,6 +12,6 @@ public class ActionNotAllowedException extends RuntimeException {
     }
 
     public ActionNotAllowedException() {
-        this(ErrorCode.UNEXPECTED_ERROR);
+        this(ErrorCode.ACTION_NOT_ALLOWED);
     }
 }
