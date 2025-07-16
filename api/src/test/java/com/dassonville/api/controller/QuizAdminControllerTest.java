@@ -2,32 +2,35 @@ package com.dassonville.api.controller;
 
 
 import com.dassonville.api.constant.ApiRoutes;
-import com.dassonville.api.dto.BooleanRequestDTO;
-import com.dassonville.api.dto.QuizAdminDTO;
-import com.dassonville.api.dto.QuizAdminDetailsDTO;
-import com.dassonville.api.dto.QuizUpsertDTO;
+import com.dassonville.api.constant.Type;
+import com.dassonville.api.dto.request.BooleanRequestDTO;
+import com.dassonville.api.dto.request.QuizUpsertDTO;
+import com.dassonville.api.dto.response.QuizAdminDTO;
+import com.dassonville.api.dto.response.QuizAdminDetailsDTO;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.repository.CategoryRepository;
 import com.dassonville.api.repository.ThemeRepository;
 import com.dassonville.api.service.QuizService;
 import com.dassonville.api.validation.validator.ValidCategoryForThemeValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -67,11 +70,46 @@ public class QuizAdminControllerTest {
 
     @BeforeEach
     public void setUp() {
+
         endpointId = 1L;
+
         booleanRequestDTO = new BooleanRequestDTO(true);
-        quizAdminDTO = new QuizAdminDTO(1L, "Test Quiz", (byte) 15, true, LocalDateTime.now(), null, null, null);
-        quizAdminDetailsDTO = new QuizAdminDetailsDTO(1L, "Test Quiz", null, null, null, 9L, 1L, List.of());
-        quizUpsertDTO = new QuizUpsertDTO("Test Quiz", 9L, 1L);
+
+        quizAdminDTO = new QuizAdminDTO(
+                1L,
+                "Test Quiz",
+                "Classique",
+                "ACCESSIBLE",
+                (byte) 15,
+                true,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                null,
+                null
+        );
+
+        quizAdminDetailsDTO = new QuizAdminDetailsDTO(
+                1L,
+                "Classique",
+                "Test Quiz",
+                "Description",
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                null,
+                9L,
+                1L,
+                null,
+                List.of()
+        );
+
+        quizUpsertDTO = new QuizUpsertDTO(
+                Type.CLASSIC,
+                "Test Quiz",
+                "Description",
+                9L,
+                1L,
+                null
+        );
 
         when(themeRepository.existsById(anyLong()))
                 .thenReturn(true);
@@ -101,7 +139,16 @@ public class QuizAdminControllerTest {
                             .param("size", "10")
                             .param("sort", "title"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].title").value(quizAdminDTO.title()));
+                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].id").value(quizAdminDTO.id()))
+                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].title").value(quizAdminDTO.title()))
+                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].quizType").value(quizAdminDTO.quizType()))
+                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].masteryLevel").value(quizAdminDTO.masteryLevel()))
+                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].numberOfQuestions").value((int) quizAdminDTO.numberOfQuestions()))
+                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].hasEnoughQuestionsForActivation").value(quizAdminDTO.hasEnoughQuestionsForActivation()))
+                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].createdAt").isNotEmpty())
+                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].updatedAt").isNotEmpty())
+                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].disabledAt").isEmpty())
+                    .andExpect(jsonPath("$._embedded.quizAdminDTOList[0].category").value(quizAdminDTO.category()));
         }
 
         @Test
@@ -118,7 +165,8 @@ public class QuizAdminControllerTest {
                             .param("size", "10")
                             .param("sort", "title"))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
 
         @Test
@@ -131,7 +179,7 @@ public class QuizAdminControllerTest {
             // When & Then
             mockMvc.perform(get(ApiRoutes.Quizzes.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.title").value(quizAdminDetailsDTO.title()));
+                    .andExpect(content().json(objectMapper.writeValueAsString(quizAdminDetailsDTO)));
         }
 
         @Test
@@ -144,7 +192,8 @@ public class QuizAdminControllerTest {
             // When & Then
             mockMvc.perform(get(ApiRoutes.Quizzes.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
     }
 
@@ -166,7 +215,7 @@ public class QuizAdminControllerTest {
                             .content(objectMapper.writeValueAsString(quizUpsertDTO)))
                     .andExpect(status().isCreated())
                     .andExpect(header().string("Location", containsString(ApiRoutes.Quizzes.STRING + "/" + quizAdminDetailsDTO.id())))
-                    .andExpect(jsonPath("$.title").value(quizAdminDetailsDTO.title()));
+                    .andExpect(content().json(objectMapper.writeValueAsString(quizAdminDetailsDTO)));
         }
 
         @Test
@@ -181,39 +230,37 @@ public class QuizAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(quizUpsertDTO)))
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.ALREADY_EXIST.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.ALREADY_EXIST.getMessage()));
         }
 
-        @Test
+        @ParameterizedTest
+        @MethodSource("com.dassonville.api.util.TestValidationProvider#invalidQuizUpsertCases")
         @DisplayName("Erreur - Données invalides")
-        public void createInvalidQuiz_shouldReturn400() throws Exception {
+        public void createInvalidQuiz_shouldReturn400(
+                QuizUpsertDTO quizUpsertDTO,
+                String... expectedErrors
+        ) throws Exception {
             // Given
-            quizUpsertDTO = new QuizUpsertDTO("", null, null);
-
-            // When & Then
-            mockMvc.perform(post(ApiRoutes.Quizzes.ADMIN_QUIZZES)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(quizUpsertDTO)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.title").exists())
-                    .andExpect(jsonPath("$.themeId").exists());
-        }
-
-        @Test
-        @DisplayName("Erreur - Catégorie invalide pour le thème")
-        public void createInvalidQuizWithWrongCategoryForTheme_shouldReturn400() throws Exception {
-            // Given
-            quizUpsertDTO = new QuizUpsertDTO("", 1L, 1L);
             when(categoryRepository.existsByIdAndThemeId(anyLong(), anyLong()))
                     .thenReturn(false);
 
             // When & Then
-            mockMvc.perform(post(ApiRoutes.Quizzes.ADMIN_QUIZZES)
+            var result = mockMvc.perform(post(ApiRoutes.Quizzes.ADMIN_QUIZZES)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(quizUpsertDTO)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.title").exists())
-                    .andExpect(jsonPath("$.categoryId").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.VALIDATION_ERROR.getMessage()));
+
+            // Vérifie le nombre d'erreurs en comptant les clés de l'objet
+            result.andExpect(jsonPath("$.errors", Matchers.aMapWithSize(expectedErrors.length)));
+
+            // Vérifie que chaque erreur attendue est présente dans le tableau des erreurs
+            for (String expectedError : expectedErrors) {
+                result.andExpect(jsonPath("$.errors.*", Matchers.hasItem(expectedError)));
+            }
+
         }
     }
 
@@ -234,7 +281,7 @@ public class QuizAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(quizUpsertDTO)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.title").value(quizAdminDetailsDTO.title()));
+                    .andExpect(content().json(objectMapper.writeValueAsString(quizAdminDetailsDTO)));
         }
 
         @Test
@@ -249,22 +296,36 @@ public class QuizAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(quizUpsertDTO)))
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.ALREADY_EXIST.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.ALREADY_EXIST.getMessage()));
         }
 
-        @Test
+        @ParameterizedTest
+        @MethodSource("com.dassonville.api.util.TestValidationProvider#invalidQuizUpsertCases")
         @DisplayName("Erreur - Données invalides")
-        public void updateInvalidQuiz_shouldReturn400() throws Exception {
+        public void updateInvalidQuiz_shouldReturn400(
+                QuizUpsertDTO quizUpsertDTO,
+                String... expectedErrors
+        ) throws Exception {
             // Given
-            quizUpsertDTO = new QuizUpsertDTO("", null, null);
+            when(categoryRepository.existsByIdAndThemeId(anyLong(), anyLong()))
+                    .thenReturn(false);
 
             // When & Then
-            mockMvc.perform(put(ApiRoutes.Quizzes.ADMIN_BY_ID, endpointId)
+            var result = mockMvc.perform(put(ApiRoutes.Quizzes.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(quizUpsertDTO)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.title").exists())
-                    .andExpect(jsonPath("$.themeId").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.VALIDATION_ERROR.getMessage()));
+
+            // Vérifie le nombre d'erreurs en comptant les clés de l'objet
+            result.andExpect(jsonPath("$.errors", Matchers.aMapWithSize(expectedErrors.length)));
+
+            // Vérifie que chaque erreur attendue est présente dans le tableau des erreurs
+            for (String expectedError : expectedErrors) {
+                result.andExpect(jsonPath("$.errors.*", Matchers.hasItem(expectedError)));
+            }
         }
 
         @Test
@@ -279,7 +340,8 @@ public class QuizAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(quizUpsertDTO)))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
     }
 
@@ -308,7 +370,8 @@ public class QuizAdminControllerTest {
             // When & Then
             mockMvc.perform(delete(ApiRoutes.Quizzes.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
     }
 
@@ -341,7 +404,8 @@ public class QuizAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
     }
 }

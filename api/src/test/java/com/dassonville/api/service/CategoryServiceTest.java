@@ -1,9 +1,10 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.CategoryAdminDTO;
-import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.request.CategoryUpsertDTO;
+import com.dassonville.api.dto.response.CategoryAdminDTO;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.CategoryMapper;
 import com.dassonville.api.model.Category;
@@ -11,10 +12,8 @@ import com.dassonville.api.model.Theme;
 import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.repository.CategoryRepository;
 import com.dassonville.api.repository.ThemeRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import com.dassonville.api.util.TestIdAndNameProjection;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
@@ -25,11 +24,12 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-
+@Tag("service")
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UNI - Service : Catégorie")
 public class CategoryServiceTest {
@@ -56,14 +56,15 @@ public class CategoryServiceTest {
 
         id = 1L;
 
-        category = new Category();
-        category.setId(1L);
-        category.setName("Catégorie");
-        category.setDescription("Description");
-        category.setCreatedAt(LocalDateTime.now());
-        category.setUpdatedAt(LocalDateTime.now());
-        category.setDisabledAt(null);
-        category.setTheme(new Theme(1L));
+        category = Category.builder()
+                .id(id)
+                .name("Catégorie")
+                .description("Description")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .disabledAt(null)
+                .theme(new Theme(1L))
+                .build();
 
         categoryUpsertDTO = new CategoryUpsertDTO(" catégorie", " description");
     }
@@ -77,26 +78,26 @@ public class CategoryServiceTest {
         @DisplayName("Succès")
         void getCategoriesByTheme_existingTheme() {
             // Given
-            IdAndNameProjection idAndNameProjection = mock(IdAndNameProjection.class);
-            when(idAndNameProjection.getId()).thenReturn(1L);
-            when(idAndNameProjection.getName()).thenReturn("Catégorie");
+            IdAndNameProjection projection = new TestIdAndNameProjection();
 
             when(themeRepository.existsById(anyLong()))
                     .thenReturn(true);
             when(categoryRepository.findAllByThemeIdOrderByName(anyLong()))
-                    .thenReturn(List.of(idAndNameProjection));
+                    .thenReturn(List.of(projection));
 
             // When
-            List<IdAndNameProjection> result = categoryService.findAllByTheme(1L);
+            List<IdAndNameProjection> result = categoryService.findAllByTheme(id);
 
             // Then
-            verify(themeRepository).existsById(anyLong());
-            verify(categoryRepository).findAllByThemeIdOrderByName(anyLong());
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).existsById(id),
+                    () -> verify(categoryRepository).findAllByThemeIdOrderByName(id)
+            );
 
-            assertThat(result).isNotNull();
-            assertThat(result).hasSize(1);
-            assertThat(result.getFirst().getId()).isEqualTo(category.getId());
-            assertThat(result.getFirst().getName()).isEqualTo(category.getName());
+            assertAll("Assertions for projection",
+                    () -> assertThat(result).isNotNull(),
+                    () -> assertThat(result).hasSize(1)
+            );
         }
 
         @Test
@@ -107,11 +108,14 @@ public class CategoryServiceTest {
                     .thenReturn(false);
 
             // When
-            assertThrows(NotFoundException.class, () -> categoryService.findAllByTheme(1L));
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> categoryService.findAllByTheme(id));
 
             // Then
-            verify(themeRepository).existsById(anyLong());
-            verify(categoryRepository, never()).findAllByThemeIdOrderByName(anyLong());
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_NOT_FOUND),
+                    () -> verify(themeRepository).existsById(id),
+                    () -> verifyNoInteractions(categoryRepository)
+            );
         }
     }
 
@@ -131,16 +135,19 @@ public class CategoryServiceTest {
             CategoryAdminDTO result = categoryService.findById(id);
 
             // Then
-            verify(categoryRepository).findById(anyLong());
+            assertAll("Verify methods calls",
+                    () -> verify(categoryRepository).findById(id)
+            );
 
-            assertThat(result).isNotNull();
-            assertThat(result.id()).isEqualTo(category.getId());
-            assertThat(result.name()).isEqualTo(category.getName());
-            assertThat(result.description()).isEqualTo(category.getDescription());
-            assertThat(result.createdAt()).isEqualTo(category.getCreatedAt());
-            assertThat(result.updatedAt()).isEqualTo(category.getUpdatedAt());
-            assertThat(result.disabledAt()).isEqualTo(category.getDisabledAt());
-            assertThat(result.themeId()).isEqualTo(category.getTheme().getId());
+            assertAll("Assertions for DTO",
+                    () -> assertThat(result.id()).isEqualTo(category.getId()),
+                    () -> assertThat(result.name()).isEqualTo(category.getName()),
+                    () -> assertThat(result.description()).isEqualTo(category.getDescription()),
+                    () -> assertThat(result.createdAt()).isEqualTo(category.getCreatedAt()),
+                    () -> assertThat(result.updatedAt()).isEqualTo(category.getUpdatedAt()),
+                    () -> assertThat(result.disabledAt()).isEqualTo(category.getDisabledAt()),
+                    () -> assertThat(result.themeId()).isEqualTo(category.getTheme().getId())
+            );
         }
 
         @Test
@@ -151,10 +158,15 @@ public class CategoryServiceTest {
                     .thenReturn(Optional.empty());
 
             // When
-            assertThrows(NotFoundException.class, () -> categoryService.findById(id));
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> categoryService.findById(id));
 
             // Then
             verify(categoryRepository).findById(anyLong());
+
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CATEGORY_NOT_FOUND),
+                    () -> verify(categoryRepository).findById(id)
+            );
         }
     }
 
@@ -175,20 +187,23 @@ public class CategoryServiceTest {
                     .thenReturn(category);
 
             // When
-            CategoryAdminDTO result = categoryService.create(1L, categoryUpsertDTO);
+            CategoryAdminDTO result = categoryService.create(id, categoryUpsertDTO);
 
             // Then
-            verify(themeRepository).existsById(anyLong());
-            verify(categoryRepository).existsByNameIgnoreCase(anyString());
-            verify(categoryRepository).save(any(Category.class));
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).existsById(id),
+                    () -> verify(categoryRepository).existsByNameIgnoreCase(anyString()),
+                    () -> verify(categoryRepository).save(any(Category.class))
+            );
 
-            assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(category.getName());
-            assertThat(result.description()).isEqualTo(category.getDescription());
-            assertThat(result.createdAt()).isEqualTo(category.getCreatedAt());
-            assertThat(result.updatedAt()).isEqualTo(category.getUpdatedAt());
-            assertThat(result.disabledAt()).isEqualTo(category.getDisabledAt());
-            assertThat(result.themeId()).isEqualTo(category.getTheme().getId());
+            assertAll("Assertions for DTO",
+                    () -> assertThat(result.name()).isEqualTo(category.getName()),
+                    () -> assertThat(result.description()).isEqualTo(category.getDescription()),
+                    () -> assertThat(result.createdAt()).isEqualTo(category.getCreatedAt()),
+                    () -> assertThat(result.updatedAt()).isEqualTo(category.getUpdatedAt()),
+                    () -> assertThat(result.disabledAt()).isEqualTo(category.getDisabledAt()),
+                    () -> assertThat(result.themeId()).isEqualTo(category.getTheme().getId())
+            );
         }
 
         @Test
@@ -199,12 +214,14 @@ public class CategoryServiceTest {
                     .thenReturn(false);
 
             // When
-            assertThrows(NotFoundException.class, () -> categoryService.create(1L, categoryUpsertDTO));
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> categoryService.create(id, categoryUpsertDTO));
 
             // Then
-            verify(themeRepository).existsById(anyLong());
-            verify(categoryRepository, never()).existsByNameIgnoreCase(anyString());
-            verify(categoryRepository, never()).save(any(Category.class));
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_NOT_FOUND),
+                    () -> verify(themeRepository).existsById(id),
+                    () -> verifyNoInteractions(categoryRepository)
+            );
         }
 
         @Test
@@ -217,12 +234,15 @@ public class CategoryServiceTest {
                     .thenReturn(true);
 
             // When
-            assertThrows(AlreadyExistException.class, () -> categoryService.create(1L, categoryUpsertDTO));
+            AlreadyExistException exception = assertThrows(AlreadyExistException.class, () -> categoryService.create(id, categoryUpsertDTO));
 
             // Then
-            verify(themeRepository).existsById(anyLong());
-            verify(categoryRepository).existsByNameIgnoreCase(anyString());
-            verify(categoryRepository, never()).save(any(Category.class));
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CATEGORY_ALREADY_EXISTS),
+                    () -> verify(themeRepository).existsById(id),
+                    () -> verify(categoryRepository).existsByNameIgnoreCase(category.getName()),
+                    () -> verifyNoMoreInteractions(categoryRepository)
+            );
         }
     }
 
@@ -230,6 +250,24 @@ public class CategoryServiceTest {
     @Nested
     @DisplayName("Mise à jour d'une catégorie")
     class UpdateTest {
+
+        private Category categoryUpdated;
+        private CategoryUpsertDTO categoryToUpdateDTO;
+
+        @BeforeEach
+        void setUpUpdate() {
+            categoryUpdated = Category.builder()
+                    .id(id)
+                    .name("Catégorie mise à jour")
+                    .description("Description mise à jour")
+                    .createdAt(category.getCreatedAt())
+                    .updatedAt(LocalDateTime.now())
+                    .disabledAt(category.getDisabledAt())
+                    .theme(category.getTheme())
+                    .build();
+
+            categoryToUpdateDTO = new CategoryUpsertDTO(" catégorie mise à jour  ", " description mise à jour  ");
+        }
 
         @Test
         @DisplayName("Succès")
@@ -239,24 +277,30 @@ public class CategoryServiceTest {
                     .thenReturn(Optional.of(category));
             when(categoryRepository.existsByNameIgnoreCaseAndIdNot(anyString(), anyLong()))
                     .thenReturn(false);
-            when(categoryRepository.save(any(Category.class)))
-                    .thenReturn(category);
 
             // When
-            CategoryAdminDTO result = categoryService.update(id, categoryUpsertDTO);
+            CategoryAdminDTO result = categoryService.update(id, categoryToUpdateDTO);
 
             // Then
-            verify(categoryRepository).findById(anyLong());
-            verify(categoryRepository).existsByNameIgnoreCaseAndIdNot(anyString(), anyLong());
-            verify(categoryRepository).save(any(Category.class));
+            assertAll("Verify methods calls",
+                    () -> verify(categoryRepository).findById(id),
+                    () -> verify(categoryRepository).existsByNameIgnoreCaseAndIdNot(anyString(), eq(id))
+            );
 
-            assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(category.getName());
-            assertThat(result.description()).isEqualTo(category.getDescription());
-            assertThat(result.createdAt()).isEqualTo(category.getCreatedAt());
-            assertThat(result.updatedAt()).isEqualTo(category.getUpdatedAt());
-            assertThat(result.disabledAt()).isEqualTo(category.getDisabledAt());
-            assertThat(result.themeId()).isEqualTo(category.getTheme().getId());
+            assertAll("Verify updated entity",
+                    () -> assertThat(category.getName()).isEqualTo(categoryUpdated.getName()),
+                    () -> assertThat(category.getDescription()).isEqualTo(categoryUpdated.getDescription())
+            );
+
+            assertAll("Assertions for DTO",
+                    () -> assertThat(result.id()).isEqualTo(category.getId()),
+                    () -> assertThat(result.name()).isEqualTo(category.getName()),
+                    () -> assertThat(result.description()).isEqualTo(category.getDescription()),
+                    () -> assertThat(result.createdAt()).isEqualTo(category.getCreatedAt()),
+                    () -> assertThat(result.updatedAt()).isEqualTo(category.getUpdatedAt()),
+                    () -> assertThat(result.disabledAt()).isEqualTo(category.getDisabledAt()),
+                    () -> assertThat(result.themeId()).isEqualTo(category.getTheme().getId())
+            );
         }
 
         @Test
@@ -267,12 +311,14 @@ public class CategoryServiceTest {
                     .thenReturn(Optional.empty());
 
             // When
-            assertThrows(NotFoundException.class, () -> categoryService.update(id, categoryUpsertDTO));
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> categoryService.update(id, categoryToUpdateDTO));
 
             // Then
-            verify(categoryRepository).findById(anyLong());
-            verify(categoryRepository, never()).existsByNameIgnoreCase(anyString());
-            verify(categoryRepository, never()).save(any(Category.class));
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CATEGORY_NOT_FOUND),
+                    () -> verify(categoryRepository).findById(id),
+                    () -> verifyNoMoreInteractions(categoryRepository)
+            );
         }
 
         @Test
@@ -285,12 +331,14 @@ public class CategoryServiceTest {
                     .thenReturn(true);
 
             // When
-            assertThrows(AlreadyExistException.class, () -> categoryService.update(id, categoryUpsertDTO));
+            AlreadyExistException exception = assertThrows(AlreadyExistException.class, () -> categoryService.update(id, categoryToUpdateDTO));
 
             // Then
-            verify(categoryRepository).findById(anyLong());
-            verify(categoryRepository).existsByNameIgnoreCaseAndIdNot(anyString(), anyLong());
-            verify(categoryRepository, never()).save(any(Category.class));
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CATEGORY_ALREADY_EXISTS),
+                    () -> verify(categoryRepository).findById(id),
+                    () -> verify(categoryRepository).existsByNameIgnoreCaseAndIdNot(anyString(), eq(id))
+            );
         }
     }
 
@@ -310,8 +358,10 @@ public class CategoryServiceTest {
             categoryService.delete(id);
 
             // Then
-            verify(categoryRepository).existsById(anyLong());
-            verify(categoryRepository).deleteById(anyLong());
+            assertAll("Verify methods calls",
+                    () -> verify(categoryRepository).existsById(id),
+                    () -> verify(categoryRepository).deleteById(id)
+            );
         }
 
         @Test
@@ -322,11 +372,14 @@ public class CategoryServiceTest {
                     .thenReturn(false);
 
             // When
-            assertThrows(NotFoundException.class, () -> categoryService.delete(id));
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> categoryService.delete(id));
 
             // Then
-            verify(categoryRepository).existsById(anyLong());
-            verify(categoryRepository, never()).deleteById(anyLong());
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CATEGORY_NOT_FOUND),
+                    () -> verify(categoryRepository).existsById(id),
+                    () -> verifyNoMoreInteractions(categoryRepository)
+            );
         }
     }
 
@@ -346,8 +399,10 @@ public class CategoryServiceTest {
             categoryService.updateVisibility(id, false);
 
             // Then
-            verify(categoryRepository).findById(anyLong());
-            verify(categoryRepository).save(any(Category.class));
+            assertAll(
+                    () -> verify(categoryRepository).findById(id),
+                    () -> assertThat(category.isVisible()).isFalse()
+            );
         }
 
         @Test
@@ -361,8 +416,10 @@ public class CategoryServiceTest {
             categoryService.updateVisibility(id, true);
 
             // Then
-            verify(categoryRepository).findById(anyLong());
-            verify(categoryRepository, never()).save(any(Category.class));
+            assertAll(
+                    () -> verify(categoryRepository).findById(id),
+                    () -> assertThat(category.isVisible()).isTrue()
+            );
         }
 
         @Test
@@ -373,11 +430,13 @@ public class CategoryServiceTest {
                     .thenReturn(Optional.empty());
 
             // When
-            assertThrows(NotFoundException.class, () -> categoryService.updateVisibility(id, false));
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> categoryService.updateVisibility(id, false));
 
             // Then
-            verify(categoryRepository).findById(anyLong());
-            verify(categoryRepository, never()).save(any(Category.class));
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CATEGORY_NOT_FOUND),
+                    () -> verify(categoryRepository).findById(id)
+            );
         }
     }
 }

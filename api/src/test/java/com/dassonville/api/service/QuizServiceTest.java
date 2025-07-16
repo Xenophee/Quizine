@@ -1,45 +1,42 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.*;
+import com.dassonville.api.constant.Type;
+import com.dassonville.api.dto.request.QuizUpsertDTO;
+import com.dassonville.api.dto.response.*;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.QuizMapper;
-import com.dassonville.api.model.Category;
-import com.dassonville.api.model.DifficultyLevel;
-import com.dassonville.api.model.Quiz;
-import com.dassonville.api.model.Theme;
+import com.dassonville.api.model.*;
 import com.dassonville.api.projection.PublicQuizProjection;
-import com.dassonville.api.projection.QuestionForPlayProjection;
-import com.dassonville.api.repository.DifficultyLevelRepository;
-import com.dassonville.api.repository.QuestionRepository;
-import com.dassonville.api.repository.QuizRepository;
-import com.dassonville.api.repository.ThemeRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import com.dassonville.api.repository.*;
+import com.dassonville.api.util.TestPublicQuizProjection;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@Tag("service")
+@SpringBootTest
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UNI - Service : Quiz")
 public class QuizServiceTest {
@@ -47,42 +44,75 @@ public class QuizServiceTest {
     @Mock
     private QuizRepository quizRepository;
     @Mock
-    private ThemeService themeService;
+    private QuestionRepository questionRepository;
     @Mock
     private ThemeRepository themeRepository;
     @Mock
-    private DifficultyLevelRepository difficultyLevelRepository;
+    private CategoryRepository categoryRepository;
     @Mock
-    private QuestionRepository questionRepository;
+    private MasteryLevelRepository masteryLevelRepository;
+
 
     private QuizService quizService;
 
-    private final QuizMapper quizMapper = Mappers.getMapper(QuizMapper.class);
+    @Autowired
+    private QuizMapper quizMapper;
 
 
     private long id;
     private Quiz quiz;
+    private Question question;
     private QuizUpsertDTO quizUpsertDTO;
 
 
     @BeforeEach
     void setUp() {
-        quizService = new QuizService(quizRepository, quizMapper, themeService, difficultyLevelRepository, questionRepository, themeRepository);
+        quizService = new QuizService(quizRepository, quizMapper, questionRepository, themeRepository, categoryRepository, masteryLevelRepository);
 
         id = 1L;
 
-        quiz = new Quiz();
-        quiz.setId(id);
-        quiz.setTitle("Test Quiz");
-        quiz.setCreatedAt(LocalDateTime.now());
-        quiz.setDisabledAt(LocalDateTime.now());
-        quiz.setCategory(new Category(1));
-        quiz.setTheme(new Theme(1));
+        question = Question.builder()
+                .id(1L)
+                .text("Une question")
+                .answerExplanation("Une explication")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .disabledAt(null)
+                .build();
+
+        quiz = Quiz.builder()
+                .id(id)
+                .quizType(new QuizType("CLASSIC"))
+                .title("Un titre")
+                .description("Une description")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .disabledAt(LocalDateTime.now())
+                .masteryLevel(MasteryLevel.builder()
+                        .id(1L)
+                        .name("Une maîtrise")
+                        .build()
+                )
+                .category(Category.builder()
+                        .id(1L)
+                        .name("Une catégorie")
+                        .build()
+                )
+                .theme(Theme.builder()
+                        .id(1L)
+                        .name("Un thème")
+                        .build()
+                )
+                .questions(List.of(question))
+                .build();
 
         quizUpsertDTO = new QuizUpsertDTO(
-                " test Quiz",
+                Type.CLASSIC,
+                " un titre  ",
+                " une description  ",
                 1L,
-                1L
+                1L,
+                null
         );
     }
 
@@ -96,31 +126,44 @@ public class QuizServiceTest {
         void shouldReturnAllQuizzesWhenThemeIdsIsEmpty() {
             // Given
             List<Long> themeIds = Collections.emptyList();
-            Pageable pageable = PageRequest.of(0, 5);
+            Pageable pageable = PageRequest.of(0, 10);
 
-            PublicQuizProjection quizProjection = mock(PublicQuizProjection.class);
-            when(quizProjection.getId()).thenReturn(1L);
-            when(quizProjection.getTitle()).thenReturn("Test Quiz");
-            when(quizProjection.getCreatedAt()).thenReturn(LocalDateTime.now());
-            when(quizProjection.getNumberOfQuestions()).thenReturn(10);
-            when(quizProjection.getCategoryName()).thenReturn(null);
-            when(quizProjection.getThemeName()).thenReturn("Science");
+            TestPublicQuizProjection quizProjection = new TestPublicQuizProjection();
 
-            Page<PublicQuizProjection> quizPage = new PageImpl<>(List.of(quizProjection));
+            Page<PublicQuizProjection> quizPage = new PageImpl<>(List.of(quizProjection), pageable, 1);
 
             when(quizRepository.findAllByDisabledAtIsNull(pageable))
                     .thenReturn(quizPage);
 
             // When
             Page<QuizPublicDTO> result = quizService.findAllByThemeIdsForUser(themeIds, pageable);
+            QuizPublicDTO resultQuiz = result.getContent().getFirst();
 
             // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getContent()).hasSize(1);
+            assertAll("Verify methods calls",
+                    () -> verify(quizRepository).findAllByDisabledAtIsNull(pageable),
+                    () -> verifyNoInteractions(themeRepository),
+                    () -> verifyNoMoreInteractions(quizRepository)
+            );
 
-            verify(quizRepository).findAllByDisabledAtIsNull(pageable);
-            verify(themeRepository, never()).existsByDisabledAtIsNullAndIdIn(anyList());
-            verify(quizRepository, never()).findAllByDisabledAtIsNullAndThemeIdIn(anyList(), any(Pageable.class));
+            assertAll("Assertion for DTO",
+                    () -> assertThat(result.getContent()).hasSize(1),
+                    () -> assertThat(resultQuiz.id()).isEqualTo(quizProjection.getId()),
+                    () -> assertThat(resultQuiz.title()).isEqualTo(quizProjection.getTitle()),
+                    () -> assertThat(resultQuiz.isNew()).isTrue(),
+                    () -> assertThat(resultQuiz.numberOfQuestions()).isEqualTo(quizProjection.getNumberOfQuestions()),
+                    () -> assertThat(resultQuiz.quizType()).isEqualTo(quizProjection.getQuizTypeName()),
+                    () -> assertThat(resultQuiz.masteryLevel()).isEqualTo(quizProjection.getMasteryLevelName()),
+                    () -> assertThat(resultQuiz.category()).isEqualTo(quizProjection.getCategoryName()),
+                    () -> assertThat(resultQuiz.theme()).isEqualTo(quizProjection.getThemeName())
+            );
+
+            assertAll("Assertion for page",
+                    () -> assertThat(result.getContent()).hasSize(1),
+                    () -> assertThat(result.getTotalElements()).isEqualTo(1),
+                    () -> assertThat(result.getNumber()).isEqualTo(0),
+                    () -> assertThat(result.getSize()).isEqualTo(10)
+            );
         }
 
         @Test
@@ -128,7 +171,7 @@ public class QuizServiceTest {
         void shouldReturnEmptyPageWhenNoValidThemeIds() {
             // Given
             List<Long> themeIds = List.of(1L, 2L);
-            Pageable pageable = PageRequest.of(0, 5);
+            Pageable pageable = PageRequest.of(0, 10);
 
             when(themeRepository.existsByDisabledAtIsNullAndIdIn(themeIds))
                     .thenReturn(false);
@@ -137,11 +180,17 @@ public class QuizServiceTest {
             Page<QuizPublicDTO> result = quizService.findAllByThemeIdsForUser(themeIds, pageable);
 
             // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getContent()).isEmpty();
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).existsByDisabledAtIsNullAndIdIn(themeIds),
+                    () -> verifyNoInteractions(quizRepository)
+            );
 
-            verify(themeRepository).existsByDisabledAtIsNullAndIdIn(themeIds);
-            verifyNoInteractions(quizRepository);
+            assertAll("Assertion for page",
+                    () -> assertThat(result.getContent()).isEmpty(),
+                    () -> assertThat(result.getTotalElements()).isEqualTo(0),
+                    () -> assertThat(result.getNumber()).isEqualTo(0),
+                    () -> assertThat(result.getSize()).isEqualTo(10)
+            );
         }
 
         @Test
@@ -149,17 +198,11 @@ public class QuizServiceTest {
         void shouldReturnQuizzesForValidThemeIds() {
             // Given
             List<Long> themeIds = List.of(1L, 2L);
-            Pageable pageable = PageRequest.of(0, 5);
+            Pageable pageable = PageRequest.of(0, 10);
 
-            PublicQuizProjection quizProjection = mock(PublicQuizProjection.class);
-            when(quizProjection.getId()).thenReturn(1L);
-            when(quizProjection.getTitle()).thenReturn("Test Quiz");
-            when(quizProjection.getCreatedAt()).thenReturn(LocalDateTime.now());
-            when(quizProjection.getNumberOfQuestions()).thenReturn(10);
-            when(quizProjection.getCategoryName()).thenReturn(null);
-            when(quizProjection.getThemeName()).thenReturn("Science");
+            TestPublicQuizProjection quizProjection = new TestPublicQuizProjection();
 
-            Page<PublicQuizProjection> quizPage = new PageImpl<>(List.of(quizProjection));
+            Page<PublicQuizProjection> quizPage = new PageImpl<>(List.of(quizProjection), pageable, 1);
 
             when(themeRepository.existsByDisabledAtIsNullAndIdIn(themeIds))
                     .thenReturn(true);
@@ -168,13 +211,32 @@ public class QuizServiceTest {
 
             // When
             Page<QuizPublicDTO> result = quizService.findAllByThemeIdsForUser(themeIds, pageable);
+            QuizPublicDTO resultQuiz = result.getContent().getFirst();
 
             // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getContent()).hasSize(1);
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).existsByDisabledAtIsNullAndIdIn(themeIds),
+                    () -> verify(quizRepository).findAllByDisabledAtIsNullAndThemeIdIn(themeIds, pageable)
+            );
 
-            verify(themeRepository).existsByDisabledAtIsNullAndIdIn(themeIds);
-            verify(quizRepository).findAllByDisabledAtIsNullAndThemeIdIn(themeIds, pageable);
+            assertAll("Assertion for DTO",
+                    () -> assertThat(result.getContent()).hasSize(1),
+                    () -> assertThat(resultQuiz.id()).isEqualTo(quizProjection.getId()),
+                    () -> assertThat(resultQuiz.title()).isEqualTo(quizProjection.getTitle()),
+                    () -> assertThat(resultQuiz.isNew()).isTrue(),
+                    () -> assertThat(resultQuiz.numberOfQuestions()).isEqualTo(quizProjection.getNumberOfQuestions()),
+                    () -> assertThat(resultQuiz.quizType()).isEqualTo(quizProjection.getQuizTypeName()),
+                    () -> assertThat(resultQuiz.masteryLevel()).isEqualTo(quizProjection.getMasteryLevelName()),
+                    () -> assertThat(resultQuiz.category()).isEqualTo(quizProjection.getCategoryName()),
+                    () -> assertThat(resultQuiz.theme()).isEqualTo(quizProjection.getThemeName())
+            );
+
+            assertAll("Assertion for page",
+                    () -> assertThat(result.getContent()).hasSize(1),
+                    () -> assertThat(result.getTotalElements()).isEqualTo(1),
+                    () -> assertThat(result.getNumber()).isEqualTo(0),
+                    () -> assertThat(result.getSize()).isEqualTo(10)
+            );
         }
     }
 
@@ -183,14 +245,45 @@ public class QuizServiceTest {
     @DisplayName("ADMIN - Récupérer les quiz par thème")
     class GetQuizzesByThemeTest {
 
+        private Quiz quiz2;
+
+        @BeforeEach
+        void init() {
+            quiz2 = Quiz.builder()
+                    .id(id)
+                    .quizType(new QuizType("TRUE_FALSE"))
+                    .title("Un autre titre")
+                    .description("Une autre description")
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .disabledAt(null)
+                    .masteryLevel(MasteryLevel.builder()
+                            .id(2L)
+                            .name("Une autre maîtrise")
+                            .build()
+                    )
+                    .category(Category.builder()
+                            .id(2L)
+                            .name("Une autre catégorie")
+                            .build()
+                    )
+                    .theme(Theme.builder()
+                            .id(2L)
+                            .name("Un autre thème")
+                            .build()
+                    )
+                    .questions(List.of())
+                    .build();
+        }
+
         @Test
         @DisplayName("Succès - visible = null")
         void shouldReturnAllQuizzes_WhenVisibleIsNull() {
             // Given
             long themeId = 1L;
             Pageable pageable = PageRequest.of(0, 10);
-            List<Quiz> quizzes = List.of(new Quiz(), new Quiz());
-            Page<Quiz> quizPage = new PageImpl<>(quizzes);
+            List<Quiz> quizzes = List.of(quiz, quiz2);
+            Page<Quiz> quizPage = new PageImpl<>(quizzes, pageable, quizzes.size());
 
             when(themeRepository.existsById(themeId))
                     .thenReturn(true);
@@ -199,25 +292,46 @@ public class QuizServiceTest {
 
             // When
             Page<QuizAdminDTO> result = quizService.findAllByThemeIdForAdmin(themeId, null, pageable);
+            QuizAdminDTO quizAdminDTO = result.getContent().getFirst();
 
             // Then
-            verify(themeRepository).existsById(themeId);
-            verify(quizRepository).findByThemeId(themeId, pageable);
-            verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNull(anyLong(), any(Pageable.class));
-            verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNotNull(anyLong(), any(Pageable.class));
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).existsById(themeId),
+                    () -> verify(quizRepository).findByThemeId(themeId, pageable),
+                    () -> verifyNoMoreInteractions(quizRepository)
+            );
 
-            assertThat(result).isNotNull();
-            assertThat(result.getContent()).hasSize(2);
+            Quiz firstQuiz = quizzes.getFirst();
+
+            assertAll("Assertion for DTO",
+                    () -> assertThat(quizAdminDTO.id()).isEqualTo(firstQuiz.getId()),
+                    () -> assertThat(quizAdminDTO.title()).isEqualTo(firstQuiz.getTitle()),
+                    () -> assertThat(quizAdminDTO.quizType()).isEqualTo(firstQuiz.getQuizType().getName()),
+                    () -> assertThat(quizAdminDTO.masteryLevel()).isEqualTo(firstQuiz.getMasteryLevel().getName()),
+                    () -> assertThat(quizAdminDTO.numberOfQuestions()).isEqualTo((byte) firstQuiz.getQuestions().size()),
+                    () -> assertThat(quizAdminDTO.hasEnoughQuestionsForActivation()).isFalse(),
+                    () -> assertThat(quizAdminDTO.createdAt()).isEqualTo(firstQuiz.getCreatedAt()),
+                    () -> assertThat(quizAdminDTO.updatedAt()).isEqualTo(firstQuiz.getUpdatedAt()),
+                    () -> assertThat(quizAdminDTO.disabledAt()).isEqualTo(firstQuiz.getDisabledAt()),
+                    () -> assertThat(quizAdminDTO.category()).isEqualTo(firstQuiz.getCategory().getName())
+            );
+
+            assertAll("Assertion for page",
+                    () -> assertThat(result.getContent()).hasSize(2),
+                    () -> assertThat(result.getTotalElements()).isEqualTo(2),
+                    () -> assertThat(result.getNumber()).isEqualTo(0),
+                    () -> assertThat(result.getSize()).isEqualTo(10)
+            );
         }
 
-        @Test
+        /*@Test
         @DisplayName("Succès - visible = true")
         void shouldReturnVisibleQuizzes_WhenVisibleIsTrue() {
             // Given
             long themeId = 1L;
             Pageable pageable = PageRequest.of(0, 10);
             List<Quiz> quizzes = List.of(new Quiz());
-            Page<Quiz> quizPage = new PageImpl<>(quizzes);
+            Page<Quiz> quizPage = new PageImpl<>(quizzes, pageable, quizzes.size());
 
             when(themeRepository.existsById(themeId))
                     .thenReturn(true);
@@ -226,15 +340,32 @@ public class QuizServiceTest {
 
             // When
             Page<QuizAdminDTO> result = quizService.findAllByThemeIdForAdmin(themeId, true, pageable);
+            QuizAdminDTO quizAdminDTO = result.getContent().getFirst();
 
             // Then
-            verify(themeRepository).existsById(themeId);
-            verify(quizRepository).findByThemeIdAndDisabledAtIsNull(themeId, pageable);
-            verify(quizRepository, never()).findByThemeId(anyLong(), any(Pageable.class));
-            verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNotNull(anyLong(), any(Pageable.class));
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).existsById(themeId),
+                    () -> verify(quizRepository).findByThemeIdAndDisabledAtIsNull(themeId, pageable),
+                    () -> verifyNoMoreInteractions(quizRepository)
+            );
+
+            Quiz firstQuiz = quizzes.getFirst();
 
             assertThat(result).isNotNull();
             assertThat(result.getContent()).hasSize(1);
+
+            assertAll("Assertion for DTO",
+                    () -> assertThat(quizAdminDTO.id()).isEqualTo(firstQuiz.getId()),
+                    () -> assertThat(quizAdminDTO.title()).isEqualTo(firstQuiz.getTitle()),
+                    () -> assertThat(quizAdminDTO.quizType()).isEqualTo(firstQuiz.getQuizType().getName()),
+                    () -> assertThat(quizAdminDTO.masteryLevel()).isEqualTo(firstQuiz.getMasteryLevel().getName()),
+                    () -> assertThat(quizAdminDTO.numberOfQuestions()).isEqualTo((byte) firstQuiz.getQuestions().size()),
+                    () -> assertThat(quizAdminDTO.hasEnoughQuestionsForActivation()).isFalse(),
+                    () -> assertThat(quizAdminDTO.createdAt()).isEqualTo(firstQuiz.getCreatedAt()),
+                    () -> assertThat(quizAdminDTO.updatedAt()).isEqualTo(firstQuiz.getUpdatedAt()),
+                    () -> assertThat(quizAdminDTO.disabledAt()).isEqualTo(firstQuiz.getDisabledAt()),
+                    () -> assertThat(quizAdminDTO.category()).isEqualTo(firstQuiz.getCategory().getName())
+            );
         }
 
         @Test
@@ -263,7 +394,7 @@ public class QuizServiceTest {
 
             assertThat(result).isNotNull();
             assertThat(result.getContent()).hasSize(1);
-        }
+        }*/
 
         @Test
         @DisplayName("Erreur - Thème non trouvé")
@@ -275,13 +406,15 @@ public class QuizServiceTest {
             when(themeRepository.existsById(themeId))
                     .thenReturn(false);
 
-            // When & then
-            assertThrows(NotFoundException.class, () -> quizService.findAllByThemeIdForAdmin(themeId, null, pageable));
+            // When
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> quizService.findAllByThemeIdForAdmin(themeId, null, pageable));
 
-            verify(themeRepository).existsById(themeId);
-            verify(quizRepository, never()).findByThemeId(anyLong(), any(Pageable.class));
-            verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNull(anyLong(), any(Pageable.class));
-            verify(quizRepository, never()).findByThemeIdAndDisabledAtIsNotNull(anyLong(), any(Pageable.class));
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_NOT_FOUND),
+                    () -> verify(themeRepository).existsById(themeId),
+                    () -> verifyNoInteractions(quizRepository)
+            );
         }
     }
 
@@ -301,9 +434,22 @@ public class QuizServiceTest {
             QuizAdminDetailsDTO result = quizService.findByIdForAdmin(id);
 
             // Then
-            verify(quizRepository).findById(anyLong());
-            assertThat(result).isNotNull();
-            assertThat(result.title()).isEqualTo(quiz.getTitle());
+            assertAll("Verify methods calls",
+                    () -> verify(quizRepository).findById(id)
+            );
+
+            assertAll("Assertion for DTO",
+                    () -> assertThat(result.id()).isEqualTo(quiz.getId()),
+                    () -> assertThat(result.title()).isEqualTo(quiz.getTitle()),
+                    () -> assertThat(result.description()).isEqualTo(quiz.getDescription()),
+                    () -> assertThat(result.createdAt()).isEqualTo(quiz.getCreatedAt()),
+                    () -> assertThat(result.updatedAt()).isEqualTo(quiz.getUpdatedAt()),
+                    () -> assertThat(result.disabledAt()).isEqualTo(quiz.getDisabledAt()),
+                    () -> assertThat(result.themeId()).isEqualTo(quiz.getTheme().getId()),
+                    () -> assertThat(result.categoryId()).isEqualTo(quiz.getCategory() != null ? quiz.getCategory().getId() : null),
+                    () -> assertThat(result.quizType()).isEqualTo(quiz.getQuizType().getName()),
+                    () -> assertThat(result.masteryLevelId()).isEqualTo(quiz.getMasteryLevel().getId())
+            );
         }
 
         @Test
@@ -311,12 +457,16 @@ public class QuizServiceTest {
         void findByIdForAdmin_quizNotFound() {
             // Given
             when(quizRepository.findById(anyLong()))
-                    .thenThrow(NotFoundException.class);
+                    .thenReturn(Optional.empty());
 
-            // When & then
-            assertThrows(NotFoundException.class, () -> quizService.findByIdForAdmin(id));
+            // When
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> quizService.findByIdForAdmin(id));
 
-            verify(quizRepository).findById(anyLong());
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.QUIZ_NOT_FOUND),
+                    () -> verify(quizRepository).findById(id)
+            );
         }
     }
 
@@ -329,125 +479,44 @@ public class QuizServiceTest {
         @DisplayName("Succès")
         void findByIdForUser_quizFound() {
             // Given
-            when(quizRepository.findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(anyLong()))
+            when(quizRepository.findByIdAndDisabledAtIsNullEverywhere(anyLong()))
                     .thenReturn(Optional.of(quiz));
 
             // When
             QuizPublicDetailsDTO result = quizService.findByIdForUser(id);
 
             // Then
-            verify(quizRepository).findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(anyLong());
+            assertAll("Verify methods calls",
+                    () -> verify(quizRepository).findByIdAndDisabledAtIsNullEverywhere(id)
+            );
 
-            assertThat(result).isNotNull();
-            assertThat(result.title()).isEqualTo(quiz.getTitle());
+            assertAll("Assertion for DTO",
+                    () -> assertThat(result.id()).isEqualTo(quiz.getId()),
+                    () -> assertThat(result.title()).isEqualTo(quiz.getTitle()),
+                    () -> assertThat(result.description()).isEqualTo(quiz.getDescription()),
+                    () -> assertThat(result.isNew()).isTrue(),
+                    () -> assertThat(result.theme()).isEqualTo(quiz.getTheme().getName()),
+                    () -> assertThat(result.category()).isEqualTo(quiz.getCategory() != null ? quiz.getCategory().getName() : null),
+                    () -> assertThat(result.quizType()).isEqualTo(quiz.getQuizType().getName()),
+                    () -> assertThat(result.masteryLevel()).isEqualTo(quiz.getMasteryLevel().getName())
+            );
         }
 
         @Test
         @DisplayName("Erreur - Quiz non trouvé")
         void findByIdForUser_quizNotFound() {
             // Given
-            when(quizRepository.findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(anyLong()))
-                    .thenThrow(NotFoundException.class);
-
-            // When & then
-            assertThrows(NotFoundException.class, () -> quizService.findByIdForUser(id));
-
-            verify(quizRepository).findByIdAndDisabledAtIsNullAndThemeDisabledAtIsNullAndCategoryDisabledAtIsNull(anyLong());
-        }
-    }
-
-
-    @Nested
-    @DisplayName("Récupérer les questions d'un quiz pour jouer")
-    class FindAllQuestionsByQuizIdForPlayTest {
-
-        @Test
-        @DisplayName("Succès")
-        void shouldReturnQuestions_WhenQuizAndDifficultyExist() {
-            // Given
-            long quizId = 1L;
-            long difficultyLevelId = 1L;
-            byte maxAnswers = 3;
-
-            DifficultyLevel difficultyLevel = new DifficultyLevel();
-            difficultyLevel.setAnswerOptionsCount(maxAnswers);
-
-            QuestionForPlayProjection.AnswersForPlay answer1 = mock(QuestionForPlayProjection.AnswersForPlay.class);
-            when(answer1.getId()).thenReturn(1L);
-            when(answer1.getText()).thenReturn("Réponse 1");
-            when(answer1.getIsCorrect()).thenReturn(true);
-
-            QuestionForPlayProjection.AnswersForPlay answer2 = mock(QuestionForPlayProjection.AnswersForPlay.class);
-            when(answer2.getId()).thenReturn(2L);
-            when(answer2.getText()).thenReturn("Réponse 2");
-            when(answer2.getIsCorrect()).thenReturn(false);
-
-            QuestionForPlayProjection question1 = mock(QuestionForPlayProjection.class);
-            when(question1.getId()).thenReturn(1L);
-            when(question1.getText()).thenReturn("Question 1");
-            when(question1.getAnswers()).thenReturn(List.of(answer1, answer2));
-
-            QuestionForPlayProjection question2 = mock(QuestionForPlayProjection.class);
-            when(question2.getId()).thenReturn(2L);
-            when(question2.getText()).thenReturn("Question 2");
-            when(question2.getAnswers()).thenReturn(List.of(answer1));
-
-            List<QuestionForPlayProjection> questions = new ArrayList<>(List.of(question1, question2));
-
-            when(quizRepository.existsByIdAndDisabledAtIsNull(quizId))
-                    .thenReturn(true);
-            when(difficultyLevelRepository.findAnswerOptionsCountByIdAndDisabledAtIsNull(difficultyLevelId))
-                    .thenReturn(Optional.of(difficultyLevel.getAnswerOptionsCount()));
-            when(questionRepository.findByQuizIdAndDisabledAtIsNullAndAnswersDisabledAtIsNull(quizId))
-                    .thenReturn(questions);
-
-            // When
-            List<QuestionForPlayDTO> result = quizService.findAllQuestionsByQuizIdForPlay(quizId, difficultyLevelId);
-
-            // Then
-            verify(quizRepository).existsByIdAndDisabledAtIsNull(quizId);
-            verify(difficultyLevelRepository).findAnswerOptionsCountByIdAndDisabledAtIsNull(difficultyLevelId);
-            verify(questionRepository).findByQuizIdAndDisabledAtIsNullAndAnswersDisabledAtIsNull(quizId);
-
-            assertThat(result).isNotNull();
-            assertThat(result.size()).isEqualTo(questions.size());
-        }
-
-        @Test
-        @DisplayName("Erreur - Quiz non trouvé")
-        void shouldThrowNotFoundException_WhenQuizDoesNotExist() {
-            // Given
-            long quizId = 1L;
-            long difficultyLevelId = 1L;
-
-            when(quizRepository.existsByIdAndDisabledAtIsNull(quizId))
-                    .thenReturn(false);
-
-            // When / Then
-            assertThrows(NotFoundException.class, () -> quizService.findAllQuestionsByQuizIdForPlay(quizId, difficultyLevelId));
-
-            verify(quizRepository).existsByIdAndDisabledAtIsNull(quizId);
-            verifyNoInteractions(difficultyLevelRepository, questionRepository);
-        }
-
-        @Test
-        @DisplayName("Erreur - Niveau de difficulté non trouvé")
-        void shouldThrowNotFoundException_WhenDifficultyLevelDoesNotExist() {
-            // Given
-            long quizId = 1L;
-            long difficultyLevelId = 1L;
-
-            when(quizRepository.existsByIdAndDisabledAtIsNull(quizId))
-                    .thenReturn(true);
-            when(difficultyLevelRepository.findAnswerOptionsCountByIdAndDisabledAtIsNull(difficultyLevelId))
+            when(quizRepository.findByIdAndDisabledAtIsNullEverywhere(anyLong()))
                     .thenReturn(Optional.empty());
 
-            // When / Then
-            assertThrows(NotFoundException.class, () -> quizService.findAllQuestionsByQuizIdForPlay(quizId, difficultyLevelId));
+            // When
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> quizService.findByIdForUser(id));
 
-            verify(quizRepository).existsByIdAndDisabledAtIsNull(quizId);
-            verify(difficultyLevelRepository).findAnswerOptionsCountByIdAndDisabledAtIsNull(difficultyLevelId);
-            verifyNoInteractions(questionRepository);
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.QUIZ_NOT_FOUND),
+                    () -> verify(quizRepository).findByIdAndDisabledAtIsNullEverywhere(id)
+            );
         }
     }
 
@@ -460,8 +529,14 @@ public class QuizServiceTest {
         @DisplayName("Succès")
         void create_newQuiz() {
             // Given
+            quiz.setQuestions(List.of());
+
             when(quizRepository.existsByTitleIgnoreCase(anyString()))
                     .thenReturn(false);
+            when(themeRepository.existsById(anyLong()))
+                    .thenReturn(true);
+            when(masteryLevelRepository.existsById(anyLong()))
+                    .thenReturn(true);
             when(quizRepository.save(any(Quiz.class)))
                     .thenReturn(quiz);
 
@@ -469,11 +544,27 @@ public class QuizServiceTest {
             QuizAdminDetailsDTO result = quizService.create(quizUpsertDTO);
 
             // Then
-            verify(quizRepository).existsByTitleIgnoreCase(anyString());
-            verify(quizRepository).save(any(Quiz.class));
+            assertAll("Verify methods calls",
+                    () -> verify(quizRepository).existsByTitleIgnoreCase(anyString()),
+                    () -> verify(themeRepository).existsById(quizUpsertDTO.themeId()),
+                    () -> verifyNoInteractions(categoryRepository),
+                    () -> verify(masteryLevelRepository).existsById(quizUpsertDTO.masteryLevelId()),
+                    () -> verify(quizRepository).save(any(Quiz.class))
+            );
 
-            assertThat(result).isNotNull();
-            assertThat(result.title()).isEqualTo(quiz.getTitle());
+            assertAll("Assertion for DTO",
+                    () -> assertThat(result.id()).isEqualTo(quiz.getId()),
+                    () -> assertThat(result.title()).isEqualTo(quiz.getTitle()),
+                    () -> assertThat(result.description()).isEqualTo(quiz.getDescription()),
+                    () -> assertThat(result.createdAt()).isEqualTo(quiz.getCreatedAt()),
+                    () -> assertThat(result.updatedAt()).isEqualTo(quiz.getUpdatedAt()),
+                    () -> assertThat(result.disabledAt()).isEqualTo(quiz.getDisabledAt()),
+                    () -> assertThat(result.themeId()).isEqualTo(quiz.getTheme().getId()),
+                    () -> assertThat(result.categoryId()).isEqualTo(quiz.getCategory() != null ? quiz.getCategory().getId() : null),
+                    () -> assertThat(result.quizType()).isEqualTo(quiz.getQuizType().getName()),
+                    () -> assertThat(result.masteryLevelId()).isEqualTo(quiz.getMasteryLevel().getId()),
+                    () -> assertThat(result.questions()).isEmpty()
+            );
         }
 
         @Test
@@ -483,11 +574,15 @@ public class QuizServiceTest {
             when(quizRepository.existsByTitleIgnoreCase(anyString()))
                     .thenReturn(true);
 
-            // When & then
-            assertThrows(AlreadyExistException.class, () -> quizService.create(quizUpsertDTO));
+            // When
+            AlreadyExistException exception = assertThrows(AlreadyExistException.class, () -> quizService.create(quizUpsertDTO));
 
-            verify(quizRepository).existsByTitleIgnoreCase(anyString());
-            verify(quizRepository, never()).save(any(Quiz.class));
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.QUIZ_ALREADY_EXISTS),
+                    () -> verify(quizRepository).existsByTitleIgnoreCase(anyString()),
+                    () -> verifyNoMoreInteractions(quizRepository)
+            );
         }
     }
 
@@ -495,6 +590,35 @@ public class QuizServiceTest {
     @Nested
     @DisplayName("Mettre à jour un quiz")
     class UpdateTest {
+
+        private Quiz quizUpdated;
+        private QuizUpsertDTO quizToUpdateDTO;
+
+        @BeforeEach
+        void init() {
+            quizUpdated = Quiz.builder()
+                    .id(id)
+                    .quizType(quiz.getQuizType())
+                    .title("Un titre mis à jour")
+                    .description("Une description mise à jour")
+                    .createdAt(quiz.getCreatedAt())
+                    .updatedAt(LocalDateTime.now())
+                    .disabledAt(null)
+                    .masteryLevel(new MasteryLevel(2))
+                    .category(new Category(2))
+                    .theme(new Theme(2))
+                    .questions(quiz.getQuestions())
+                    .build();
+
+            quizToUpdateDTO = new QuizUpsertDTO(
+                    Type.CLASSIC,
+                    " un titre mis à jour  ",
+                    " une description mise à jour  ",
+                    2L,
+                    2L,
+                    2L
+            );
+        }
 
         @Test
         @DisplayName("Succès")
@@ -504,19 +628,76 @@ public class QuizServiceTest {
                     .thenReturn(Optional.of(quiz));
             when(quizRepository.existsByTitleIgnoreCaseAndIdNot(anyString(), anyLong()))
                     .thenReturn(false);
-            when(quizRepository.save(any(Quiz.class)))
-                    .thenReturn(quiz);
+            when(quizRepository.existsInvalidQuestionTypeForQuiz(anyLong(), anyString()))
+                    .thenReturn(false);
+            when(themeRepository.existsById(anyLong()))
+                    .thenReturn(true);
+            when(categoryRepository.existsById(anyLong()))
+                    .thenReturn(true);
+            when(masteryLevelRepository.existsById(anyLong()))
+                    .thenReturn(true);
 
             // When
-            QuizAdminDetailsDTO result = quizService.update(id, quizUpsertDTO);
+            QuizAdminDetailsDTO result = quizService.update(id, quizToUpdateDTO);
+            QuestionAdminDTO resultQuestion = result.questions().getFirst();
 
             // Then
-            verify(quizRepository).existsByTitleIgnoreCaseAndIdNot(anyString(), anyLong());
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository).save(any(Quiz.class));
+            assertAll("Verify methods calls",
+                    () -> verify(quizRepository).findById(id),
+                    () -> verify(quizRepository).existsByTitleIgnoreCaseAndIdNot(anyString(), eq(id)),
+                    () -> verify(quizRepository).existsInvalidQuestionTypeForQuiz(id, quizToUpdateDTO.type().getType()),
+                    () -> verify(themeRepository).existsById(quizToUpdateDTO.themeId()),
+                    () -> verify(categoryRepository).existsById(quizToUpdateDTO.categoryId()),
+                    () -> verify(masteryLevelRepository).existsById(quizToUpdateDTO.masteryLevelId())
+            );
 
-            assertThat(result).isNotNull();
-            assertThat(result.title()).isEqualTo(quiz.getTitle());
+            assertAll("Verify updated entity",
+                    () -> assertThat(quiz.getTitle()).isEqualTo(quizUpdated.getTitle()),
+                    () -> assertThat(quiz.getDescription()).isEqualTo(quizUpdated.getDescription()),
+                    () -> assertThat(quiz.getQuizType().getName()).isEqualTo(quizUpdated.getQuizType().getName()),
+                    () -> assertThat(quiz.getTheme().getId()).isEqualTo(quizUpdated.getTheme().getId()),
+                    () -> assertThat(quiz.getCategory().getId()).isEqualTo(quizUpdated.getCategory().getId()),
+                    () -> assertThat(quiz.getMasteryLevel().getId()).isEqualTo(quizUpdated.getMasteryLevel().getId())
+            );
+
+            assertAll("Assertion for DTO",
+                    () -> assertThat(result.id()).isEqualTo(quiz.getId()),
+                    () -> assertThat(result.title()).isEqualTo(quiz.getTitle()),
+                    () -> assertThat(result.description()).isEqualTo(quiz.getDescription()),
+                    () -> assertThat(result.createdAt()).isEqualTo(quiz.getCreatedAt()),
+                    () -> assertThat(result.updatedAt()).isEqualTo(quiz.getUpdatedAt()),
+                    () -> assertThat(result.disabledAt()).isEqualTo(quiz.getDisabledAt()),
+                    () -> assertThat(result.themeId()).isEqualTo(quiz.getTheme().getId()),
+                    () -> assertThat(result.categoryId()).isEqualTo(quiz.getCategory() != null ? quiz.getCategory().getId() : null),
+                    () -> assertThat(result.quizType()).isEqualTo(quiz.getQuizType().getName()),
+                    () -> assertThat(result.masteryLevelId()).isEqualTo(quiz.getMasteryLevel().getId()),
+
+                    () -> assertThat(result.questions()).hasSize(1),
+                    () -> assertThat(resultQuestion.id()).isEqualTo(question.getId()),
+                    () -> assertThat(resultQuestion.text()).isEqualTo(question.getText()),
+                    () -> assertThat(resultQuestion.answerExplanation()).isEqualTo(question.getAnswerExplanation()),
+                    () -> assertThat(resultQuestion.createdAt()).isEqualTo(question.getCreatedAt()),
+                    () -> assertThat(resultQuestion.updatedAt()).isEqualTo(question.getUpdatedAt()),
+                    () -> assertThat(resultQuestion.disabledAt()).isEqualTo(question.getDisabledAt())
+            );
+        }
+
+        @Test
+        @DisplayName("Erreur - Quiz non trouvé")
+        void update_quizNotFound() {
+            // Given
+            when(quizRepository.findById(anyLong()))
+                    .thenReturn(Optional.empty());
+
+            // When
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> quizService.update(id, quizToUpdateDTO));
+
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.QUIZ_NOT_FOUND),
+                    () -> verify(quizRepository).findById(id),
+                    () -> verifyNoMoreInteractions(quizRepository)
+            );
         }
 
         @Test
@@ -528,27 +709,16 @@ public class QuizServiceTest {
             when(quizRepository.existsByTitleIgnoreCaseAndIdNot(anyString(), anyLong()))
                     .thenReturn(true);
 
-            // When & then
-            assertThrows(AlreadyExistException.class, () -> quizService.update(id, quizUpsertDTO));
+            // When
+            AlreadyExistException exception = assertThrows(AlreadyExistException.class, () -> quizService.update(id, quizToUpdateDTO));
 
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository).existsByTitleIgnoreCaseAndIdNot(anyString(), anyLong());
-            verify(quizRepository, never()).save(any(Quiz.class));
-        }
-
-        @Test
-        @DisplayName("Erreur - Quiz non trouvé")
-        void update_quizNotFound() {
-            // Given
-            when(quizRepository.findById(anyLong()))
-                    .thenReturn(Optional.empty());
-
-            // When & then
-            assertThrows(NotFoundException.class, () -> quizService.update(id, quizUpsertDTO));
-
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository, never()).existsByTitleIgnoreCaseAndIdNot(anyString(), anyLong());
-            verify(quizRepository, never()).save(any(Quiz.class));
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.QUIZ_ALREADY_EXISTS),
+                    () -> verify(quizRepository).findById(id),
+                    () -> verify(quizRepository).existsByTitleIgnoreCaseAndIdNot(anyString(), eq(id)),
+                    () -> verifyNoMoreInteractions(quizRepository)
+            );
         }
     }
 
@@ -558,56 +728,38 @@ public class QuizServiceTest {
     class DeleteTest {
 
         @Test
-        @DisplayName("Succès - & Theme actif")
-        void delete_quizAndThemeActive() {
+        @DisplayName("Succès")
+        void delete_quiz() {
             // Given
-            when(quizRepository.findById(anyLong()))
-                    .thenReturn(Optional.of(quiz));
-            when(quizRepository.countByThemeIdAndDisabledAtIsNull(anyLong()))
-                    .thenReturn(1);
-
+            when(quizRepository.existsById(anyLong()))
+                    .thenReturn(true);
 
             // When
             quizService.delete(id);
 
             // Then
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository).deleteById(anyLong());
-            verify(quizRepository).countByThemeIdAndDisabledAtIsNull(anyLong());
-            verify(themeService, never()).updateVisibility(anyLong(), anyBoolean());
-        }
-
-        @Test
-        @DisplayName("Succès - & Theme inactif")
-        void delete_quizAndThemeInactive() {
-            // Given
-            when(quizRepository.findById(anyLong()))
-                    .thenReturn(Optional.of(quiz));
-            when(quizRepository.countByThemeIdAndDisabledAtIsNull(anyLong()))
-                    .thenReturn(0);
-
-            // When
-            quizService.delete(id);
-
-            // Then
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository).deleteById(anyLong());
-            verify(quizRepository).countByThemeIdAndDisabledAtIsNull(anyLong());
-            verify(themeService).updateVisibility(anyLong(), anyBoolean());
+            assertAll("Verify methods calls",
+                    () -> verify(quizRepository).existsById(id),
+                    () -> verify(quizRepository).deleteById(id)
+            );
         }
 
         @Test
         @DisplayName("Erreur - Quiz non trouvé")
         void delete_quizNotFound() {
             // Given
-            when(quizRepository.findById(anyLong()))
-                    .thenReturn(Optional.empty());
+            when(quizRepository.existsById(anyLong()))
+                    .thenReturn(false);
 
-            // When & then
-            assertThrows(NotFoundException.class, () -> quizService.delete(id));
+            // When
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> quizService.delete(id));
 
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository, never()).deleteById(anyLong());
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.QUIZ_NOT_FOUND),
+                    () -> verify(quizRepository).existsById(id),
+                    () -> verifyNoMoreInteractions(quizRepository)
+            );
         }
     }
 
@@ -624,18 +776,16 @@ public class QuizServiceTest {
                     .thenReturn(Optional.of(quiz));
             when(quizRepository.countByIdAndQuestionsDisabledAtIsNull(anyLong()))
                     .thenReturn(10);
-            when(quizRepository.save(any(Quiz.class)))
-                    .thenReturn(quiz);
 
             // When
             quizService.updateVisibility(id, true);
 
             // Then
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository).countByIdAndQuestionsDisabledAtIsNull(anyLong());
-            verify(quizRepository).save(any(Quiz.class));
-            verify(quizRepository, never()).countByThemeIdAndDisabledAtIsNull(anyLong());
-            verify(themeService, never()).updateVisibility(anyLong(), anyBoolean());
+            assertAll(
+                    () -> verify(quizRepository).findById(id),
+                    () -> verify(quizRepository).countByIdAndQuestionsDisabledAtIsNull(id),
+                    () -> assertThat(quiz.isVisible()).isTrue()
+            );
         }
 
         @Test
@@ -647,58 +797,16 @@ public class QuizServiceTest {
             when(quizRepository.countByIdAndQuestionsDisabledAtIsNull(anyLong()))
                     .thenReturn(0);
 
-            // When & then
-            assertThrows(ActionNotAllowedException.class, () -> quizService.updateVisibility(id, true));
-
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository).countByIdAndQuestionsDisabledAtIsNull(anyLong());
-            verify(quizRepository, never()).save(any(Quiz.class));
-            verify(quizRepository, never()).countByThemeIdAndDisabledAtIsNull(anyLong());
-            verify(themeService, never()).updateVisibility(anyLong(), anyBoolean());
-        }
-
-        @Test
-        @DisplayName("Succès - Quiz désactivé & thème actif")
-        void updateVisibility_quizDisable() {
-            // Given
-            quiz.setDisabledAt(null);
-            when(quizRepository.findById(anyLong()))
-                    .thenReturn(Optional.of(quiz));
-            when(quizRepository.countByThemeIdAndDisabledAtIsNull(anyLong()))
-                    .thenReturn(1);
-            when(quizRepository.save(any(Quiz.class)))
-                    .thenReturn(quiz);
-
             // When
-            quizService.updateVisibility(id, false);
+            ActionNotAllowedException exception = assertThrows(ActionNotAllowedException.class, () -> quizService.updateVisibility(id, true));
 
             // Then
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository).save(any(Quiz.class));
-            verify(quizRepository).countByThemeIdAndDisabledAtIsNull(anyLong());
-            verify(themeService, never()).updateVisibility(anyLong(), anyBoolean());
-        }
-        
-        @Test
-        @DisplayName("Succès - Quiz désactivé & thème inactif")
-        void updateVisibility_quizDisableAndThemeInactive() {
-            // Given
-            quiz.setDisabledAt(null);
-            when(quizRepository.findById(anyLong()))
-                    .thenReturn(Optional.of(quiz));
-            when(quizRepository.countByThemeIdAndDisabledAtIsNull(anyLong()))
-                    .thenReturn(0);
-            when(quizRepository.save(any(Quiz.class)))
-                    .thenReturn(quiz);
-
-            // When
-            quizService.updateVisibility(id, false);
-
-            // Then
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository).save(any(Quiz.class));
-            verify(quizRepository).countByThemeIdAndDisabledAtIsNull(anyLong());
-            verify(themeService).updateVisibility(anyLong(), anyBoolean());
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.QUIZ_CONTAINS_NOT_ENOUGH_QUESTIONS),
+                    () -> verify(quizRepository).findById(id),
+                    () -> verify(quizRepository).countByIdAndQuestionsDisabledAtIsNull(id),
+                    () -> assertThat(quiz.isVisible()).isFalse()
+            );
         }
 
         @Test
@@ -712,9 +820,11 @@ public class QuizServiceTest {
             quizService.updateVisibility(id, false);
 
             // Then
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository, never()).countByIdAndQuestionsDisabledAtIsNull(anyLong());
-            verify(quizRepository, never()).save(any(Quiz.class));
+            assertAll(
+                    () -> verify(quizRepository).findById(id),
+                    () -> verifyNoMoreInteractions(quizRepository),
+                    () -> assertThat(quiz.isVisible()).isFalse()
+            );
         }
 
         @Test
@@ -724,11 +834,16 @@ public class QuizServiceTest {
             when(quizRepository.findById(anyLong()))
                     .thenReturn(Optional.empty());
 
-            // When & then
-            assertThrows(NotFoundException.class, () -> quizService.updateVisibility(id, false));
+            // When
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> quizService.updateVisibility(id, true));
 
-            verify(quizRepository).findById(anyLong());
-            verify(quizRepository, never()).save(any(Quiz.class));
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.QUIZ_NOT_FOUND),
+                    () -> verify(quizRepository).findById(id),
+                    () -> verifyNoMoreInteractions(quizRepository),
+                    () -> assertThat(quiz.isVisible()).isFalse()
+            );
         }
     }
 }

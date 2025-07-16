@@ -1,7 +1,11 @@
 package com.dassonville.api.integration;
 
 
-import com.dassonville.api.dto.*;
+import com.dassonville.api.constant.AppConstants;
+import com.dassonville.api.constant.GameType;
+import com.dassonville.api.constant.Type;
+import com.dassonville.api.dto.request.QuizUpsertDTO;
+import com.dassonville.api.dto.response.*;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
@@ -73,15 +77,17 @@ public class QuizServiceIT {
 
             // Then
             assertThat(quizzes).isNotNull();
-            assertThat(quizzes.getTotalPages()).isEqualTo(2);
+            assertThat(quizzes.getTotalPages()).isEqualTo(3);
             assertThat(quizzes.getContent()).hasSize(5);
 
-            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(10L);
-            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Philosophie allemande : courants, penseurs et concepts");
+            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(16L);
+            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("La langage Java : Concepts et Pratiques");
+            assertThat(quizzes.getContent().getFirst().quizType()).isEqualTo("Classique");
+            assertThat(quizzes.getContent().getFirst().masteryLevel()).isEqualTo("AVERTI");
             assertThat(quizzes.getContent().getFirst().isNew()).isTrue();
-            assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 20);
-            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Philosophie");
-            assertThat(quizzes.getContent().getFirst().theme()).isEqualTo("Sciences humaines");
+            assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 10);
+            assertThat(quizzes.getContent().getFirst().category()).isNull();
+            assertThat(quizzes.getContent().getFirst().theme()).isEqualTo("Informatique");
         }
 
         @Test
@@ -113,14 +119,14 @@ public class QuizServiceIT {
             // Then
             assertThat(quizzes).isNotNull();
             assertThat(quizzes.getTotalPages()).isEqualTo(1);
-            assertThat(quizzes.getContent()).hasSize(4);
+            assertThat(quizzes.getContent()).hasSize(3);
 
-            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(6L);
-            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Littérature médiévale : héros, légendes et formes poétiques");
+            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(11L);
+            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Philosophie française : figures, courants et concepts majeurs");
             assertThat(quizzes.getContent().getFirst().isNew()).isTrue();
             assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 20);
-            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Période littéraire");
-            assertThat(quizzes.getContent().getFirst().theme()).isEqualTo("Littérature");
+            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Philosophie");
+            assertThat(quizzes.getContent().getFirst().theme()).isEqualTo("Sciences humaines");
         }
     }
 
@@ -133,35 +139,11 @@ public class QuizServiceIT {
         @DisplayName("Succès - visible = null")
         public void shouldFindAllQuizzesByThemeIdForAdmin_WhenExistingTheme() {
             // Given
-            long idToGet = 1L;
+            long idToGet = 4L;
             Pageable pageable = PageRequest.of(0, 5, Sort.by("title"));
 
             // When
             Page<QuizAdminDTO> quizzes = quizService.findAllByThemeIdForAdmin(idToGet, null, pageable);
-
-            // Then
-            assertThat(quizzes).isNotNull();
-            assertThat(quizzes.getTotalPages()).isEqualTo(2);
-            assertThat(quizzes.getContent()).hasSize(5);
-
-            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(12L);
-            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Je suis vide");
-            assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 0);
-            assertThat(quizzes.getContent().getFirst().hasEnoughQuestionsForActivation()).isFalse();
-            assertThat(quizzes.getContent().getFirst().createdAt()).isNotNull();
-            assertThat(quizzes.getContent().getFirst().disabledAt()).isNotNull();
-            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Philosophie");
-        }
-
-        @Test
-        @DisplayName("Succès - visible = true")
-        public void shouldFindAllQuizzesByThemeIdForAdmin_WhenExistingThemeAndVisibleTrue() {
-            // Given
-            long idToGet = 1L;
-            Pageable pageable = PageRequest.of(0, 5, Sort.by("title"));
-
-            // When
-            Page<QuizAdminDTO> quizzes = quizService.findAllByThemeIdForAdmin(idToGet, true, pageable);
 
             // Then
             assertThat(quizzes).isNotNull();
@@ -170,6 +152,30 @@ public class QuizServiceIT {
 
             assertThat(quizzes.getContent().getFirst().id()).isEqualTo(8L);
             assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Mythologie égyptienne : dieux, légendes et symboles");
+            assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 20);
+            assertThat(quizzes.getContent().getFirst().hasEnoughQuestionsForActivation()).isTrue();
+            assertThat(quizzes.getContent().getFirst().createdAt()).isNotNull();
+            assertThat(quizzes.getContent().getFirst().disabledAt()).isNotNull();
+            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Mythologie & Religion");
+        }
+
+        @Test
+        @DisplayName("Succès - visible = true")
+        public void shouldFindAllQuizzesByThemeIdForAdmin_WhenExistingThemeAndVisibleTrue() {
+            // Given
+            long idToGet = 4L;
+            Pageable pageable = PageRequest.of(0, 5, Sort.by("title"));
+
+            // When
+            Page<QuizAdminDTO> quizzes = quizService.findAllByThemeIdForAdmin(idToGet, true, pageable);
+
+            // Then
+            assertThat(quizzes).isNotNull();
+            assertThat(quizzes.getTotalPages()).isEqualTo(1);
+            assertThat(quizzes.getContent()).hasSize(4);
+
+            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(9L);
+            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Mythologie nordique : dieux, créatures et légendes vikings");
             assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 20);
             assertThat(quizzes.getContent().getFirst().hasEnoughQuestionsForActivation()).isTrue();
             assertThat(quizzes.getContent().getFirst().createdAt()).isNotNull();
@@ -190,15 +196,15 @@ public class QuizServiceIT {
             // Then
             assertThat(quizzes).isNotNull();
             assertThat(quizzes.getTotalPages()).isEqualTo(1);
-            assertThat(quizzes.getContent()).hasSize(3);
+            assertThat(quizzes.getContent()).hasSize(1);
 
-            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(13L);
-            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Je suis vide aussi");
-            assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 0);
-            assertThat(quizzes.getContent().getFirst().hasEnoughQuestionsForActivation()).isFalse();
+            assertThat(quizzes.getContent().getFirst().id()).isEqualTo(8L);
+            assertThat(quizzes.getContent().getFirst().title()).isEqualTo("Mythologie égyptienne : dieux, légendes et symboles");
+            assertThat(quizzes.getContent().getFirst().numberOfQuestions()).isEqualTo((byte) 20);
+            assertThat(quizzes.getContent().getFirst().hasEnoughQuestionsForActivation()).isTrue();
             assertThat(quizzes.getContent().getFirst().createdAt()).isNotNull();
             assertThat(quizzes.getContent().getFirst().disabledAt()).isNotNull();
-            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Courant littéraire");
+            assertThat(quizzes.getContent().getFirst().category()).isEqualTo("Mythologie & Religion");
         }
 
         @Test
@@ -232,8 +238,8 @@ public class QuizServiceIT {
             assertThat(quiz.title()).isEqualTo("Philosophie grecque : penseurs, écoles et concepts fondateurs");
             assertThat(quiz.createdAt()).isNotNull();
             assertThat(quiz.disabledAt()).isNull();
-            assertThat(quiz.categoryId()).isEqualTo(9L);
-            assertThat(quiz.themeId()).isEqualTo(1L);
+            assertThat(quiz.categoryId()).isEqualTo(7L);
+            assertThat(quiz.themeId()).isEqualTo(4L);
         }
 
         @Test
@@ -277,60 +283,7 @@ public class QuizServiceIT {
     }
 
 
-    @Nested
-    @DisplayName("Récupération des questions d'un quiz pour le jeu")
-    class GettingQuestionsForPlay {
 
-
-        @ParameterizedTest
-        @ValueSource(longs = {2L, 5L})
-        @DisplayName("Succès - Récupération des questions d'un quiz pour le jeu")
-        public void shouldFindAllQuestionsByQuizIdForPlay_WhenExistingQuiz(long idToGetDifficulty) {
-            // Given
-            long idToGet = 11L;
-
-            // When
-            List<QuestionForPlayDTO> questions = quizService.findAllQuestionsByQuizIdForPlay(idToGet, idToGetDifficulty);
-
-            // Then
-            assertThat(questions).isNotNull();
-            assertThat(questions.size()).isEqualTo(21);
-
-            // Vérification de l'ordre des IDs
-            List<Long> originalOrder = questionRepository.findByQuizIdAndDisabledAtIsNullAndAnswersDisabledAtIsNull(idToGet)
-                    .stream()
-                    .map(QuestionForPlayProjection::getId)
-                    .toList();
-            List<Long> shuffledOrder = questions.stream()
-                    .map(QuestionForPlayDTO::id)
-                    .toList();
-
-            assertThat(shuffledOrder).isNotEqualTo(originalOrder); // Vérifie que l'ordre a changé
-            assertThat(shuffledOrder).containsExactlyInAnyOrderElementsOf(originalOrder); // Vérifie que tous les éléments sont présents
-        }
-
-        @Test
-        @DisplayName("Erreur - Quiz non trouvé")
-        public void shouldFailToFindAllQuestionsByQuizIdForPlay_WhenNonExistingQuiz() {
-            // Given
-            long idToGetQuiz = 9999L;
-            long idToGetDifficulty = 1L;
-
-            // When / Then
-            assertThrows(NotFoundException.class, () -> quizService.findAllQuestionsByQuizIdForPlay(idToGetQuiz, idToGetDifficulty));
-        }
-
-        @Test
-        @DisplayName("Erreur - Difficulté non trouvée")
-        public void shouldFailToFindAllQuestionsByQuizIdForPlay_WhenNonExistingDifficulty() {
-            // Given
-            long idToGetQuiz = 1L;
-            long idToGetDifficulty = 9999L;
-
-            // When / Then
-            assertThrows(NotFoundException.class, () -> quizService.findAllQuestionsByQuizIdForPlay(idToGetQuiz, idToGetDifficulty));
-        }
-    }
 
 
     @Nested
@@ -342,9 +295,12 @@ public class QuizServiceIT {
         public void shouldCreateQuiz() {
             // Given
             QuizUpsertDTO quizUpsertDTO = new QuizUpsertDTO(
+                    Type.CLASSIC,
                     " test Quiz",
-                    9L,
-                    1L
+                    "Description du test Quiz",
+                    1L,
+                    1L,
+                    5L
             );
 
             // When
@@ -356,7 +312,7 @@ public class QuizServiceIT {
             assertThat(quiz.getTitle()).isEqualTo("Test Quiz");
             assertThat(quiz.getCreatedAt()).isNotNull();
             assertThat(quiz.getDisabledAt()).isNotNull();
-            assertThat(quiz.getCategory().getId()).isEqualTo(9L);
+            assertThat(quiz.getCategory().getId()).isEqualTo(5L);
             assertThat(quiz.getTheme().getId()).isEqualTo(1L);
         }
 
@@ -365,8 +321,11 @@ public class QuizServiceIT {
         public void shouldFailToCreate_WhenExistingQuiz() {
             // Given
             QuizUpsertDTO quizUpsertDTO = new QuizUpsertDTO(
+                    Type.CLASSIC,
                     " philosophie grecque : penseurs, écoles et concepts fondateurs",
+                    "Description du test Quiz",
                     9L,
+                    1L,
                     1L
             );
 
@@ -385,9 +344,12 @@ public class QuizServiceIT {
         public void shouldUpdateQuiz_WhenExistingQuiz() {
             // Given
             QuizUpsertDTO quizUpsertDTO = new QuizUpsertDTO(
+                    Type.CLASSIC,
                     " test Quiz",
-                    9L,
-                    1L
+                    "Description du test Quiz",
+                    2L,
+                    3L,
+                    4L
             );
 
             // When
@@ -400,8 +362,8 @@ public class QuizServiceIT {
             assertThat(quiz.getCreatedAt()).isNotNull();
             assertThat(quiz.getUpdatedAt()).isNotNull();
             assertThat(quiz.getDisabledAt()).isNull();
-            assertThat(quiz.getCategory().getId()).isEqualTo(9L);
-            assertThat(quiz.getTheme().getId()).isEqualTo(1L);
+            assertThat(quiz.getCategory().getId()).isEqualTo(4L);
+            assertThat(quiz.getTheme().getId()).isEqualTo(3L);
         }
 
         @Test
@@ -409,8 +371,11 @@ public class QuizServiceIT {
         public void shouldFailToUpdate_WhenQuizWithExistingTitle() {
             // Given
             QuizUpsertDTO quizUpsertDTO = new QuizUpsertDTO(
+                    Type.CLASSIC,
                     " littérature gothique : motifs, personnages et influences",
+                    "Description du test Quiz",
                     9L,
+                    1L,
                     1L
             );
 
@@ -423,8 +388,11 @@ public class QuizServiceIT {
         public void shouldFailToUpdate_WhenNonExistingQuiz() {
             // Given
             QuizUpsertDTO quizUpsertDTO = new QuizUpsertDTO(
+                    Type.CLASSIC,
                     "test Quiz",
+                    "Description du test Quiz",
                     9L,
+                    1L,
                     1L
             );
 
@@ -449,7 +417,7 @@ public class QuizServiceIT {
 
             // Then
             assertThat(quizRepository.existsById(idToDelete)).isFalse();
-            assertThat(questionRepository.existsByQuizId(idToDelete)).isFalse();
+            assertThat(questionRepository.existsByQuizzesId(idToDelete)).isFalse();
         }
 
         @Test
@@ -505,7 +473,7 @@ public class QuizServiceIT {
         @DisplayName("Succès - Quiz activé, suffisamment de questions")
         public void shouldEnableQuiz_WhenExistingQuizAndEnoughQuestions() {
             // Given
-            long idToEnable = 2L;
+            long idToEnable = 8L;
 
             // When
             quizService.updateVisibility(idToEnable, true);
@@ -519,7 +487,7 @@ public class QuizServiceIT {
         @DisplayName("Erreur - Pas assez de questions, reste inactif")
         public void shouldFailToEnableQuiz_WhenNotEnoughQuestions() {
             // Given
-            long idToEnable = 12L;
+            long idToEnable = 18L;
 
             // When / Then
             assertThrows(ActionNotAllowedException.class, () -> quizService.updateVisibility(idToEnable, true));

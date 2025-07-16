@@ -1,9 +1,9 @@
 package com.dassonville.api.controller;
 
 import com.dassonville.api.constant.ApiRoutes;
-import com.dassonville.api.dto.ThemePublicDTO;
-import com.dassonville.api.exception.NotFoundException;
+import com.dassonville.api.dto.response.ThemePublicDTO;
 import com.dassonville.api.service.ThemeService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,11 +14,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
@@ -29,6 +27,9 @@ public class ThemeControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockitoBean
     private ThemeService themeService;
@@ -46,15 +47,18 @@ public class ThemeControllerTest {
 
     @Test
     @DisplayName("Récupérer tous les thèmes actifs")
-    public void getAllActiveThemes_shouldReturn200() throws Exception {
+    public void getAllActive_shouldReturn200() throws Exception {
         // Given
-        when(themeService.getAllActiveThemes())
+        when(themeService.getAllActive())
                 .thenReturn(List.of(themePublicDTO));
 
         // When & Then
         mockMvc.perform(get(ApiRoutes.Themes.BASE))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value(themePublicDTO.name()));
+                .andExpect(content().json(
+                        objectMapper.writeValueAsString(
+                                List.of(themePublicDTO)
+                        )
+                ));
     }
 }

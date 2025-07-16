@@ -2,8 +2,9 @@ package com.dassonville.api.controller;
 
 
 import com.dassonville.api.constant.ApiRoutes;
-import com.dassonville.api.dto.DifficultyLevelPublicDTO;
+import com.dassonville.api.dto.response.DifficultyLevelPublicDTO;
 import com.dassonville.api.service.DifficultyLevelService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,10 +16,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(DifficultyLevelController.class)
 @DisplayName("IT - PUBLIC Controller : Niveaux de difficulté")
@@ -27,6 +28,8 @@ public class DifficultyLevelControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockitoBean
     private DifficultyLevelService difficultyLevelService;
@@ -37,7 +40,7 @@ public class DifficultyLevelControllerTest {
 
     @BeforeEach
     public void setUp() {
-        difficultyLevelPublicDTO = new DifficultyLevelPublicDTO(1L, "Débutant", (byte) 2, (short) 0, 15, false);
+        difficultyLevelPublicDTO = new DifficultyLevelPublicDTO(1L, "Débutant", "EZ", "Une description", false);
     }
 
 
@@ -45,13 +48,16 @@ public class DifficultyLevelControllerTest {
     @DisplayName("Récupérer tous les niveaux de difficulté actifs")
     public void getAllActiveDifficultyLevels_shouldReturn200() throws Exception {
         // Given
-        when(difficultyLevelService.getAllActiveDifficultyLevels())
+        when(difficultyLevelService.getAllActiveDifficultyLevels(anyLong()))
                 .thenReturn(List.of(difficultyLevelPublicDTO));
 
         // When & Then
-        mockMvc.perform(get(ApiRoutes.DifficultyLevels.BASE))
+        mockMvc.perform(get(ApiRoutes.Quizzes.BY_ID + ApiRoutes.DifficultyLevels.STRING, 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value(difficultyLevelPublicDTO.name()));
+                .andExpect(content().json(
+                        objectMapper.writeValueAsString(
+                                List.of(difficultyLevelPublicDTO)
+                        )
+                ));
     }
 }

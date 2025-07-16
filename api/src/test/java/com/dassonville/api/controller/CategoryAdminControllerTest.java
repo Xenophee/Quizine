@@ -2,28 +2,31 @@ package com.dassonville.api.controller;
 
 
 import com.dassonville.api.constant.ApiRoutes;
-import com.dassonville.api.dto.BooleanRequestDTO;
-import com.dassonville.api.dto.CategoryAdminDTO;
-import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.request.BooleanRequestDTO;
+import com.dassonville.api.dto.request.CategoryUpsertDTO;
+import com.dassonville.api.dto.response.CategoryAdminDTO;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
-import com.dassonville.api.projection.IdAndNameProjection;
 import com.dassonville.api.service.CategoryService;
+import com.dassonville.api.util.TestIdAndNameProjection;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
@@ -48,26 +51,24 @@ public class CategoryAdminControllerTest {
     private BooleanRequestDTO booleanRequestDTO;
     private CategoryAdminDTO categoryAdminDTO;
     private CategoryUpsertDTO categoryUpsertDTO;
-    private IdAndNameProjection idAndNameProjection;
 
 
     @BeforeEach
     public void setUp() {
         endpointId = 1L;
-        booleanRequestDTO = new BooleanRequestDTO(true);
-        categoryAdminDTO = new CategoryAdminDTO(1L, "Code", "", null, null, null, 6);
-        categoryUpsertDTO = new CategoryUpsertDTO("Code", "");
 
-        idAndNameProjection = new IdAndNameProjection() {
-            @Override
-            public Long getId() {
-                return 1L;
-            }
-            @Override
-            public String getName() {
-                return "Informatique";
-            }
-        };
+        booleanRequestDTO = new BooleanRequestDTO(true);
+
+        categoryAdminDTO = new CategoryAdminDTO(
+                1L,
+                "Un nom",
+                "Une description",
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                null,
+                6);
+
+        categoryUpsertDTO = new CategoryUpsertDTO("Un nom", "Une description");
     }
 
 
@@ -79,14 +80,19 @@ public class CategoryAdminControllerTest {
         @DisplayName("Succès - Récupérer la liste des catégories selon un thème")
         public void getCategoriesByTheme_shouldReturn200() throws Exception {
             // Given
+            TestIdAndNameProjection testIdAndNameProjection = new TestIdAndNameProjection();
+
             when(categoryService.findAllByTheme(anyLong()))
-                    .thenReturn(List.of(idAndNameProjection));
+                    .thenReturn(List.of(testIdAndNameProjection));
 
             // When & Then
             mockMvc.perform(get(ApiRoutes.Themes.ADMIN_BY_ID + ApiRoutes.Categories.STRING, endpointId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(1)))
-                    .andExpect(jsonPath("$[0].name").value(idAndNameProjection.getName()));
+                    .andExpect(content().json(
+                            objectMapper.writeValueAsString(
+                                    List.of(testIdAndNameProjection)
+                            )
+                    ));
         }
 
         @Test
@@ -99,7 +105,8 @@ public class CategoryAdminControllerTest {
             // When & Then
             mockMvc.perform(get(ApiRoutes.Themes.ADMIN_BY_ID + ApiRoutes.Categories.STRING, endpointId))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
 
         @Test
@@ -112,7 +119,7 @@ public class CategoryAdminControllerTest {
             // When & Then
             mockMvc.perform(get(ApiRoutes.Categories.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name").value(categoryAdminDTO.name()));
+                    .andExpect(content().json(objectMapper.writeValueAsString(categoryAdminDTO)));
         }
 
         @Test
@@ -125,7 +132,8 @@ public class CategoryAdminControllerTest {
             // When & Then
             mockMvc.perform(get(ApiRoutes.Categories.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
     }
 
@@ -147,7 +155,7 @@ public class CategoryAdminControllerTest {
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isCreated())
                     .andExpect(header().string("Location", containsString(ApiRoutes.Categories.STRING + "/" + categoryAdminDTO.id())))
-                    .andExpect(jsonPath("$.name").value(categoryAdminDTO.name()));
+                    .andExpect(content().json(objectMapper.writeValueAsString(categoryAdminDTO)));
         }
 
         @Test
@@ -162,7 +170,8 @@ public class CategoryAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
 
         @Test
@@ -177,21 +186,29 @@ public class CategoryAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.ALREADY_EXIST.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.ALREADY_EXIST.getMessage()));
         }
 
-        @Test
+        @ParameterizedTest
+        @MethodSource("com.dassonville.api.util.TestValidationProvider#invalidCategoryUpsertCases")
         @DisplayName("Erreur - Données invalides")
-        public void createCategory_shouldReturn400() throws Exception {
+        public void createCategory_shouldReturn400(
+                String name, String description,
+                String expectedNameMessage, String expectedDescriptionMessage
+        ) throws Exception {
             // Given
-            categoryUpsertDTO = new CategoryUpsertDTO("", "");
+            categoryUpsertDTO = new CategoryUpsertDTO(name, description);
 
             // When & Then
             mockMvc.perform(post(ApiRoutes.Categories.ADMIN_QUESTIONS_POST, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.name").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.VALIDATION_ERROR.getMessage()))
+                    .andExpect(jsonPath("$.errors.name").value(expectedNameMessage))
+                    .andExpect(jsonPath("$.errors.description").value(expectedDescriptionMessage));
         }
     }
 
@@ -212,7 +229,7 @@ public class CategoryAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name").value(categoryAdminDTO.name()));
+                    .andExpect(content().json(objectMapper.writeValueAsString(categoryAdminDTO)));
         }
 
         @Test
@@ -227,21 +244,29 @@ public class CategoryAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.ALREADY_EXIST.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.ALREADY_EXIST.getMessage()));
         }
 
-        @Test
+        @ParameterizedTest
+        @MethodSource("com.dassonville.api.util.TestValidationProvider#invalidCategoryUpsertCases")
         @DisplayName("Erreur - Données invalides")
-        public void updateCategory_shouldReturn400() throws Exception {
+        public void updateCategory_shouldReturn400(
+                String name, String description,
+                String expectedNameMessage, String expectedDescriptionMessage
+        ) throws Exception {
             // Given
-            categoryUpsertDTO = new CategoryUpsertDTO("", "");
+            categoryUpsertDTO = new CategoryUpsertDTO(name, description);
 
             // When & Then
             mockMvc.perform(put(ApiRoutes.Categories.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.name").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.VALIDATION_ERROR.getMessage()))
+                    .andExpect(jsonPath("$.errors.name").value(expectedNameMessage))
+                    .andExpect(jsonPath("$.errors.description").value(expectedDescriptionMessage));
         }
 
         @Test
@@ -256,7 +281,8 @@ public class CategoryAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryUpsertDTO)))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
     }
 
@@ -285,7 +311,8 @@ public class CategoryAdminControllerTest {
             // When & Then
             mockMvc.perform(delete(ApiRoutes.Categories.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
     }
 
@@ -318,7 +345,8 @@ public class CategoryAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
     }
 }

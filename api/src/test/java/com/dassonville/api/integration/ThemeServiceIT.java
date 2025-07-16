@@ -1,8 +1,8 @@
 package com.dassonville.api.integration;
 
-import com.dassonville.api.dto.ThemeAdminDTO;
-import com.dassonville.api.dto.ThemePublicDTO;
-import com.dassonville.api.dto.ThemeUpsertDTO;
+import com.dassonville.api.dto.response.ThemeAdminDTO;
+import com.dassonville.api.dto.response.ThemePublicDTO;
+import com.dassonville.api.dto.request.ThemeUpsertDTO;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
@@ -50,31 +50,31 @@ public class ThemeServiceIT {
         @DisplayName("Succès - Récupérer tous les thèmes")
         public void shouldGetAllThemes() {
             // When
-            List<ThemeAdminDTO> themes = themeService.getAllThemesDetails();
+            List<ThemeAdminDTO> themes = themeService.getAllDetails();
 
             // Then
-            assertThat(themes.size()).isEqualTo(6);
+            assertThat(themes.size()).isEqualTo(9);
         }
 
         @Test
         @DisplayName("Succès - Récupérer tous les thèmes actifs")
         public void shouldGetAllActiveThemes() {
             // When
-            List<ThemePublicDTO> themes = themeService.getAllActiveThemes();
+            List<ThemePublicDTO> themes = themeService.getAllActive();
 
             // Then
-            assertThat(themes.size()).isEqualTo(3);
+            assertThat(themes.size()).isEqualTo(5);
         }
 
         @Test
         @DisplayName("Succès - Récupérer tous les thèmes (ID et nom) par ordre alphabétique")
         public void shouldGetAllThemesIdAndName() {
             // When
-            List<IdAndNameProjection> themes = themeService.getAllThemes();
+            List<IdAndNameProjection> themes = themeService.getAll();
 
             // Then
-            assertThat(themes.size()).isEqualTo(6);
-            assertThat(themes.get(0).getId()).isEqualTo(3L);
+            assertThat(themes.size()).isEqualTo(9);
+            assertThat(themes.get(0).getId()).isEqualTo(2L);
             assertThat(themes.get(0).getName()).isEqualTo("Art");
         }
 
@@ -88,7 +88,7 @@ public class ThemeServiceIT {
             ThemeAdminDTO theme = themeService.findByIdForAdmin(idToFind);
 
             // Then
-            assertThat(theme.name()).isEqualTo("Sciences humaines");
+            assertThat(theme.name()).isEqualTo("Histoire & Géographie");
         }
 
         @Test
@@ -176,7 +176,7 @@ public class ThemeServiceIT {
             ThemeUpsertDTO themeToUpdate = new ThemeUpsertDTO("Art", "");
 
             // When / Then
-            assertThrows(AlreadyExistException.class, () -> themeService.update(2L, themeToUpdate));
+            assertThrows(AlreadyExistException.class, () -> themeService.update(1L, themeToUpdate));
         }
 
     }
@@ -203,7 +203,7 @@ public class ThemeServiceIT {
         @DisplayName("Erreur - Quiz restant")
         public void shouldFailToDelete_WhenExistingThemeWithQuizzes() {
             // Given
-            long idToDelete = 1L;
+            long idToDelete = 5L;
 
             // When / Then
             assertThrows(ActionNotAllowedException.class, () -> themeService.delete(idToDelete));

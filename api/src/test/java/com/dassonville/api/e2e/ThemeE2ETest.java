@@ -1,9 +1,9 @@
 package com.dassonville.api.e2e;
 
 import com.dassonville.api.constant.ApiRoutes;
-import com.dassonville.api.dto.ThemeAdminDTO;
-import com.dassonville.api.dto.ThemePublicDTO;
-import com.dassonville.api.dto.ThemeUpsertDTO;
+import com.dassonville.api.dto.response.ThemeAdminDTO;
+import com.dassonville.api.dto.response.ThemePublicDTO;
+import com.dassonville.api.dto.request.ThemeUpsertDTO;
 import com.dassonville.api.model.Theme;
 import com.dassonville.api.repository.ThemeRepository;
 import org.flywaydb.core.Flyway;
@@ -23,6 +23,7 @@ import java.net.URI;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DisplayName("E2E - Thème")
@@ -95,7 +96,7 @@ public class ThemeE2ETest {
     @DisplayName("Mettre à jour un thème inexistant")
     public void shouldFailToUpdateNonExistingTheme() {
         // Given
-        long id = 9;
+        long id = 9999;
         ThemeUpsertDTO themeToUpdate = new ThemeUpsertDTO("Cinéma", "Pour les cinéphiles");
         String url = "http://localhost:" + port + ApiRoutes.Themes.ADMIN_THEMES + "/" + id;
 

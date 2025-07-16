@@ -1,22 +1,23 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.ThemeAdminDTO;
-import com.dassonville.api.dto.ThemePublicDTO;
-import com.dassonville.api.dto.ThemeUpsertDTO;
+import com.dassonville.api.dto.request.ThemeUpsertDTO;
+import com.dassonville.api.dto.response.CategoryInfoThemeAdminDTO;
+import com.dassonville.api.dto.response.ThemeAdminDTO;
+import com.dassonville.api.dto.response.ThemePublicDTO;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.ThemeMapper;
+import com.dassonville.api.model.Category;
 import com.dassonville.api.model.Theme;
-import com.dassonville.api.projection.PublicThemeProjection;
 import com.dassonville.api.repository.ThemeRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import com.dassonville.api.util.TestPublicThemeProjection;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -25,11 +26,13 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 
+@Tag("service")
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UNI - Service : Thème")
 public class ThemeServiceTest {
@@ -43,10 +46,12 @@ public class ThemeServiceTest {
 
 
     private long id;
+    private long idCategory;
     private Theme theme;
-    private PublicThemeProjection publicThemeProjection;
+    private Category category;
     private ThemeUpsertDTO themeToUpsertDTO;
 
+    private LocalDateTime FIXED_LOCALDATETIME = LocalDateTime.now();
 
 
     @BeforeEach
@@ -54,22 +59,29 @@ public class ThemeServiceTest {
         themeService = new ThemeService(themeRepository, themeMapper);
 
         id = 1L;
+        idCategory = 2L;
 
-        theme = new Theme();
-        theme.setId(1L);
-        theme.setName("Informatique");
-        theme.setDescription("Description");
-        theme.setCreatedAt(LocalDateTime.now());
-        theme.setUpdatedAt(LocalDateTime.now());
-        theme.setDisabledAt(null);
+        category = Category.builder()
+                .id(idCategory)
+                .name("Catégorie")
+                .description("Description de la catégorie")
+                .createdAt(FIXED_LOCALDATETIME)
+                .updatedAt(FIXED_LOCALDATETIME)
+                .disabledAt(null)
+                .build();
 
-        publicThemeProjection = mock(PublicThemeProjection.class);
-        lenient().when(publicThemeProjection.getId()).thenReturn(1L);
-        lenient().when(publicThemeProjection.getName()).thenReturn("Informatique");
-        lenient().when(publicThemeProjection.getDescription()).thenReturn("Description");
-        lenient().when(publicThemeProjection.getCreatedAt()).thenReturn(LocalDateTime.now());
+        theme = Theme.builder()
+                .id(id)
+                .name("Nom")
+                .description("Description")
+                .isDefault(false)
+                .createdAt(FIXED_LOCALDATETIME)
+                .updatedAt(FIXED_LOCALDATETIME)
+                .disabledAt(null)
+                .categories(List.of(category))
+                .build();
 
-        themeToUpsertDTO = new ThemeUpsertDTO(" informatique ", " description");
+        themeToUpsertDTO = new ThemeUpsertDTO(" nom  ", " description  ");
     }
 
 
@@ -85,40 +97,63 @@ public class ThemeServiceTest {
                     .thenReturn(List.of(theme));
 
             // When
-            List<ThemeAdminDTO> results = themeService.getAllThemesDetails();
+            List<ThemeAdminDTO> results = themeService.getAllDetails();
+            ThemeAdminDTO themeDTO = results.getFirst();
+            CategoryInfoThemeAdminDTO categoryDTO = themeDTO.categories().getFirst();
 
             // Then
-            verify(themeRepository).findAllByOrderByNameAndCategoryName();
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).findAllByOrderByNameAndCategoryName()
+            );
 
-            assertThat(results).isNotNull();
-            assertThat(results.size()).isEqualTo(1);
-            assertThat(results.getFirst().id()).isEqualTo(theme.getId());
-            assertThat(results.getFirst().name()).isEqualTo(theme.getName());
-            assertThat(results.getFirst().description()).isEqualTo(theme.getDescription());
-            assertThat(results.getFirst().createdAt()).isEqualTo(theme.getCreatedAt());
-            assertThat(results.getFirst().updatedAt()).isEqualTo(theme.getUpdatedAt());
-            assertThat(results.getFirst().disabledAt()).isEqualTo(theme.getDisabledAt());
+            assertAll("Assertions for DTO",
+                    () -> assertThat(results).isNotEmpty(),
+                    () -> assertThat(results).hasSize(1),
+                    () -> assertThat(themeDTO.id()).isEqualTo(theme.getId()),
+                    () -> assertThat(themeDTO.name()).isEqualTo(theme.getName()),
+                    () -> assertThat(themeDTO.description()).isEqualTo(theme.getDescription()),
+                    () -> assertThat(themeDTO.isDefault()).isEqualTo(theme.getIsDefault()),
+                    () -> assertThat(themeDTO.createdAt()).isEqualTo(theme.getCreatedAt()),
+                    () -> assertThat(themeDTO.updatedAt()).isEqualTo(theme.getUpdatedAt()),
+                    () -> assertThat(themeDTO.disabledAt()).isEqualTo(theme.getDisabledAt()),
+
+                    () -> assertThat(themeDTO.categories()).isNotEmpty(),
+                    () -> assertThat(themeDTO.categories()).hasSize(1),
+                    () -> assertThat(categoryDTO.id()).isEqualTo(category.getId()),
+                    () -> assertThat(categoryDTO.name()).isEqualTo(category.getName()),
+                    () -> assertThat(categoryDTO.description()).isEqualTo(category.getDescription()),
+                    () -> assertThat(categoryDTO.createdAt()).isEqualTo(category.getCreatedAt()),
+                    () -> assertThat(categoryDTO.updatedAt()).isEqualTo(category.getUpdatedAt()),
+                    () -> assertThat(categoryDTO.disabledAt()).isEqualTo(category.getDisabledAt())
+            );
         }
 
         @Test
         @DisplayName("USER - Récupérer tous les thèmes actifs")
         public void getAllActiveThemes() {
             // Given
-            when(themeRepository.findByDisabledAtIsNullOrderByName())
+            TestPublicThemeProjection publicThemeProjection = new TestPublicThemeProjection();
+
+            when(themeRepository.findByDisabledAtIsNullOrderByNameWithDefaultLast())
                     .thenReturn(List.of(publicThemeProjection));
 
             // When
-            List<ThemePublicDTO> results = themeService.getAllActiveThemes();
+            List<ThemePublicDTO> results = themeService.getAllActive();
+            ThemePublicDTO theme = results.getFirst();
 
             // Then
-            verify(themeRepository).findByDisabledAtIsNullOrderByName();
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).findByDisabledAtIsNullOrderByNameWithDefaultLast()
+            );
 
-            assertThat(results).isNotNull();
-            assertThat(results.size()).isEqualTo(1);
-            assertThat(results.getFirst().id()).isEqualTo(publicThemeProjection.getId());
-            assertThat(results.getFirst().name()).isEqualTo(publicThemeProjection.getName());
-            assertThat(results.getFirst().description()).isEqualTo(publicThemeProjection.getDescription());
-            assertThat(results.getFirst().isNew()).isEqualTo(true);
+            assertAll("Assertions for public themes",
+                    () -> assertThat(results).isNotEmpty(),
+                    () -> assertThat(results).hasSize(1),
+                    () -> assertThat(theme.id()).isEqualTo(publicThemeProjection.getId()),
+                    () -> assertThat(theme.name()).isEqualTo(publicThemeProjection.getName()),
+                    () -> assertThat(theme.description()).isEqualTo(publicThemeProjection.getDescription()),
+                    () -> assertThat(theme.isNew()).isTrue()
+            );
         }
     }
 
@@ -136,12 +171,32 @@ public class ThemeServiceTest {
 
             // When
             ThemeAdminDTO result = themeService.findByIdForAdmin(id);
+            CategoryInfoThemeAdminDTO categories = result.categories().getFirst();
 
             // Then
-            verify(themeRepository).findById(anyLong());
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).findById(id)
+            );
 
-            assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(theme.getName());
+
+            assertAll("Assertions for DTO",
+                    () -> assertThat(result).isNotNull(),
+                    () -> assertThat(result.id()).isEqualTo(theme.getId()),
+                    () -> assertThat(result.name()).isEqualTo(theme.getName()),
+                    () -> assertThat(result.description()).isEqualTo(theme.getDescription()),
+                    () -> assertThat(result.createdAt()).isEqualTo(theme.getCreatedAt()),
+                    () -> assertThat(result.updatedAt()).isEqualTo(theme.getUpdatedAt()),
+                    () -> assertThat(result.disabledAt()).isEqualTo(theme.getDisabledAt()),
+
+                    () -> assertThat(result.categories()).isNotEmpty(),
+                    () -> assertThat(result.categories()).hasSize(1),
+                    () -> assertThat(categories.id()).isEqualTo(category.getId()),
+                    () -> assertThat(categories.name()).isEqualTo(category.getName()),
+                    () -> assertThat(categories.description()).isEqualTo(category.getDescription()),
+                    () -> assertThat(categories.createdAt()).isEqualTo(category.getCreatedAt()),
+                    () -> assertThat(categories.updatedAt()).isEqualTo(category.getUpdatedAt()),
+                    () -> assertThat(categories.disabledAt()).isEqualTo(category.getDisabledAt())
+            );
         }
 
         @Test
@@ -151,10 +206,14 @@ public class ThemeServiceTest {
             when(themeRepository.findById(anyLong()))
                     .thenReturn(Optional.empty());
 
-            // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.findByIdForAdmin(id));
+            // When
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> themeService.findByIdForAdmin(id));
 
-            verify(themeRepository).findById(anyLong());
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_NOT_FOUND),
+                    () -> verify(themeRepository).findById(id)
+            );
         }
 
     }
@@ -168,6 +227,8 @@ public class ThemeServiceTest {
         @DisplayName("Succès")
         public void create_newTheme() {
             // Given
+            theme.setCategories(List.of());
+
             when(themeRepository.existsByNameIgnoreCase(anyString()))
                     .thenReturn(false);
             when(themeRepository.save(any(Theme.class)))
@@ -177,11 +238,20 @@ public class ThemeServiceTest {
             ThemeAdminDTO result = themeService.create(themeToUpsertDTO);
 
             // Then
-            verify(themeRepository).existsByNameIgnoreCase(anyString());
-            verify(themeRepository).save(any(Theme.class));
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).existsByNameIgnoreCase(anyString()),
+                    () -> verify(themeRepository).save(any(Theme.class))
+            );
 
-            assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(theme.getName());
+            assertAll("Assertions for DTO",
+                    () -> assertThat(result.id()).isEqualTo(theme.getId()),
+                    () -> assertThat(result.name()).isEqualTo(theme.getName()),
+                    () -> assertThat(result.description()).isEqualTo(theme.getDescription()),
+                    () -> assertThat(result.createdAt()).isEqualTo(theme.getCreatedAt()),
+                    () -> assertThat(result.updatedAt()).isEqualTo(theme.getUpdatedAt()),
+                    () -> assertThat(result.disabledAt()).isEqualTo(theme.getDisabledAt()),
+                    () -> assertThat(result.categories()).isEmpty()
+            );
         }
 
         @Test
@@ -191,11 +261,15 @@ public class ThemeServiceTest {
             when(themeRepository.existsByNameIgnoreCase(anyString()))
                     .thenReturn(true);
 
-            // When & Then
-            assertThrows(AlreadyExistException.class, () -> themeService.create(themeToUpsertDTO));
+            // When
+            AlreadyExistException exception = assertThrows(AlreadyExistException.class, () -> themeService.create(themeToUpsertDTO));
 
-            verify(themeRepository).existsByNameIgnoreCase(anyString());
-            verify(themeRepository, never()).save(any(Theme.class));
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_ALREADY_EXISTS),
+                    () -> verify(themeRepository).existsByNameIgnoreCase(anyString()),
+                    () -> verifyNoMoreInteractions(themeRepository)
+            );
         }
 
     }
@@ -205,6 +279,25 @@ public class ThemeServiceTest {
     @DisplayName("Mettre à jour un thème")
     class UpdateTests {
 
+        private Theme themeUpdated;
+        private ThemeUpsertDTO themeToUpdateDTO;
+
+        @BeforeEach
+        void setUpUpdate() {
+            themeUpdated = Theme.builder()
+                    .id(id)
+                    .name("Nouveau nom")
+                    .description("Nouvelle description")
+                    .isDefault(theme.getIsDefault())
+                    .createdAt(theme.getCreatedAt())
+                    .updatedAt(LocalDateTime.now())
+                    .disabledAt(null)
+                    .categories(theme.getCategories())
+                    .build();
+
+            themeToUpdateDTO = new ThemeUpsertDTO(" nouveau nom  ", " nouvelle description  ");
+        }
+
         @Test
         @DisplayName("Succès")
         public void update_existingTheme() {
@@ -213,19 +306,40 @@ public class ThemeServiceTest {
                     .thenReturn(Optional.of(theme));
             when(themeRepository.existsByNameIgnoreCaseAndIdNot(anyString(), anyLong()))
                     .thenReturn(false);
-            when(themeRepository.save(any(Theme.class)))
-                    .thenReturn(theme);
 
             // When
-            ThemeAdminDTO result = themeService.update(id, themeToUpsertDTO);
+            ThemeAdminDTO result = themeService.update(id, themeToUpdateDTO);
+            CategoryInfoThemeAdminDTO resultCategory = result.categories().getFirst();
 
             // Then
-            verify(themeRepository).findById(anyLong());
-            verify(themeRepository).existsByNameIgnoreCaseAndIdNot(anyString(), anyLong());
-            verify(themeRepository).save(any(Theme.class));
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).findById(id),
+                    () -> verify(themeRepository).existsByNameIgnoreCaseAndIdNot(anyString(), eq(id))
+            );
 
-            assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(theme.getName());
+            assertAll("Verify updated entity",
+                    () -> assertThat(theme.getName()).isEqualTo(themeUpdated.getName()),
+                    () -> assertThat(theme.getDescription()).isEqualTo(themeUpdated.getDescription())
+            );
+
+            assertAll("Assertions for DTO",
+                    () -> assertThat(result).isNotNull(),
+                    () -> assertThat(result.id()).isEqualTo(theme.getId()),
+                    () -> assertThat(result.name()).isEqualTo(theme.getName()),
+                    () -> assertThat(result.description()).isEqualTo(theme.getDescription()),
+                    () -> assertThat(result.isDefault()).isEqualTo(theme.getIsDefault()),
+                    () -> assertThat(result.createdAt()).isEqualTo(theme.getCreatedAt()),
+                    () -> assertThat(result.updatedAt()).isEqualTo(theme.getUpdatedAt()),
+                    () -> assertThat(result.disabledAt()).isEqualTo(theme.getDisabledAt()),
+
+                    () -> assertThat(result.categories()).hasSize(1),
+                    () -> assertThat(resultCategory.id()).isEqualTo(category.getId()),
+                    () -> assertThat(resultCategory.name()).isEqualTo(category.getName()),
+                    () -> assertThat(resultCategory.description()).isEqualTo(category.getDescription()),
+                    () -> assertThat(resultCategory.createdAt()).isEqualTo(category.getCreatedAt()),
+                    () -> assertThat(resultCategory.updatedAt()).isEqualTo(category.getUpdatedAt()),
+                    () -> assertThat(resultCategory.disabledAt()).isEqualTo(category.getDisabledAt())
+            );
         }
 
         @Test
@@ -235,12 +349,15 @@ public class ThemeServiceTest {
             when(themeRepository.findById(anyLong()))
                     .thenReturn(Optional.empty());
 
-            // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.update(id, themeToUpsertDTO));
+            // When
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> themeService.update(id, themeToUpdateDTO));
 
-            verify(themeRepository).findById(anyLong());
-            verify(themeRepository, never()).existsByNameIgnoreCase(anyString());
-            verify(themeRepository, never()).save(any(Theme.class));
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_NOT_FOUND),
+                    () -> verify(themeRepository).findById(id),
+                    () -> verifyNoMoreInteractions(themeRepository)
+            );
         }
 
         @Test
@@ -252,12 +369,15 @@ public class ThemeServiceTest {
             when(themeRepository.existsByNameIgnoreCaseAndIdNot(anyString(), anyLong()))
                     .thenReturn(true);
 
-            // When & Then
-            assertThrows(AlreadyExistException.class, () -> themeService.update(id, themeToUpsertDTO));
+            // When
+            AlreadyExistException exception = assertThrows(AlreadyExistException.class, () -> themeService.update(id, themeToUpdateDTO));
 
-            verify(themeRepository).findById(anyLong());
-            verify(themeRepository).existsByNameIgnoreCaseAndIdNot(anyString(), anyLong());
-            verify(themeRepository, never()).save(any(Theme.class));
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_ALREADY_EXISTS),
+                    () -> verify(themeRepository).findById(id),
+                    () -> verify(themeRepository).existsByNameIgnoreCaseAndIdNot(anyString(), eq(id))
+            );
         }
 
     }
@@ -273,13 +393,21 @@ public class ThemeServiceTest {
             // Given
             when(themeRepository.existsById(anyLong()))
                     .thenReturn(true);
+            when(themeRepository.existsByIdAndIsDefaultTrue(anyLong()))
+                    .thenReturn(false);
+            when(themeRepository.existsByIdAndQuizzesIsNotEmpty(anyLong()))
+                    .thenReturn(false);
 
             // When
             themeService.delete(id);
 
             // Then
-            verify(themeRepository).existsById(anyLong());
-            verify(themeRepository).deleteById(anyLong());
+            assertAll("Verify methods calls",
+                    () -> verify(themeRepository).existsById(id),
+                    () -> verify(themeRepository).existsByIdAndIsDefaultTrue(id),
+                    () -> verify(themeRepository).existsByIdAndQuizzesIsNotEmpty(id),
+                    () -> verify(themeRepository).deleteById(id)
+            );
         }
 
         @Test
@@ -289,11 +417,60 @@ public class ThemeServiceTest {
             when(themeRepository.existsById(anyLong()))
                     .thenReturn(false);
 
-            // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.delete(id));
+            // When
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> themeService.delete(id));
 
-            verify(themeRepository).existsById(anyLong());
-            verify(themeRepository, never()).deleteById(anyLong());
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_NOT_FOUND),
+                    () -> verify(themeRepository).existsById(id),
+                    () -> verifyNoMoreInteractions(themeRepository)
+            );
+        }
+
+        @Test
+        @DisplayName("Erreur - Action non autorisée - Thème par défaut")
+        public void delete_defaultTheme() {
+            // Given
+            when(themeRepository.existsById(anyLong()))
+                    .thenReturn(true);
+            when(themeRepository.existsByIdAndIsDefaultTrue(anyLong()))
+                    .thenReturn(true);
+
+            // When
+            ActionNotAllowedException exception = assertThrows(ActionNotAllowedException.class, () -> themeService.delete(id));
+
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_IS_DEFAULT),
+                    () -> verify(themeRepository).existsById(id),
+                    () -> verify(themeRepository).existsByIdAndIsDefaultTrue(id),
+                    () -> verifyNoMoreInteractions(themeRepository)
+            );
+        }
+
+        @Test
+        @DisplayName("Erreur - Action non autorisée - Thème avec quiz")
+        public void delete_themeWithQuizzes() {
+            // Given
+            when(themeRepository.existsById(anyLong()))
+                    .thenReturn(true);
+            when(themeRepository.existsByIdAndIsDefaultTrue(anyLong()))
+                    .thenReturn(false);
+            when(themeRepository.existsByIdAndQuizzesIsNotEmpty(anyLong()))
+                    .thenReturn(true);
+
+            // When
+            ActionNotAllowedException exception = assertThrows(ActionNotAllowedException.class, () -> themeService.delete(id));
+
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_CONTAINS_QUIZZES),
+                    () -> verify(themeRepository).existsById(id),
+                    () -> verify(themeRepository).existsByIdAndIsDefaultTrue(id),
+                    () -> verify(themeRepository).existsByIdAndQuizzesIsNotEmpty(id),
+                    () -> verifyNoMoreInteractions(themeRepository)
+            );
         }
 
     }
@@ -314,9 +491,11 @@ public class ThemeServiceTest {
             themeService.updateVisibility(id, false);
 
             // Then
-            verify(themeRepository).findById(anyLong());
-            verify(themeRepository, never()).countByIdAndQuizzesDisabledAtIsNull(anyLong());
-            verify(themeRepository).save(any(Theme.class));
+            assertAll(
+                    () -> verify(themeRepository).findById(id),
+                    () -> verifyNoMoreInteractions(themeRepository),
+                    () -> assertThat(theme.isVisible()).isFalse()
+            );
         }
 
         @Test
@@ -330,28 +509,13 @@ public class ThemeServiceTest {
             themeService.updateVisibility(id, true);
 
             // Then
-            verify(themeRepository).findById(anyLong());
-            verify(themeRepository, never()).countByIdAndQuizzesDisabledAtIsNull(anyLong());
-            verify(themeRepository, never()).save(any(Theme.class));
+            assertAll(
+                    () -> verify(themeRepository).findById(id),
+                    () -> verifyNoMoreInteractions(themeRepository),
+                    () -> assertThat(theme.isVisible()).isTrue()
+            );
         }
-        
-        @Test
-        @DisplayName("Erreur - Action non autorisée - Thème sans quiz actif")
-        public void enable_disabledThemeWithoutActiveQuizzes() {
-            // Given
-            theme.setDisabledAt(LocalDateTime.now());
-            when(themeRepository.findById(anyLong()))
-                    .thenReturn(Optional.of(theme));
-            when(themeRepository.countByIdAndQuizzesDisabledAtIsNull(anyLong()))
-                    .thenReturn(0);
 
-            // When & Then
-            assertThrows(ActionNotAllowedException.class, () -> themeService.updateVisibility(id, true));
-
-            verify(themeRepository).findById(anyLong());
-            verify(themeRepository).countByIdAndQuizzesDisabledAtIsNull(anyLong());
-            verify(themeRepository, never()).save(any(Theme.class));
-        }
 
         @Test
         @DisplayName("Erreur - Thème non trouvé")
@@ -360,14 +524,38 @@ public class ThemeServiceTest {
             when(themeRepository.findById(anyLong()))
                     .thenReturn(Optional.empty());
 
-            // When & Then
-            assertThrows(NotFoundException.class, () -> themeService.updateVisibility(id, true));
+            // When
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> themeService.updateVisibility(id, true));
 
-            verify(themeRepository).findById(anyLong());
-            verify(themeRepository, never()).countByIdAndQuizzesDisabledAtIsNull(anyLong());
-            verify(themeRepository, never()).save(any(Theme.class));
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_NOT_FOUND),
+                    () -> verify(themeRepository).findById(id),
+                    () -> verifyNoMoreInteractions(themeRepository)
+            );
         }
+        
+        @Test
+        @DisplayName("Erreur - Action non autorisée - Thème sans quiz actif")
+        public void enable_disabledThemeWithoutActiveQuizzes() {
+            // Given
+            theme.setDisabledAt(LocalDateTime.now());
 
+            when(themeRepository.findById(anyLong()))
+                    .thenReturn(Optional.of(theme));
+            when(themeRepository.countByIdAndQuizzesDisabledAtIsNull(anyLong()))
+                    .thenReturn(0);
+
+            // When
+            ActionNotAllowedException exception = assertThrows(ActionNotAllowedException.class, () -> themeService.updateVisibility(id, true));
+
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.THEME_CONTAINS_NO_QUIZZES),
+                    () -> verify(themeRepository).findById(id),
+                    () -> verify(themeRepository).countByIdAndQuizzesDisabledAtIsNull(id)
+            );
+        }
     }
 
 }

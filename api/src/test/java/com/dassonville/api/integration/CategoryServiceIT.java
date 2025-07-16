@@ -1,8 +1,8 @@
 package com.dassonville.api.integration;
 
 
-import com.dassonville.api.dto.CategoryAdminDTO;
-import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.response.CategoryAdminDTO;
+import com.dassonville.api.dto.request.CategoryUpsertDTO;
 import com.dassonville.api.exception.AlreadyExistException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.model.Category;
@@ -48,15 +48,15 @@ public class CategoryServiceIT {
         @DisplayName("Succès - Récupérer toutes les catégories selon un thème par ordre alphabétique")
         public void shouldGetAllCategoriesByTheme() {
             // Given
-            long themeId = 1L;
+            long themeId = 3L;
 
             // When
             List<IdAndNameProjection> categories = categoryService.findAllByTheme(themeId);
 
             // Then
-            assertThat(categories).hasSize(3);
-            assertThat(categories.getFirst().getId()).isEqualTo(14L);
-            assertThat(categories.getFirst().getName()).isEqualTo("Mythologie & Religion");
+            assertThat(categories).hasSize(4);
+            assertThat(categories.getFirst().getId()).isEqualTo(1L);
+            assertThat(categories.getFirst().getName()).isEqualTo("Droit privé");
         }
 
         @Test
@@ -79,7 +79,7 @@ public class CategoryServiceIT {
             CategoryAdminDTO category = categoryService.findById(idToFind);
 
             // Then
-            assertThat(category.name()).isEqualTo("Peinture");
+            assertThat(category.name()).isEqualTo("Droit privé");
         }
 
         @Test
@@ -120,7 +120,7 @@ public class CategoryServiceIT {
         @DisplayName("Erreur - Thème non trouvé")
         public void shouldFailToCreateCategory_WhenThemeNotFound() {
             // Given
-            CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO(" catégorie", " description");
+            CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO(" catégorie", " description pour la catégorie  ");
 
             // When / Then
             assertThrows(NotFoundException.class, () -> categoryService.create(9999L, categoryToCreate));
@@ -130,7 +130,7 @@ public class CategoryServiceIT {
         @DisplayName("Erreur - Catégorie déjà existante")
         public void shouldFailToCreateCategory_WhenAlreadyExisting() {
             // Given
-            CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO(" droit civil", "");
+            CategoryUpsertDTO categoryToCreate = new CategoryUpsertDTO(" droit public   ", " une description pour la catégorie droit public ");
 
             // When / Then
             assertThrows(AlreadyExistException.class, () -> categoryService.create(1L, categoryToCreate));
@@ -158,7 +158,7 @@ public class CategoryServiceIT {
             assertThat(category.getDescription()).isEqualTo("Description");
             assertThat(category.getCreatedAt()).isNotNull();
             assertThat(category.getUpdatedAt()).isNotNull();
-            assertThat(category.getTheme().getId()).isEqualTo(1L);
+            assertThat(category.getTheme().getId()).isEqualTo(6L);
         }
 
         @Test
@@ -176,8 +176,8 @@ public class CategoryServiceIT {
         @DisplayName("Erreur - Catégorie déjà existante")
         public void shouldFailToUpdate_WhenCategoryWithExistingName() {
             // Given
-            long idToUpdate = 5L;
-            CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO(" peinture", "");
+            long idToUpdate = 1L;
+            CategoryUpsertDTO categoryToUpdate = new CategoryUpsertDTO(" cinéma  ", " une description pour la catégorie cinéma  ");
 
             // When / Then
             assertThrows(AlreadyExistException.class, () -> categoryService.update(idToUpdate, categoryToUpdate));

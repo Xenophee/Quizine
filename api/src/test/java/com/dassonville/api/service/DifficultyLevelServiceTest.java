@@ -1,21 +1,21 @@
 package com.dassonville.api.service;
 
 
-import com.dassonville.api.dto.DifficultyLevelAdminDTO;
-import com.dassonville.api.dto.DifficultyLevelPublicDTO;
-import com.dassonville.api.dto.DifficultyLevelUpsertDTO;
-import com.dassonville.api.exception.ActionNotAllowedException;
-import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.dto.response.DifficultyLevelAdminDTO;
+import com.dassonville.api.dto.response.DifficultyLevelPublicDTO;
+import com.dassonville.api.exception.ErrorCode;
+import com.dassonville.api.exception.MisconfiguredException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.DifficultyLevelMapper;
 import com.dassonville.api.model.DifficultyLevel;
 import com.dassonville.api.projection.PublicDifficultyLevelProjection;
 import com.dassonville.api.repository.DifficultyLevelRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import com.dassonville.api.repository.QuizRepository;
+import com.dassonville.api.util.TestPublicDifficultyLevelProjection;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,16 +25,20 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 
+@Tag("service")
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UNI - Service : Niveaux de difficulté")
 public class DifficultyLevelServiceTest {
 
     @Mock
     private DifficultyLevelRepository difficultyLevelRepository;
+    @Mock
+    private QuizRepository quizRepository;
 
     private DifficultyLevelService difficultyLevelService;
 
@@ -43,25 +47,28 @@ public class DifficultyLevelServiceTest {
 
     private long id;
     private DifficultyLevel difficultyLevel;
-    private DifficultyLevelUpsertDTO difficultyLevelUpsertDTO;
 
 
     @BeforeEach
     void setUp() {
-        difficultyLevelService = new DifficultyLevelService(difficultyLevelRepository, difficultyLevelMapper);
+        difficultyLevelService = new DifficultyLevelService(difficultyLevelRepository, difficultyLevelMapper, quizRepository);
 
         id = 1L;
 
-        difficultyLevel = new DifficultyLevel();
-        difficultyLevel.setId(1L);
-        difficultyLevel.setName("Facile");
-        difficultyLevel.setAnswerOptionsCount((byte) 2);
-        difficultyLevel.setTimerSeconds((short) 0);
-        difficultyLevel.setPointsPerQuestion(5);
-        difficultyLevel.setIsReference(false);
-        difficultyLevel.setCreatedAt(LocalDateTime.now());
-
-        difficultyLevelUpsertDTO = new DifficultyLevelUpsertDTO(" facile", (byte) 2, (short) 0, 5);
+        difficultyLevel = DifficultyLevel.builder()
+                .id(id)
+                .name("Facile")
+                .isReference(false)
+                .label("FACILE")
+                .description("Un niveau facile pour commencer.")
+                .rank((byte) 1)
+                .startsAt(null)
+                .endsAt(null)
+                .isRecurring(false)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .disabledAt(null)
+                .build();
     }
 
 
@@ -73,54 +80,106 @@ public class DifficultyLevelServiceTest {
         @DisplayName("ADMIN - Récupérer tous les niveaux de difficulté")
         void getAllDifficultyLevels() {
             // Given
-            when(difficultyLevelRepository.findAllByOrderByDisplayOrder())
+            when(difficultyLevelRepository.findAllByOrderByRank())
                     .thenReturn(List.of(difficultyLevel));
 
             // When
             List<DifficultyLevelAdminDTO> results = difficultyLevelService.getAllDifficultyLevels();
+            DifficultyLevelAdminDTO dto = results.getFirst();
 
             // Then
-            verify(difficultyLevelRepository).findAllByOrderByDisplayOrder();
-            
-            assertThat(results).isNotNull();
-            assertThat(results.size()).isEqualTo(1);
-            assertThat(results.getFirst().name()).isEqualTo(difficultyLevel.getName());
-            assertThat(results.getFirst().answerOptionsCount()).isEqualTo(difficultyLevel.getAnswerOptionsCount());
-            assertThat(results.getFirst().timerSeconds()).isEqualTo(difficultyLevel.getTimerSeconds());
-            assertThat(results.getFirst().pointsPerQuestion()).isEqualTo(difficultyLevel.getPointsPerQuestion());
-            assertThat(results.getFirst().createdAt()).isEqualTo(difficultyLevel.getCreatedAt());
-            assertThat(results.getFirst().isReference()).isEqualTo(difficultyLevel.getIsReference());
+            assertAll("Verify method calls",
+                    () -> verify(difficultyLevelRepository).findAllByOrderByRank()
+            );
+
+            assertAll("Assertions for DTO",
+                    () -> assertThat(results).isNotEmpty(),
+                    () -> assertThat(results).hasSize(1),
+                    () -> assertThat(dto.name()).isEqualTo(difficultyLevel.getName()),
+                    () -> assertThat(dto.isReference()).isEqualTo(difficultyLevel.getIsReference()),
+                    () -> assertThat(dto.label()).isEqualTo(difficultyLevel.getLabel()),
+                    () -> assertThat(dto.description()).isEqualTo(difficultyLevel.getDescription()),
+                    () -> assertThat(dto.rank()).isEqualTo(difficultyLevel.getRank()),
+                    () -> assertThat(dto.startsAt()).isEqualTo(difficultyLevel.getStartsAt()),
+                    () -> assertThat(dto.endsAt()).isEqualTo(difficultyLevel.getEndsAt()),
+                    () -> assertThat(dto.isRecurring()).isEqualTo(difficultyLevel.getIsRecurring()),
+                    () -> assertThat(dto.createdAt()).isEqualTo(difficultyLevel.getCreatedAt()),
+                    () -> assertThat(dto.updatedAt()).isEqualTo(difficultyLevel.getUpdatedAt()),
+                    () -> assertThat(dto.disabledAt()).isEqualTo(difficultyLevel.getDisabledAt())
+            );
         }
 
-        @Test
+        @ParameterizedTest(name = "createdAt {0} days ago => isNew = {1}")
+        @MethodSource("com.dassonville.api.util.TestDataFactory#provideCreatedAtsAndIsNew")
         @DisplayName("PUBLIC - Récupérer tous les niveaux de difficulté actifs")
-        void getAllActiveDifficultyLevels() {
-            PublicDifficultyLevelProjection projection = mock(PublicDifficultyLevelProjection.class);
-            when(projection.getId()).thenReturn(1L);
-            when(projection.getName()).thenReturn("Facile");
-            when(projection.getAnswerOptionsCount()).thenReturn((byte) 0);
-            when(projection.getTimerSeconds()).thenReturn((short) 0);
-            when(projection.getPointsPerQuestion()).thenReturn(5);
-            when(projection.getCreatedAt()).thenReturn(LocalDateTime.now());
+        void getAllActiveDifficultyLevels(LocalDateTime createdAt, boolean expectedIsNew) {
+
+            PublicDifficultyLevelProjection projection = new TestPublicDifficultyLevelProjection(createdAt);
 
             // Given
-            when(difficultyLevelRepository.findByDisabledAtIsNullOrderByDisplayOrder())
+            when(quizRepository.existsByIdAndDisabledAtIsNull(id))
+                    .thenReturn(true);
+            when(difficultyLevelRepository.findByDisabledAtIsNullOrderByRank(anyLong()))
                     .thenReturn(List.of(projection));
 
             // When
-            List<DifficultyLevelPublicDTO> results = difficultyLevelService.getAllActiveDifficultyLevels();
+            List<DifficultyLevelPublicDTO> results = difficultyLevelService.getAllActiveDifficultyLevels(id);
+            DifficultyLevelPublicDTO dto = results.getFirst();
+
 
             // Then
-            verify(difficultyLevelRepository).findByDisabledAtIsNullOrderByDisplayOrder();
+            assertAll("Verify method calls",
+                    () -> verify(quizRepository).existsByIdAndDisabledAtIsNull(id),
+                    () -> verify(difficultyLevelRepository).findByDisabledAtIsNullOrderByRank(id)
+            );
 
-            assertThat(results).isNotNull();
-            assertThat(results.size()).isEqualTo(1);
-            assertThat(results.getFirst().id()).isEqualTo(projection.getId());
-            assertThat(results.getFirst().name()).isEqualTo(projection.getName());
-            assertThat(results.getFirst().answerOptionsCount()).isEqualTo(projection.getAnswerOptionsCount());
-            assertThat(results.getFirst().timerSeconds()).isEqualTo(projection.getTimerSeconds());
-            assertThat(results.getFirst().pointsPerQuestion()).isEqualTo(projection.getPointsPerQuestion());
-            assertThat(results.getFirst().isNew()).isTrue();
+            assertAll("Assertions for DTO",
+                    () -> assertThat(results).isNotEmpty(),
+                    () -> assertThat(results).hasSize(1),
+                    () -> assertThat(dto.id()).isEqualTo(projection.getId()),
+                    () -> assertThat(dto.name()).isEqualTo(projection.getName()),
+                    () -> assertThat(dto.label()).isEqualTo(projection.getLabel()),
+                    () -> assertThat(dto.description()).isEqualTo(projection.getDescription()),
+                    () -> assertThat(dto.isNew()).isEqualTo(expectedIsNew)
+            );
+        }
+
+        @Test
+        @DisplayName("Erreur - Quiz non trouvé ou désactivé")
+        void getAllActiveDifficultyLevels_quizNotFoundOrDisabled() {
+            // Given
+            when(quizRepository.existsByIdAndDisabledAtIsNull(id))
+                    .thenReturn(false);
+
+            // When
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> difficultyLevelService.getAllActiveDifficultyLevels(id));
+
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.QUIZ_NOT_FOUND),
+                    () -> verify(quizRepository).existsByIdAndDisabledAtIsNull(id),
+                    () -> verifyNoInteractions(difficultyLevelRepository)
+            );
+        }
+
+        @Test
+        @DisplayName("Erreur - Aucun niveau de difficulté actif trouvé")
+        void getAllActiveDifficultyLevels_noActiveLevelsFound() {
+            // Given
+            when(quizRepository.existsByIdAndDisabledAtIsNull(id))
+                    .thenReturn(true);
+            when(difficultyLevelRepository.findByDisabledAtIsNullOrderByRank(anyLong()))
+                    .thenReturn(List.of());
+
+            // When
+            MisconfiguredException exception = assertThrows(MisconfiguredException.class, () -> difficultyLevelService.getAllActiveDifficultyLevels(id));
+
+            // Then
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.QUIZ_MISCONFIGURED),
+                    () -> verify(quizRepository).existsByIdAndDisabledAtIsNull(id),
+                    () -> verify(difficultyLevelRepository).findByDisabledAtIsNullOrderByRank(id)
+            );
         }
     }
 
@@ -140,14 +199,23 @@ public class DifficultyLevelServiceTest {
             DifficultyLevelAdminDTO result = difficultyLevelService.findById(id);
 
             // Then
-            verify(difficultyLevelRepository).findById(anyLong());
-            
-            assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(difficultyLevel.getName());
-            assertThat(result.answerOptionsCount()).isEqualTo(difficultyLevel.getAnswerOptionsCount());
-            assertThat(result.timerSeconds()).isEqualTo(difficultyLevel.getTimerSeconds());
-            assertThat(result.pointsPerQuestion()).isEqualTo(difficultyLevel.getPointsPerQuestion());
-            assertThat(result.createdAt()).isEqualTo(difficultyLevel.getCreatedAt());
+            assertAll("Verify method calls",
+                    () -> verify(difficultyLevelRepository).findById(id)
+            );
+
+            assertAll("Assertions for DTO",
+                    () -> assertThat(result.name()).isEqualTo(difficultyLevel.getName()),
+                    () -> assertThat(result.isReference()).isEqualTo(difficultyLevel.getIsReference()),
+                    () -> assertThat(result.label()).isEqualTo(difficultyLevel.getLabel()),
+                    () -> assertThat(result.description()).isEqualTo(difficultyLevel.getDescription()),
+                    () -> assertThat(result.rank()).isEqualTo(difficultyLevel.getRank()),
+                    () -> assertThat(result.startsAt()).isEqualTo(difficultyLevel.getStartsAt()),
+                    () -> assertThat(result.endsAt()).isEqualTo(difficultyLevel.getEndsAt()),
+                    () -> assertThat(result.isRecurring()).isEqualTo(difficultyLevel.getIsRecurring()),
+                    () -> assertThat(result.createdAt()).isEqualTo(difficultyLevel.getCreatedAt()),
+                    () -> assertThat(result.updatedAt()).isEqualTo(difficultyLevel.getUpdatedAt()),
+                    () -> assertThat(result.disabledAt()).isEqualTo(difficultyLevel.getDisabledAt())
+            );
         }
 
         @Test
@@ -158,272 +226,13 @@ public class DifficultyLevelServiceTest {
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThrows(NotFoundException.class, () -> difficultyLevelService.findById(id));
+            NotFoundException exception = assertThrows(NotFoundException.class, () -> difficultyLevelService.findById(id));
 
             // Then
-            verify(difficultyLevelRepository).findById(anyLong());
-        }
-    }
-
-
-    @Nested
-    @DisplayName("Créer un niveau de difficulté")
-    class CreateTest {
-
-        @Test
-        @DisplayName("Succès")
-        void create_newDifficultyLevel() {
-            // Given
-            when(difficultyLevelRepository.existsByNameIgnoreCase(anyString()))
-                    .thenReturn(false);
-            when(difficultyLevelRepository.save(any(DifficultyLevel.class)))
-                    .thenReturn(difficultyLevel);
-
-            // When
-            DifficultyLevelAdminDTO result = difficultyLevelService.create(difficultyLevelUpsertDTO);
-
-            // Then
-            verify(difficultyLevelRepository).existsByNameIgnoreCase(anyString());
-            verify(difficultyLevelRepository).save(any(DifficultyLevel.class));
-
-            assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(difficultyLevel.getName());
-            assertThat(result.answerOptionsCount()).isEqualTo(difficultyLevel.getAnswerOptionsCount());
-            assertThat(result.timerSeconds()).isEqualTo(difficultyLevel.getTimerSeconds());
-            assertThat(result.pointsPerQuestion()).isEqualTo(difficultyLevel.getPointsPerQuestion());
-            assertThat(result.createdAt()).isEqualTo(difficultyLevel.getCreatedAt());
-        }
-
-        @Test
-        @DisplayName("Erreur - Nom déjà existant")
-        void create_existingName() {
-            // Given
-            when(difficultyLevelRepository.existsByNameIgnoreCase(anyString()))
-                    .thenReturn(true);
-
-            // When & Then
-            assertThrows(AlreadyExistException.class, () -> difficultyLevelService.create(difficultyLevelUpsertDTO));
-
-            verify(difficultyLevelRepository).existsByNameIgnoreCase(anyString());
-            verify(difficultyLevelRepository, never()).save(any(DifficultyLevel.class));
-        }
-    }
-
-
-    @Nested
-    @DisplayName("Mettre à jour un niveau de difficulté")
-    class UpdateTest {
-
-        @Test
-        @DisplayName("Succès")
-        void update_existingDifficultyLevel() {
-            // Given
-            when(difficultyLevelRepository.findById(anyLong()))
-                    .thenReturn(Optional.of(difficultyLevel));
-            when(difficultyLevelRepository.existsByNameIgnoreCaseAndIdNot(anyString(), anyLong()))
-                    .thenReturn(false);
-            when(difficultyLevelRepository.save(any(DifficultyLevel.class)))
-                    .thenReturn(difficultyLevel);
-
-            // When
-            DifficultyLevelAdminDTO result = difficultyLevelService.update(id, difficultyLevelUpsertDTO);
-
-            // Then
-            verify(difficultyLevelRepository).findById(anyLong());
-            verify(difficultyLevelRepository).existsByNameIgnoreCaseAndIdNot(anyString(), anyLong());
-            verify(difficultyLevelRepository).save(any(DifficultyLevel.class));
-
-            assertThat(result).isNotNull();
-            assertThat(result.name()).isEqualTo(difficultyLevel.getName());
-            assertThat(result.answerOptionsCount()).isEqualTo(difficultyLevel.getAnswerOptionsCount());
-            assertThat(result.timerSeconds()).isEqualTo(difficultyLevel.getTimerSeconds());
-            assertThat(result.pointsPerQuestion()).isEqualTo(difficultyLevel.getPointsPerQuestion());
-            assertThat(result.createdAt()).isEqualTo(difficultyLevel.getCreatedAt());
-        }
-
-        @Test
-        @DisplayName("Erreur - Niveau de difficulté non trouvé")
-        void update_nonExistingDifficultyLevel() {
-            // Given
-            when(difficultyLevelRepository.findById(anyLong()))
-                    .thenReturn(Optional.empty());
-
-            // When & Then
-            assertThrows(NotFoundException.class, () -> difficultyLevelService.update(id, difficultyLevelUpsertDTO));
-
-            verify(difficultyLevelRepository).findById(anyLong());
-            verify(difficultyLevelRepository, never()).existsByNameIgnoreCaseAndIdNot(anyString(), anyLong());
-            verify(difficultyLevelRepository, never()).save(any(DifficultyLevel.class));
-        }
-
-        @Test
-        @DisplayName("Erreur - Nom déjà existant")
-        void update_existingDifficultyLevelWithExistingName() {
-            // Given
-            when(difficultyLevelRepository.findById(anyLong()))
-                    .thenReturn(Optional.of(difficultyLevel));
-            when(difficultyLevelRepository.existsByNameIgnoreCaseAndIdNot(anyString(), anyLong()))
-                    .thenReturn(true);
-
-            // When & Then
-            assertThrows(AlreadyExistException.class, () -> difficultyLevelService.update(id, difficultyLevelUpsertDTO));
-
-            verify(difficultyLevelRepository).findById(anyLong());
-            verify(difficultyLevelRepository).existsByNameIgnoreCaseAndIdNot(anyString(), anyLong());
-            verify(difficultyLevelRepository, never()).save(any(DifficultyLevel.class));
-        }
-    }
-
-
-    @Nested
-    @DisplayName("Supprimer un niveau de difficulté")
-    class DeleteTest {
-
-        @Test
-        @DisplayName("Succès")
-        void delete_existingDifficultyLevel() {
-            // Given
-            when(difficultyLevelRepository.findById(anyLong()))
-                    .thenReturn(Optional.of(difficultyLevel));
-
-            // When
-            difficultyLevelService.delete(id);
-
-            // Then
-            verify(difficultyLevelRepository).findById(anyLong());
-            verify(difficultyLevelRepository).deleteById(anyLong());
-        }
-
-        @Test
-        @DisplayName("Erreur - Niveau de difficulté non trouvé")
-        void delete_nonExistingDifficultyLevel() {
-            // Given
-            when(difficultyLevelRepository.findById(anyLong()))
-                    .thenReturn(Optional.empty());
-
-            // When & Then
-            assertThrows(NotFoundException.class, () -> difficultyLevelService.delete(id));
-
-            verify(difficultyLevelRepository).findById(anyLong());
-            verify(difficultyLevelRepository, never()).deleteById(anyLong());
-        }
-
-        @Test
-        @DisplayName("Erreur - Impossible de supprimer un niveau de difficulté de référence")
-        void delete_referenceDifficultyLevel() {
-            // Given
-            difficultyLevel.setIsReference(true);
-            when(difficultyLevelRepository.findById(anyLong()))
-                    .thenReturn(Optional.of(difficultyLevel));
-
-            // When & Then
-            assertThrows(ActionNotAllowedException.class, () -> difficultyLevelService.delete(id));
-
-            verify(difficultyLevelRepository).findById(anyLong());
-            verify(difficultyLevelRepository, never()).deleteById(anyLong());
-        }
-    }
-
-
-    @Nested
-    @DisplayName("Basculer la visibilité d'un niveau de difficulté")
-    class UpdateVisibilityTest {
-
-        @Test
-        @DisplayName("Succès")
-        void disable_existingDifficultyLevel() {
-            // Given
-            when(difficultyLevelRepository.findById(anyLong()))
-                    .thenReturn(Optional.of(difficultyLevel));
-
-            // When
-            difficultyLevelService.updateVisibility(id, false);
-
-            // Then
-            verify(difficultyLevelRepository).findById(anyLong());
-            verify(difficultyLevelRepository).save(any(DifficultyLevel.class));
-        }
-
-        @Test
-        @DisplayName("RAS - Niveau de difficulté déjà activé")
-        void updateVisibility_alreadyDisabled() {
-            // Given
-            when(difficultyLevelRepository.findById(anyLong()))
-                    .thenReturn(Optional.of(difficultyLevel));
-
-            // When
-            difficultyLevelService.updateVisibility(id, true);
-
-            // Then
-            verify(difficultyLevelRepository).findById(anyLong());
-            verify(difficultyLevelRepository, never()).save(any(DifficultyLevel.class));
-        }
-
-        @Test
-        @DisplayName("Erreur - Niveau de difficulté non trouvé")
-        void updateVisibility_nonExistingDifficultyLevel() {
-            // Given
-            when(difficultyLevelRepository.findById(anyLong()))
-                    .thenReturn(Optional.empty());
-
-            // When & Then
-            assertThrows(NotFoundException.class, () -> difficultyLevelService.updateVisibility(id, false));
-
-            verify(difficultyLevelRepository).findById(anyLong());
-            verify(difficultyLevelRepository, never()).save(any(DifficultyLevel.class));
-        }
-    }
-
-
-    @Nested
-    @DisplayName("Changer l'ordre d'affichage")
-    class UpdateDisplayOrderTest {
-
-        @Test
-        @DisplayName("Succès")
-        void updateDisplayOrder_success() {
-            // Given
-            List<Long> newOrder = List.of(1L, 2L, 3L);
-            List<DifficultyLevel> levels = List.of(
-                    new DifficultyLevel(1L, "Facile", (short) 1),
-                    new DifficultyLevel(2L, "Moyen", (short) 2),
-                    new DifficultyLevel(3L, "Difficile", (short) 3)
+            assertAll(
+                    () -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DIFFICULTY_NOT_FOUND),
+                    () -> verify(difficultyLevelRepository).findById(id)
             );
-
-            when(difficultyLevelRepository.findAllById(newOrder)).thenReturn(levels);
-
-            // When
-            difficultyLevelService.updateDisplayOrder(newOrder);
-
-            // Then
-            verify(difficultyLevelRepository).findAllById(newOrder);
-            verify(difficultyLevelRepository, times(2)).saveAll(levels);
-            verify(difficultyLevelRepository).flush();
-
-            assertThat(levels.get(0).getDisplayOrder()).isEqualTo((short) 1);
-            assertThat(levels.get(1).getDisplayOrder()).isEqualTo((short) 2);
-            assertThat(levels.get(2).getDisplayOrder()).isEqualTo((short) 3);
-        }
-
-        @Test
-        @DisplayName("Erreur - Certains IDs fournis n'existent pas")
-        void updateDisplayOrder_idsNotFound() {
-            // Given
-            List<Long> newOrder = List.of(1L, 2L, 3L);
-            List<DifficultyLevel> levels = List.of(
-                    new DifficultyLevel(1L, "Facile", (short) 1),
-                    new DifficultyLevel(2L, "Moyen", (short) 2)
-            );
-
-            when(difficultyLevelRepository.findAllById(newOrder))
-                    .thenReturn(levels);
-
-            // When & Then
-            assertThrows(NotFoundException.class, () -> difficultyLevelService.updateDisplayOrder(newOrder));
-
-            verify(difficultyLevelRepository).findAllById(newOrder);
-            verify(difficultyLevelRepository, never()).saveAll(anyList());
-            verify(difficultyLevelRepository, never()).flush();
         }
     }
 }

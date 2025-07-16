@@ -2,8 +2,8 @@ package com.dassonville.api.e2e;
 
 
 import com.dassonville.api.constant.ApiRoutes;
-import com.dassonville.api.dto.CategoryAdminDTO;
-import com.dassonville.api.dto.CategoryUpsertDTO;
+import com.dassonville.api.dto.response.CategoryAdminDTO;
+import com.dassonville.api.dto.request.CategoryUpsertDTO;
 import com.dassonville.api.model.Category;
 import com.dassonville.api.repository.CategoryRepository;
 import org.flywaydb.core.Flyway;

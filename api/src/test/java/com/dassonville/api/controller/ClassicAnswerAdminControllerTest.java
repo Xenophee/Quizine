@@ -2,11 +2,13 @@ package com.dassonville.api.controller;
 
 
 import com.dassonville.api.constant.ApiRoutes;
-import com.dassonville.api.dto.AnswerAdminDTO;
-import com.dassonville.api.dto.AnswerUpsertDTO;
-import com.dassonville.api.dto.BooleanRequestDTO;
+import com.dassonville.api.constant.FieldConstraint;
+import com.dassonville.api.dto.response.AnswerAdminDTO;
+import com.dassonville.api.dto.request.ClassicAnswerUpsertDTO;
+import com.dassonville.api.dto.request.BooleanRequestDTO;
 import com.dassonville.api.exception.ActionNotAllowedException;
 import com.dassonville.api.exception.AlreadyExistException;
+import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.service.AnswerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AnswerAdminController.class)
 @DisplayName("IT - ADMIN Controller : Réponse")
-public class AnswerAdminControllerTest {
+public class ClassicAnswerAdminControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -46,7 +48,7 @@ public class AnswerAdminControllerTest {
     private long endpointId;
     private BooleanRequestDTO booleanRequestDTO;
     private AnswerAdminDTO answerAdminDTO;
-    private AnswerUpsertDTO answerUpsertDTO;
+    private ClassicAnswerUpsertDTO classicAnswerUpsertDTO;
 
 
     @BeforeEach
@@ -54,7 +56,7 @@ public class AnswerAdminControllerTest {
         endpointId = 1L;
         booleanRequestDTO = new BooleanRequestDTO(true);
         answerAdminDTO = new AnswerAdminDTO(1L, "Test", true, null, null, null);
-        answerUpsertDTO = new AnswerUpsertDTO("Test", true);
+        classicAnswerUpsertDTO = new ClassicAnswerUpsertDTO("Test", true);
     }
 
 
@@ -66,60 +68,66 @@ public class AnswerAdminControllerTest {
         @DisplayName("Succès")
         void createAnswer_shouldReturn201() throws Exception {
             // Given
-            when(answerService.create(anyLong(), any(AnswerUpsertDTO.class)))
+            when(answerService.create(anyLong(), any(ClassicAnswerUpsertDTO.class)))
                     .thenReturn(answerAdminDTO);
 
             // When & Then
             mockMvc.perform(post(ApiRoutes.Answers.ADMIN_ANSWERS_POST, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(answerUpsertDTO)))
+                            .content(objectMapper.writeValueAsString(classicAnswerUpsertDTO)))
                     .andExpect(status().isCreated())
                     .andExpect(header().string("Location", containsString(ApiRoutes.Answers.STRING + "/" + answerAdminDTO.id())))
-                    .andExpect(jsonPath("$.text").value(answerAdminDTO.text()));
+                    .andExpect(jsonPath("$.text").value(answerAdminDTO.text()))
+                    .andExpect(jsonPath("$.isCorrect").value(answerAdminDTO.isCorrect()));
         }
 
         @Test
         @DisplayName("Erreur - Question non trouvée")
         void createAnswer_shouldReturn404() throws Exception {
             // Given
-            when(answerService.create(anyLong(), any(AnswerUpsertDTO.class)))
+            when(answerService.create(anyLong(), any(ClassicAnswerUpsertDTO.class)))
                     .thenThrow(new NotFoundException());
 
             // When & Then
             mockMvc.perform(post(ApiRoutes.Answers.ADMIN_ANSWERS_POST, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(answerUpsertDTO)))
+                            .content(objectMapper.writeValueAsString(classicAnswerUpsertDTO)))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
 
         @Test
         @DisplayName("Erreur - Réponse déjà existante")
         void createAnswer_shouldReturn409() throws Exception {
             // Given
-            when(answerService.create(anyLong(), any(AnswerUpsertDTO.class)))
+            when(answerService.create(anyLong(), any(ClassicAnswerUpsertDTO.class)))
                     .thenThrow(new AlreadyExistException());
 
             // When & Then
             mockMvc.perform(post(ApiRoutes.Answers.ADMIN_ANSWERS_POST, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(answerUpsertDTO)))
+                            .content(objectMapper.writeValueAsString(classicAnswerUpsertDTO)))
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.ALREADY_EXIST.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.ALREADY_EXIST.getMessage()));
         }
 
         @Test
         @DisplayName("Erreur - Données invalides")
         void createAnswer_shouldReturn400() throws Exception {
             // Given
-            answerUpsertDTO = new AnswerUpsertDTO("", true);
+            classicAnswerUpsertDTO = new ClassicAnswerUpsertDTO("", null);
 
             // When & Then
             mockMvc.perform(post(ApiRoutes.Answers.ADMIN_ANSWERS_POST, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(answerUpsertDTO)))
+                            .content(objectMapper.writeValueAsString(classicAnswerUpsertDTO)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.text").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.VALIDATION_ERROR.getMessage()))
+                    .andExpect(jsonPath("$.errors.text").value(FieldConstraint.ClassicAnswer.TEXT_NOT_BLANK))
+                    .andExpect(jsonPath("$.errors.isCorrect").value(FieldConstraint.ClassicAnswer.IS_CORRECT_NOT_NULL));
         }
     }
 
@@ -132,59 +140,65 @@ public class AnswerAdminControllerTest {
         @DisplayName("Succès")
         void updateAnswer_shouldReturn200() throws Exception {
             // Given
-            when(answerService.update(anyLong(), any(AnswerUpsertDTO.class)))
+            when(answerService.update(anyLong(), any(ClassicAnswerUpsertDTO.class)))
                     .thenReturn(answerAdminDTO);
 
             // When & Then
             mockMvc.perform(put(ApiRoutes.Answers.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(answerUpsertDTO)))
+                            .content(objectMapper.writeValueAsString(classicAnswerUpsertDTO)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.text").value(answerAdminDTO.text()));
+                    .andExpect(jsonPath("$.text").value(answerAdminDTO.text()))
+                    .andExpect(jsonPath("$.isCorrect").value(answerAdminDTO.isCorrect()));
         }
 
         @Test
         @DisplayName("Erreur - Réponse déjà existante")
         void updateAnswer_shouldReturn409() throws Exception {
             // Given
-            when(answerService.update(anyLong(), any(AnswerUpsertDTO.class)))
+            when(answerService.update(anyLong(), any(ClassicAnswerUpsertDTO.class)))
                     .thenThrow(new AlreadyExistException());
 
             // When & Then
             mockMvc.perform(put(ApiRoutes.Answers.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(answerUpsertDTO)))
+                            .content(objectMapper.writeValueAsString(classicAnswerUpsertDTO)))
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.ALREADY_EXIST.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.ALREADY_EXIST.getMessage()));
         }
 
         @Test
         @DisplayName("Erreur - Données invalides")
         void updateAnswer_shouldReturn400() throws Exception {
             // Given
-            answerUpsertDTO = new AnswerUpsertDTO("", true);
+            classicAnswerUpsertDTO = new ClassicAnswerUpsertDTO("", null);
 
             // When & Then
             mockMvc.perform(put(ApiRoutes.Answers.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(answerUpsertDTO)))
+                            .content(objectMapper.writeValueAsString(classicAnswerUpsertDTO)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.text").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.VALIDATION_ERROR.getMessage()))
+                    .andExpect(jsonPath("$.errors.text").value(FieldConstraint.ClassicAnswer.TEXT_NOT_BLANK))
+                    .andExpect(jsonPath("$.errors.isCorrect").value(FieldConstraint.ClassicAnswer.IS_CORRECT_NOT_NULL));
         }
 
         @Test
         @DisplayName("Erreur - Réponse non trouvée")
         void updateAnswer_shouldReturn404() throws Exception {
             // Given
-            when(answerService.update(anyLong(), any(AnswerUpsertDTO.class)))
+            when(answerService.update(anyLong(), any(ClassicAnswerUpsertDTO.class)))
                     .thenThrow(new NotFoundException());
 
             // When & Then
             mockMvc.perform(put(ApiRoutes.Answers.ADMIN_BY_ID, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(answerUpsertDTO)))
+                            .content(objectMapper.writeValueAsString(classicAnswerUpsertDTO)))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
     }
 
@@ -213,7 +227,8 @@ public class AnswerAdminControllerTest {
             // When & Then
             mockMvc.perform(delete(ApiRoutes.Answers.ADMIN_BY_ID, endpointId))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
 
         @Test
@@ -224,8 +239,9 @@ public class AnswerAdminControllerTest {
 
             // When & Then
             mockMvc.perform(delete(ApiRoutes.Answers.ADMIN_BY_ID, endpointId))
-                    .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(status().isUnprocessableEntity())
+                    .andExpect(jsonPath("$.code").value(ErrorCode.ACTION_NOT_ALLOWED.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.ACTION_NOT_ALLOWED.getMessage()));
         }
     }
 
@@ -258,7 +274,8 @@ public class AnswerAdminControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(booleanRequestDTO)))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.code").value(ErrorCode.NOT_FOUND.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.NOT_FOUND.getMessage()));
         }
 
         @Test
@@ -271,8 +288,9 @@ public class AnswerAdminControllerTest {
             mockMvc.perform(patch(ApiRoutes.Answers.ADMIN_VISIBILITY_PATCH, endpointId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(booleanRequestDTO)))
-                    .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(status().isUnprocessableEntity())
+                    .andExpect(jsonPath("$.code").value(ErrorCode.ACTION_NOT_ALLOWED.getCode()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.ACTION_NOT_ALLOWED.getMessage()));
         }
     }
 }
