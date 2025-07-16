@@ -66,10 +66,10 @@ public class GameRule {
 
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "question_type_code", nullable = false)
+    @JoinColumn(name = "question_type_code", referencedColumnName = "code", nullable = false)
     private QuestionType questionType;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "difficulty_level_id", nullable = false)
+    @JoinColumn(name = "difficulty_level_id", referencedColumnName = "id", nullable = false)
     private DifficultyLevel difficultyLevel;
 }
