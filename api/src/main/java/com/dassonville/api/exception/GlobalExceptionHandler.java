@@ -4,6 +4,7 @@ import com.dassonville.api.util.ValidationErrorUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -84,6 +85,16 @@ public class GlobalExceptionHandler {
         return new Error(
                 ex.getErrorCode().getCode(),
                 ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Error handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        log.warn("Une erreur de désérialisation s'est produite : {}", ex.getMessage());
+        return new Error(
+                ErrorCode.DESERIALIZATION_ERROR.getCode(),
+                ErrorCode.DESERIALIZATION_ERROR.getMessage()
         );
     }
 
