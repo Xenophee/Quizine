@@ -28,7 +28,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.Map;
 
-import static com.dassonville.api.constant.AppConstants.MINIMUM_QUIZ_QUESTIONS;
+import static com.dassonville.api.constant.AppConstants.MIN_ACTIVE_QUESTIONS_PER_QUIZ;
 
 
 @Slf4j
@@ -148,7 +148,7 @@ public class QuizAdminController {
     }
 
 
-    @Operation(summary = "Activer / désactiver un quiz", description = "Active ou désactive un quiz par son ID. Un quiz ne peut être actif que s'il contient au moins " + MINIMUM_QUIZ_QUESTIONS + " questions.")
+    @Operation(summary = "Activer / désactiver un quiz", description = "Active ou désactive un quiz par son ID. Un quiz ne peut être actif que s'il contient au moins " + MIN_ACTIVE_QUESTIONS_PER_QUIZ + " questions.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Le quiz a été activé / désactivé avec succès."),
             @ApiResponse(responseCode = "400", description = "Les données fournies pour activer / désactiver le quiz sont invalides.",
