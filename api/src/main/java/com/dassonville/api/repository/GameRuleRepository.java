@@ -48,7 +48,7 @@ public interface GameRuleRepository extends JpaRepository<GameRule, Long> {
     @Query(value = """
                 SELECT DISTINCT ON (rule.question_type_code)
                        rule.answer_options_count AS answerOptionsCount,
-                       rule.question_type_code AS questionTypeId
+                       rule.question_type_code AS questionTypeCode
                 FROM game_rules rule
                 JOIN difficulty_levels difficulty ON rule.difficulty_level_id = difficulty.id
                 JOIN difficulty_levels selected_difficulty ON selected_difficulty.id = :difficultyId
@@ -57,13 +57,10 @@ public interface GameRuleRepository extends JpaRepository<GameRule, Long> {
                       AND difficulty.disabled_at IS NULL
                       AND selected_difficulty.disabled_at IS NULL
                       AND (:includeSpecial = TRUE OR difficulty.label != 'SPÉCIAL')
-                      AND (rule.starts_at IS NULL OR rule.starts_at <= CURRENT_TIMESTAMP)
-                      AND (rule.ends_at IS NULL OR rule.ends_at >= CURRENT_TIMESTAMP)
                 ORDER BY
                       rule.question_type_code,
                       CASE WHEN COALESCE(difficulty.rank, 0) <= COALESCE(selected_difficulty.rank, 0) THEN 0 ELSE 1 END,
-                      ABS(COALESCE(difficulty.rank, 0) - COALESCE(selected_difficulty.rank, 0)),
-                      rule.priority DESC
+                      ABS(COALESCE(difficulty.rank, 0) - COALESCE(selected_difficulty.rank, 0))
             """, nativeQuery = true)
     List<AnswerOptionsRuleProjection> findAnswerOptionsBestMatchingRulesByQuestionTypeCodes(List<String> questionTypeCodes, long difficultyId, boolean includeSpecial);
 
@@ -96,12 +93,9 @@ public interface GameRuleRepository extends JpaRepository<GameRule, Long> {
                     AND difficulty.disabled_at IS NULL
                     AND selected_difficulty.disabled_at IS NULL
                     AND (:includeSpecial = TRUE OR difficulty.label != 'SPÉCIAL')
-                    AND (rule.starts_at IS NULL OR rule.starts_at <= CURRENT_TIMESTAMP)
-                    AND (rule.ends_at IS NULL OR rule.ends_at >= CURRENT_TIMESTAMP)
                 ORDER BY
                     CASE WHEN COALESCE(difficulty.rank, 0) = COALESCE(selected_difficulty.rank, 0) THEN 0 ELSE 1 END,
-                    ABS(COALESCE(difficulty.rank, 0) - COALESCE(selected_difficulty.rank, 0)),
-                    rule.priority DESC
+                    ABS(COALESCE(difficulty.rank, 0) - COALESCE(selected_difficulty.rank, 0))
                 LIMIT 1
             """, nativeQuery = true)
     Optional<GameRule> findBestMatchingRule(String questionTypeCode, long difficultyId, boolean includeSpecial);
