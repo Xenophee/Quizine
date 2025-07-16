@@ -40,7 +40,7 @@ public class ClassicQuestionAnswerChecker implements QuestionAnswerChecker {
 
     @Override
     public boolean supports(GameType type) {
-        return Objects.equals(type.getQuestionType(), AppConstants.CLASSIC_QUESTION_TYPE);
+        return Objects.equals(type.getMainType(), AppConstants.CLASSIC_TYPE);
     }
 
     @Override

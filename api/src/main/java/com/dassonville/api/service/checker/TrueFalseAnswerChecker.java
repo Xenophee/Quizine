@@ -29,7 +29,7 @@ public class TrueFalseAnswerChecker implements QuestionAnswerChecker {
 
     @Override
     public boolean supports(GameType type) {
-        return Objects.equals(type.getQuestionType(), AppConstants.TRUE_FALSE_QUESTION_TYPE);
+        return Objects.equals(type.getMainType(), AppConstants.TRUE_FALSE_TYPE);
     }
 
     @Override
