@@ -3,6 +3,7 @@ package com.dassonville.api.repository;
 import com.dassonville.api.model.DifficultyLevel;
 import com.dassonville.api.projection.PublicDifficultyLevelProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -126,4 +127,19 @@ public interface DifficultyLevelRepository extends JpaRepository<DifficultyLevel
      * @return La liste des niveaux de difficulté triés.
      */
     List<DifficultyLevel> findAllByOrderByRank();
+
+
+    /**
+     * Désactive les niveaux de difficulté spéciaux qui sont expirés.
+     */
+    @Modifying
+    @Query("""
+        UPDATE DifficultyLevel
+        SET disabledAt = CURRENT_TIMESTAMP, updatedAt = CURRENT_TIMESTAMP
+        WHERE isRecurring = FALSE
+            AND endsAt IS NOT NULL
+            AND endsAt < CURRENT_DATE
+            AND disabledAt IS NULL
+    """)
+    void disableExpiredSpecialLevels();
 }

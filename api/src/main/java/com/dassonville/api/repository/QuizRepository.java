@@ -120,6 +120,26 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
      */
     boolean existsByTitleIgnoreCaseAndIdNot(String title, long id);
 
+
+    /**
+     * Vérifie si un quiz actif possède des questions avec un type de question invalide.
+     * Un type de question est considéré invalide si le type de quiz du quiz ne correspond pas au code spécifié.
+     *
+     * @param quizId       L'ID du quiz.
+     * @param quizTypeCode Le code du type de quiz à vérifier.
+     * @return {@code true} si des questions avec un type invalide existent, sinon {@code false}.
+     */
+    @Query("""
+            SELECT CASE WHEN COUNT(questionType) > 0 THEN TRUE ELSE FALSE END
+            FROM Quiz quiz
+            JOIN quiz.questions questions
+            JOIN questions.questionType questionType
+            LEFT JOIN quiz.quizType quizType
+            WHERE quiz.id = :quizId
+                AND quizType.code != :quizTypeCode
+            """)
+    boolean existsInvalidQuestionTypeForQuiz(Long quizId, String quizTypeCode);
+
     /**
      * Compte le nombre de questions actives pour un quiz donné.
      *
