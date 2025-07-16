@@ -13,26 +13,24 @@ import java.util.Arrays;
 @Getter
 public enum GameType {
 
-    CLASSIC_CHOICE(AppConstants.CLASSIC_TYPE, AppConstants.CLASSIC_QUESTION_TYPE, AppConstants.CLASSIC_CHOICE_ANSWER_TYPE),
-    CLASSIC_TEXT(AppConstants.CLASSIC_TYPE, AppConstants.CLASSIC_QUESTION_TYPE, AppConstants.CLASSIC_TEXT_ANSWER_TYPE),
-    TRUE_FALSE(AppConstants.TRUE_FALSE_TYPE, AppConstants.TRUE_FALSE_QUESTION_TYPE, AppConstants.TRUE_FALSE_ANSWER_TYPE),
-    MIXTE(AppConstants.MIXTE_TYPE, null, null);
+    CLASSIC_CHOICE(AppConstants.CLASSIC_TYPE, AppConstants.CLASSIC_CHOICE_ANSWER_TYPE),
+    CLASSIC_TEXT(AppConstants.CLASSIC_TYPE, AppConstants.CLASSIC_TEXT_ANSWER_TYPE),
+    TRUE_FALSE(AppConstants.TRUE_FALSE_TYPE, AppConstants.TRUE_FALSE_ANSWER_TYPE),
+    MIXTE(AppConstants.MIXTE_TYPE, null);
 
 
-    private final String quizType;
-    private final String questionType;
+    private final String mainType;
     private final String answerType;
 
 
-    GameType(String quizType, String questionType, String answerType) {
-        this.quizType = quizType;
-        this.questionType = questionType;
+    GameType(String mainType, String answerType) {
+        this.mainType = mainType;
         this.answerType = answerType;
     }
 
     @JsonValue
-    public String getQuizType() {
-        return this.quizType;
+    public String getMainType() {
+        return this.mainType;
     }
 
 
@@ -40,18 +38,11 @@ public enum GameType {
     public static GameType fromJson(String value) {
         log.debug("Désérialisation à partir de la valeur : {}", value);
 
-        String normalizedValue = value
-                .replace(AppConstants.INSERT_SUFFIX, "")
-                .replace(AppConstants.UPDATE_SUFFIX, "");
-
         return Arrays.stream(values())
-                .filter(type -> type.quizType.equalsIgnoreCase(normalizedValue)) // Priorité 1
+                .filter(type -> type.mainType.equalsIgnoreCase(value)) // Priorité 1
                 .findFirst()
                 .or(() -> Arrays.stream(values())
-                        .filter(type -> type.questionType != null && type.questionType.equalsIgnoreCase(normalizedValue)) // Priorité 2
-                        .findFirst())
-                .or(() -> Arrays.stream(values())
-                        .filter(type -> type.answerType != null && type.answerType.equalsIgnoreCase(normalizedValue)) // Priorité 3
+                        .filter(type -> type.answerType != null && type.answerType.equalsIgnoreCase(value)) // Priorité 2
                         .findFirst())
                 .map(type -> {
                     log.debug("GameType retenu : {}", type);
