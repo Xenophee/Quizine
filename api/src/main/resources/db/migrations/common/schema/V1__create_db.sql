@@ -48,6 +48,10 @@ CREATE TABLE themes
     disabled_at TIMESTAMP
 );
 
+CREATE UNIQUE INDEX uniq_themes_is_default
+    ON themes (is_default)
+    WHERE is_default = TRUE;
+
 ---------------------------------------------------
 -- Créer la table des catégories
 ---------------------------------------------------
@@ -167,12 +171,12 @@ CREATE TABLE quiz_questions
 CREATE TABLE classic_answers
 (
     id          SERIAL PRIMARY KEY,
+    question_id INTEGER   NOT NULL REFERENCES questions (id) ON DELETE CASCADE,
     text        TEXT      NOT NULL,
     is_correct  BOOLEAN   NOT NULL DEFAULT FALSE,
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP,
-    disabled_at TIMESTAMP,
-    question_id INTEGER   NOT NULL REFERENCES questions (id) ON DELETE CASCADE
+    disabled_at TIMESTAMP
 );
 
 
@@ -193,9 +197,16 @@ CREATE TABLE difficulty_levels
         (label = 'EXPERT' AND rank = 4) OR
         (label = 'SPÉCIAL' AND rank IS NULL)
         ),                                                                                                     -- Rang de difficulté, avec une correspondance stricte entre label et rang
+    starts_at    DATE,                                                                                         -- Date de début de validité du niveau de difficulté 'SPÉCIAL'
+    ends_at      DATE,                                                                                         -- Date de fin de validité du niveau de difficulté 'SPÉCIAL'
+    is_recurring BOOLEAN      NOT NULL DEFAULT FALSE,
     created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMP,
-    disabled_at  TIMESTAMP
+    disabled_at  TIMESTAMP,
+    CHECK (starts_at IS NULL OR ends_at IS NULL OR starts_at < ends_at),                                       -- Vérifie que les dates de validité sont cohérentes
+    CHECK (label = 'SPÉCIAL' OR (starts_at IS NULL AND ends_at IS NULL)),                                      -- Vérifie que les niveaux de difficulté autres que 'SPÉCIAL' n'ont pas de dates de validité
+    CHECK (label <> 'SPÉCIAL' OR (starts_at IS NOT NULL AND ends_at IS NOT NULL)),
+    CHECK (label = 'SPÉCIAL' OR is_recurring = FALSE)
 );
 
 -- Contraintes supplémentaires via index partiels
@@ -205,7 +216,7 @@ CREATE UNIQUE INDEX uniq_difficulty_rank -- Assure que chaque rang est unique lo
 
 CREATE UNIQUE INDEX uniq_difficulty_label -- Assure que chaque label est unique, sauf pour 'SPECIAL'
     ON difficulty_levels (label)
-    WHERE label <> 'SPECIAL';
+    WHERE label <> 'SPÉCIAL';
 
 
 ---------------------------------------------------
@@ -227,8 +238,6 @@ CREATE TABLE game_rules
     id                              SERIAL PRIMARY KEY,
     question_type_code              VARCHAR(50)   NOT NULL REFERENCES question_types (code) ON DELETE CASCADE,
     difficulty_level_id             INTEGER       NOT NULL REFERENCES difficulty_levels (id) ON DELETE CASCADE,
-    tag                             VARCHAR(50),                          -- Null s'il s'agit d'une règle générique
-    is_reference                    BOOLEAN       NOT NULL DEFAULT FALSE, -- Indique si c'est la référence à utiliser pour l'exigence du nombre de réponses à fournir lors de la création d'une question
     answer_options_count            SMALLINT      NOT NULL CHECK (answer_options_count >= 0),
     points_per_good_answer          SMALLINT      NOT NULL CHECK (points_per_good_answer >= 0),
     points_penalty_per_wrong_answer SMALLINT      NOT NULL CHECK (points_penalty_per_wrong_answer >= 1),
@@ -239,14 +248,10 @@ CREATE TABLE game_rules
     combo_3_bonus                   SMALLINT      NOT NULL CHECK (combo_3_bonus >= 0),
     combo_4_bonus                   SMALLINT      NOT NULL CHECK (combo_4_bonus >= 0),
     combo_5_bonus                   SMALLINT      NOT NULL CHECK (combo_5_bonus >= 0),
-    starts_at                       TIMESTAMP,                            -- Date de début de validité de la règle, NULL si la règle est toujours valide
-    ends_at                         TIMESTAMP,                            -- Date de fin de validité de la règle, NULL si la règle est toujours valide
-    priority                        SMALLINT      NOT NULL,
     created_at                      TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                      TIMESTAMP,
     disabled_at                     TIMESTAMP,
-    UNIQUE (tag, question_type_code, difficulty_level_id),
-    CHECK (starts_at IS NULL OR ends_at IS NULL OR starts_at < ends_at)
+    UNIQUE (question_type_code, difficulty_level_id)
 );
 
 
@@ -295,38 +300,3 @@ CREATE TABLE quiz_session_questions
     question_started_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     answer_received_at  TIMESTAMP
 );
-
-
----------------------------------------------------
--- Indexes
----------------------------------------------------
-
--- Pour accélérer les recherches de catégories par thème
-CREATE INDEX idx_categories_theme ON categories (theme_id);
-
--- Pour les requêtes de filtrage ou de jointure des quiz par catégorie et thème
-CREATE INDEX idx_quiz_category ON quizzes (category_id);
-CREATE INDEX idx_quiz_theme ON quizzes (theme_id);
-
--- Pour accélérer les jointures entre questions et leurs réponses
-CREATE INDEX idx_answers_question ON classic_answers (question_id);
-
-
-
----------------------------------------------------
--- Indexes partiels
----------------------------------------------------
-
--- Pour les données actives
-CREATE INDEX idx_active_quizzes ON quizzes (disabled_at) WHERE disabled_at IS NULL;
-CREATE INDEX idx_active_questions ON questions (disabled_at) WHERE disabled_at IS NULL;
-CREATE INDEX idx_active_classic_answers ON classic_answers (disabled_at) WHERE disabled_at IS NULL;
-
-CREATE INDEX idx_active_difficulty_levels ON difficulty_levels (disabled_at) WHERE disabled_at IS NULL;
-CREATE INDEX idx_active_game_rules ON game_rules (disabled_at) WHERE disabled_at IS NULL;
-
-CREATE INDEX idx_active_themes ON themes (disabled_at) WHERE disabled_at IS NULL;
-CREATE INDEX idx_active_categories ON categories (disabled_at) WHERE disabled_at IS NULL;
-
-CREATE INDEX idx_active_quiz_types ON quiz_types (disabled_at) WHERE disabled_at IS NULL;
-CREATE INDEX idx_active_mastery_levels ON mastery_levels (disabled_at) WHERE disabled_at IS NULL;
