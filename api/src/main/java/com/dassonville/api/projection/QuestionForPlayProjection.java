@@ -12,7 +12,7 @@ public interface QuestionForPlayProjection {
     List<AnswersForPlay> getClassicAnswers();
 
     interface QuestionType {
-        String getId();
+        String getCode();
         String getName();
         String getInstruction();
     }
