@@ -3,7 +3,7 @@ package com.dassonville.api.dto.request;
 
 import com.dassonville.api.constant.AppConstants;
 import com.dassonville.api.constant.FieldConstraint;
-import com.dassonville.api.constant.GameType;
+import com.dassonville.api.constant.Type;
 import com.dassonville.api.validation.annotation.ValidCategoryForTheme;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -18,7 +18,7 @@ public record QuizUpsertDTO(
         @Schema(description = "Type du quiz.", example = AppConstants.CLASSIC_TYPE,
                 allowableValues = {AppConstants.CLASSIC_TYPE, AppConstants.TRUE_FALSE_TYPE, AppConstants.MIXTE_TYPE})
         @NotNull(message = FieldConstraint.Quiz.TYPE_NOT_NULL)
-        GameType type,
+        Type type,
 
         @Schema(description = "Titre du quiz", example = "La Constitution de la Ve République")
         @NotBlank(message = FieldConstraint.Quiz.TITLE_NOT_BLANK)

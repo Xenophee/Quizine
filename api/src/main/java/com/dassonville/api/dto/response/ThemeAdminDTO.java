@@ -7,6 +7,7 @@ public record ThemeAdminDTO(
         long id,
         String name,
         String description,
+        boolean isDefault,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         LocalDateTime disabledAt,

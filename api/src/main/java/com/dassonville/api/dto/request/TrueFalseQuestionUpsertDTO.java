@@ -2,7 +2,7 @@ package com.dassonville.api.dto.request;
 
 import com.dassonville.api.constant.AppConstants;
 import com.dassonville.api.constant.FieldConstraint;
-import com.dassonville.api.constant.GameType;
+import com.dassonville.api.constant.RequestActionType;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -11,7 +11,7 @@ import jakarta.validation.constraints.Size;
 
 
 @Schema(description = "Représente les données nécessaires pour créer ou mettre à jour une question de type Vrai/Faux.")
-@JsonTypeName(AppConstants.TRUE_FALSE_QUESTION_TYPE)
+@JsonTypeName(AppConstants.TRUE_FALSE_TYPE)
 public record TrueFalseQuestionUpsertDTO(
 
         @Schema(
@@ -19,9 +19,9 @@ public record TrueFalseQuestionUpsertDTO(
                         Type de la question.
                         ⚠️ Obligatoire pour que l'API sache comment désérialiser correctement la réponse.
                         """,
-                allowableValues = AppConstants.TRUE_FALSE_QUESTION_TYPE)
+                allowableValues = AppConstants.TRUE_FALSE_TYPE)
         @NotNull(message = FieldConstraint.Question.TYPE_NOT_NULL)
-        GameType type,
+        RequestActionType type,
 
         @Schema(description = "Contenu de la question.", example = "La Terre est ronde.")
         @NotBlank(message = FieldConstraint.Question.TEXT_NOT_BLANK)

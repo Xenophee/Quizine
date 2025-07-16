@@ -1,6 +1,9 @@
 package com.dassonville.api.dto.request;
 
-import com.dassonville.api.constant.*;
+import com.dassonville.api.constant.AppConstants;
+import com.dassonville.api.constant.FieldConstraint;
+import com.dassonville.api.constant.GameType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -38,5 +41,11 @@ public record ClassicChoiceAnswerRequestDTO(
         Integer timeSpentInSeconds
 
 ) implements QuestionAnswerRequestDTO {
+
+        @JsonProperty("type")
+        public String getJsonType() {
+                return type.getAnswerType();
+        }
+
 }
 

@@ -1,6 +1,7 @@
 package com.dassonville.api.dto.request;
 
 import com.dassonville.api.constant.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -38,5 +39,10 @@ public record ClassicTextAnswerRequestDTO(
         Integer timeSpentInSeconds
 
 ) implements QuestionAnswerRequestDTO {
+
+        @JsonProperty("type")
+        public String getJsonType() {
+                return type.getAnswerType();
+        }
 }
 

@@ -1,15 +1,18 @@
 package com.dassonville.api.dto.response;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record DifficultyLevelAdminDTO(
         long id,
         String name,
-        byte answerOptionsCount,
-        short timerSeconds,
-        int pointsPerQuestion,
         boolean isReference,
-        byte displayOrder,
+        String label,
+        String description,
+        byte rank,
+        LocalDate startsAt,
+        LocalDate endsAt,
+        boolean isRecurring,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         LocalDateTime disabledAt

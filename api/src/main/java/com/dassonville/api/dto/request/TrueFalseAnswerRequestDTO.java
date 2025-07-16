@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
 @Schema(description = "Représente une réponse à une question de type Vrai/Faux.")
-@JsonTypeName(AppConstants.TRUE_FALSE_QUESTION_TYPE)
+@JsonTypeName(AppConstants.TRUE_FALSE_TYPE)
 public record TrueFalseAnswerRequestDTO(
 
         @Schema(
@@ -14,7 +14,7 @@ public record TrueFalseAnswerRequestDTO(
                         Type de jeu utilisé pour déterminer comment la réponse est interprétée.
                         ⚠️ Obligatoire pour que l'API sache comment désérialiser correctement la réponse.
                         """,
-                allowableValues = AppConstants.TRUE_FALSE_QUESTION_TYPE)
+                allowableValues = AppConstants.TRUE_FALSE_TYPE)
         @NotNull(message = FieldConstraint.CheckAnswer.TYPE_NOT_NULL)
         GameType type,
 

@@ -13,7 +13,7 @@ public record QuizAdminDetailsDTO(
         LocalDateTime disabledAt,
         long masteryLevelId,
         long themeId,
-        long categoryId,
+        Long categoryId,
         List<QuestionAdminDTO> questions
 ) {
 }
