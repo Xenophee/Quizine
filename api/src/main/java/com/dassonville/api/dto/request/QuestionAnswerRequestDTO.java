@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = ClassicChoiceAnswerRequestDTO.class, name = AppConstants.CLASSIC_CHOICE_ANSWER_TYPE),
         @JsonSubTypes.Type(value = ClassicTextAnswerRequestDTO.class, name = AppConstants.CLASSIC_TEXT_ANSWER_TYPE),
-        @JsonSubTypes.Type(value = TrueFalseAnswerRequestDTO.class, name = AppConstants.TRUE_FALSE_QUESTION_TYPE)
+        @JsonSubTypes.Type(value = TrueFalseAnswerRequestDTO.class, name = AppConstants.TRUE_FALSE_TYPE)
 })
 public interface QuestionAnswerRequestDTO {
 
