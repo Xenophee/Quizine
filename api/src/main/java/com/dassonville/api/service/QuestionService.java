@@ -22,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import static com.dassonville.api.constant.AppConstants.MINIMUM_QUIZ_QUESTIONS;
 
 @Slf4j
 @Service
@@ -33,7 +32,6 @@ public class QuestionService {
     private final QuestionMapper questionMapper;
 
     private final QuizRepository quizRepository;
-    private final QuizService quizService;
 
     private final QuestionTypeRepository questionTypeRepository;
 
@@ -62,7 +60,7 @@ public class QuestionService {
                     return new NotFoundException(ErrorCode.QUIZ_NOT_FOUND);
                 });
 
-        if (!questionTypeRepository.existsByCodeAndQuizTypes_Quizzes_Id(dto.type().getQuestionType(), quizId)) {
+        if (!questionTypeRepository.existsByCodeAndQuizTypes_Quizzes_Id(dto.type().getType(), quizId)) {
             log.warn("Le type de question « {} » n'est pas supporté pour le quiz avec l'id {}.", dto.type(), quizId);
             throw new ActionNotAllowedException(ErrorCode.QUESTION_TYPE_NOT_SUPPORTED);
         }
@@ -112,7 +110,7 @@ public class QuestionService {
 
         Question question = findQuestionById(questionId);
 
-        if (!questionRepository.existsByIdAndQuestionTypeCode(questionId, dto.type().getQuestionType())) {
+        if (!questionRepository.existsByIdAndQuestionTypeCode(questionId, dto.type().getType())) {
             log.warn("Les informations fournies ne correspondent pas au schéma attendu pour la question avec l'ID {}.", questionId);
             throw new ActionNotAllowedException(ErrorCode.QUESTION_AND_QUESTION_TYPE_MISMATCH);
         }
@@ -146,11 +144,12 @@ public class QuestionService {
      */
     public void delete(long id) {
 
-        Question question = findQuestionById(id);
+        if (!questionRepository.existsById(id)) {
+            log.warn("La question avec l'ID {}, n'existe pas.", id);
+            throw new NotFoundException(ErrorCode.QUESTION_NOT_FOUND);
+        }
 
         questionRepository.deleteById(id);
-
-        disableQuizIfTooFewActiveQuestions(question.getQuizzes().getFirst().getId());
     }
 
 
@@ -169,11 +168,7 @@ public class QuestionService {
 
         Question question = findQuestionById(id);
 
-        if (question.isVisible() == visible) return;
-
         question.setVisible(visible);
-
-        disableQuizIfTooFewActiveQuestions(question.getQuizzes().getFirst().getId());
     }
 
 
@@ -193,27 +188,6 @@ public class QuestionService {
                     log.warn("La question avec l'ID {}, n'a pas été trouvée.", id);
                     return new NotFoundException(ErrorCode.QUESTION_NOT_FOUND);
                 });
-    }
-
-
-    /**
-     * Désactive un quiz si le nombre de questions actives devient insuffisant.
-     *
-     * <p>Cette méthode compte le nombre de questions actives associées à un quiz.
-     * Si ce nombre est inférieur au minimum requis, elle désactive le quiz.</p>
-     *
-     * @param quizId l'identifiant du quiz à vérifier
-     */
-    private void disableQuizIfTooFewActiveQuestions(long quizId) {
-
-        int numberOfActiveQuestions = questionRepository.countByQuizzesIdAndDisabledAtIsNull(quizId);
-
-        if (numberOfActiveQuestions < MINIMUM_QUIZ_QUESTIONS) {
-            log.warn("Le quiz avec l'ID {}, n'a pas suffisamment de questions : {}, il a donc été désactivé.", quizId, numberOfActiveQuestions);
-            quizService.updateVisibility(quizId, false);
-        } else {
-            log.debug("Le quiz avec l'ID {}, a suffisamment de questions : {}, il reste actif.", quizId, numberOfActiveQuestions);
-        }
     }
     
 }

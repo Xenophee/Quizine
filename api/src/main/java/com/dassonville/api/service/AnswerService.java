@@ -50,8 +50,8 @@ public class AnswerService {
             throw new NotFoundException(ErrorCode.QUESTION_NOT_FOUND);
         }
 
-        if (!questionRepository.existsByIdAndQuestionTypeCode(questionId, AppConstants.CLASSIC_QUESTION_TYPE)) {
-            log.warn("La question avec l'ID {}, n'autorise pas le type d'enregistrement {}.", questionId, AppConstants.CLASSIC_QUESTION_TYPE);
+        if (!questionRepository.existsByIdAndQuestionTypeCode(questionId, AppConstants.CLASSIC_TYPE)) {
+            log.warn("La question avec l'ID {}, n'autorise pas le type d'enregistrement {}.", questionId, AppConstants.CLASSIC_TYPE);
             throw new ActionNotAllowedException(ErrorCode.ANSWER_TYPE_NOT_SUPPORTED);
         }
 
@@ -123,6 +123,7 @@ public class AnswerService {
      * @throws NotFoundException si la réponse avec l'ID spécifié n'existe pas
      * @throws ActionNotAllowedException si les contraintes sur les réponses actives ou correctes ne sont pas respectées
      */
+    @Transactional
     public void delete(long id) {
 
         ClassicAnswer classicAnswer = findAnswerById(id);
@@ -134,7 +135,7 @@ public class AnswerService {
             assertAtLeastOneActiveCorrectAnswerRemains(classicAnswer.getQuestion().getId(), classicAnswer.getId());
         }
 
-        classicAnswerRepository.deleteById(id);
+        classicAnswerRepository.delete(classicAnswer);
     }
 
 
@@ -149,6 +150,7 @@ public class AnswerService {
      * @throws NotFoundException si la réponse avec l'ID spécifié n'existe pas
      * @throws ActionNotAllowedException si les contraintes sur les réponses actives ou correctes ne sont pas respectées
      */
+    @Transactional
     public void updateVisibility(long id, boolean visible) {
 
         ClassicAnswer classicAnswer = findAnswerById(id);
@@ -166,8 +168,6 @@ public class AnswerService {
         }
 
         classicAnswer.setVisible(visible);
-
-        classicAnswerRepository.save(classicAnswer);
     }
 
 

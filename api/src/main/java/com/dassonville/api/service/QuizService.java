@@ -12,9 +12,7 @@ import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.mapper.QuizMapper;
 import com.dassonville.api.model.Quiz;
-import com.dassonville.api.repository.QuestionRepository;
-import com.dassonville.api.repository.QuizRepository;
-import com.dassonville.api.repository.ThemeRepository;
+import com.dassonville.api.repository.*;
 import com.dassonville.api.util.TextUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +24,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 
-import static com.dassonville.api.constant.AppConstants.MINIMUM_QUIZ_QUESTIONS;
+import static com.dassonville.api.constant.AppConstants.MIN_ACTIVE_QUESTIONS_PER_QUIZ;
 
 @Slf4j
 @Service
@@ -36,10 +34,10 @@ public class QuizService {
     private final QuizRepository quizRepository;
     private final QuizMapper quizMapper;
 
-    private final ThemeService themeService;
-
     private final QuestionRepository questionRepository;
     private final ThemeRepository themeRepository;
+    private final CategoryRepository categoryRepository;
+    private final MasteryLevelRepository masteryLevelRepository;
 
 
 
@@ -170,7 +168,7 @@ public class QuizService {
      */
     public QuizAdminDetailsDTO create(QuizUpsertDTO dto) {
 
-        log.debug("Type du quiz : {}", dto.type().getQuizType());
+        log.debug("Type du quiz : {}", dto.type().getType());
 
         String normalizedNewText = TextUtils.normalizeText(dto.title());
         log.debug("Titre normalisé : {}, depuis {}", normalizedNewText, dto.title());
@@ -178,6 +176,21 @@ public class QuizService {
         if (quizRepository.existsByTitleIgnoreCase(normalizedNewText)) {
             log.warn("Le quiz avec le titre {}, existe déjà.", normalizedNewText);
             throw new AlreadyExistException(ErrorCode.QUIZ_ALREADY_EXISTS);
+        }
+
+        if (!themeRepository.existsById(dto.themeId())) {
+            log.warn("L'ID {} n'est pas un thème valide. Enregistrement du quiz impossible.", dto.themeId());
+            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND);
+        }
+
+        if (dto.categoryId() != null && !categoryRepository.existsById(dto.categoryId())) {
+            log.warn("L'ID {} n'est pas une catégorie valide. Enregistrement du quiz impossible.", dto.categoryId());
+            throw new NotFoundException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+
+        if (!masteryLevelRepository.existsById(dto.masteryLevelId())) {
+            log.warn("L'ID {} n'est pas un niveau de maîtrise valide. Enregistrement du quiz impossible.", dto.masteryLevelId());
+            throw new NotFoundException(ErrorCode.MASTERY_LEVEL_NOT_FOUND);
         }
 
         Quiz quizToCreate = quizMapper.toModel(dto);
@@ -214,6 +227,26 @@ public class QuizService {
             throw new AlreadyExistException(ErrorCode.QUIZ_ALREADY_EXISTS);
         }
 
+        if (quizRepository.existsInvalidQuestionTypeForQuiz(id, dto.type().getType())) {
+            log.warn("Le quiz avec l'ID {}, contient des questions de type invalide pour le type de quiz souhaité {}. Pas de modification possible.", id, dto.type().getType());
+            throw new ActionNotAllowedException(ErrorCode.QUIZ_CONTAINS_INVALID_QUESTION_TYPE);
+        }
+
+        if (!themeRepository.existsById(dto.themeId())) {
+            log.warn("Le quiz avec l'ID {}, contient un thème invalide (ID {}). Pas de modification possible.", id, dto.themeId());
+            throw new NotFoundException(ErrorCode.THEME_NOT_FOUND);
+        }
+
+        if (dto.categoryId() != null && !categoryRepository.existsById(dto.categoryId())) {
+            log.warn("Le quiz avec l'ID {}, contient une catégorie invalide (ID {}). Pas de modification possible.", id, dto.categoryId());
+            throw new NotFoundException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+
+        if (!masteryLevelRepository.existsById(dto.masteryLevelId())) {
+            log.warn("Le quiz avec l'ID {}, contient un niveau de maîtrise invalide (ID {}). Pas de modification possible.", id, dto.masteryLevelId());
+            throw new NotFoundException(ErrorCode.MASTERY_LEVEL_NOT_FOUND);
+        }
+
         quizMapper.updateModelFromDTO(dto, quiz);
 
         return quizMapper.toAdminDetailsDTO(quiz);
@@ -232,11 +265,12 @@ public class QuizService {
     @Transactional
     public void delete(long id) {
 
-        Quiz quiz = findById(id);
+        if (!quizRepository.existsById(id)) {
+            log.warn("Le quiz avec l'ID {}, n'a pas été trouvé.", id);
+            throw new NotFoundException(ErrorCode.QUIZ_NOT_FOUND);
+        }
 
         quizRepository.deleteById(id);
-
-        disableThemeIfNoActiveQuizzes(quiz.getTheme().getId());
     }
 
 
@@ -270,11 +304,6 @@ public class QuizService {
         }
 
         quiz.setVisible(visible);
-
-        if (!visible) {
-            log.debug("Désactivation demandée du quiz avec l'ID {}, vérification du nombre de quiz actifs restant.", id);
-            disableThemeIfNoActiveQuizzes(quiz.getTheme().getId());
-        }
     }
 
 
@@ -309,32 +338,11 @@ public class QuizService {
 
         int numberOfActiveQuestions = quizRepository.countByIdAndQuestionsDisabledAtIsNull(id);
 
-        if (numberOfActiveQuestions < MINIMUM_QUIZ_QUESTIONS) {
+        if (numberOfActiveQuestions < MIN_ACTIVE_QUESTIONS_PER_QUIZ) {
             log.warn("Le quiz avec l'ID {}, ne peut pas être activé car il n'a pas assez de questions.", id);
-            throw new ActionNotAllowedException(ErrorCode.QUIZ_CONTAINS_NOT_ENOUGH_QUESTIONS, MINIMUM_QUIZ_QUESTIONS);
+            throw new ActionNotAllowedException(ErrorCode.QUIZ_CONTAINS_NOT_ENOUGH_QUESTIONS, MIN_ACTIVE_QUESTIONS_PER_QUIZ);
         } else {
             log.debug("Le quiz avec l'ID {}, a suffisamment de questions : {} pour être activé.", id, numberOfActiveQuestions);
-        }
-    }
-
-
-    /**
-     * Désactive un thème si aucun quiz actif n'est associé à ce thème.
-     *
-     * <p>Cette méthode vérifie le nombre de quiz actifs associés à un thème.
-     * Si aucun quiz actif n'est trouvé, elle désactive le thème.</p>
-     *
-     * @param themeId l'identifiant du thème à vérifier
-     */
-    private void disableThemeIfNoActiveQuizzes(long themeId) {
-
-        int numberOfActiveQuizzes = themeRepository.countByIdAndQuizzesDisabledAtIsNull(themeId);
-
-        if (numberOfActiveQuizzes == 0) {
-            log.warn("Le thème avec l'ID {} n'a pas de quiz actifs et va être désactivé.", themeId);
-            themeService.updateVisibility(themeId, false);
-        } else {
-            log.debug("Le thème avec l'ID {} a {} quiz actifs et reste donc actif.", themeId, numberOfActiveQuizzes);
         }
     }
 }

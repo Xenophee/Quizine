@@ -12,6 +12,7 @@ import com.dassonville.api.repository.DifficultyLevelRepository;
 import com.dassonville.api.repository.QuizRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -94,5 +95,14 @@ public class DifficultyLevelService {
                     return new NotFoundException(ErrorCode.DIFFICULTY_NOT_FOUND);
                 });
     }
+
+
+    @Scheduled(cron = "0 0 0 * * *")
+    public void disableExpiredSpecialLevels() {
+        log.info("Désactivation des niveaux de difficulté spéciaux expirés...");
+        difficultyLevelRepository.disableExpiredSpecialLevels();
+        log.info("Désactivation des niveaux de difficulté spéciaux expirés terminée.");
+    }
+
 
 }

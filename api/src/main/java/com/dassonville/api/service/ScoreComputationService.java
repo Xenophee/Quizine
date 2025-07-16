@@ -30,15 +30,15 @@ public class ScoreComputationService {
     public ScoreComputationResult computeScore(ScoreComputationContext context, boolean isQuizSoloQuestionType) {
 
         GameRule rule = gameRuleRepository
-                .findBestMatchingRule(context.gameType().getQuestionType(), context.difficultyLevelId(), isQuizSoloQuestionType)
+                .findBestMatchingRule(context.gameType().getMainType(), context.difficultyLevelId(), isQuizSoloQuestionType)
                 .orElseThrow(() -> {
                     log.error("Aucune règle de jeu applicable trouvée pour le niveau de difficulté {} et le type de question {}.",
-                            context.difficultyLevelId(), context.gameType().getQuestionType());
+                            context.difficultyLevelId(), context.gameType().getMainType());
                     return new InvalidStateException(ErrorCode.INTERNAL_ERROR);
                 });
 
         log.debug("Règles de jeu récupérées pour le type de question {} et le niveau de difficulté {} : {}",
-                context.gameType().getQuestionType(), context.difficultyLevelId(), rule.getId());
+                context.gameType().getMainType(), context.difficultyLevelId(), rule.getId());
 
 
         boolean isInTime = isTimeValid(context, rule);

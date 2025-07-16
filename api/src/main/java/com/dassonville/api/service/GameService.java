@@ -6,6 +6,7 @@ import com.dassonville.api.dto.response.CheckAnswerResultDTO;
 import com.dassonville.api.dto.response.QuestionForPlayDTO;
 import com.dassonville.api.exception.ErrorCode;
 import com.dassonville.api.exception.InvalidStateException;
+import com.dassonville.api.exception.MisconfiguredException;
 import com.dassonville.api.exception.NotFoundException;
 import com.dassonville.api.projection.AnswerOptionsRuleProjection;
 import com.dassonville.api.projection.QuestionForPlayProjection;
@@ -78,7 +79,7 @@ public class GameService {
         List<QuestionForPlayDTO> questionsForPlay = new ArrayList<>(questions.stream()
                 .map(question -> {
 
-                    String questionTypeId = question.getQuestionType().getId();
+                    String questionTypeCode = question.getQuestionType().getCode();
 
                     // Récupération de toutes les informations nécessaires du quiz d'origine en se basant sur la date de création
                     Optional<QuestionForPlayProjection.QuizShortProjection> quizMeta = question.getQuizzes().stream()
@@ -124,7 +125,7 @@ public class GameService {
                     }
 
                     // Détermination du nombre d'options de réponse à afficher
-                    byte answerOptionsCount = resolveAnswerOptionsCount(questionTypeId, rulesByType);
+                    byte answerOptionsCount = resolveAnswerOptionsCount(questionTypeCode, rulesByType);
                     log.debug("Nombre de réponses à indiquer pour la question {} : {}", question.getId(), answerOptionsCount);
 
                     // Préparation des réponses de la question pour le jeu
@@ -310,15 +311,21 @@ public class GameService {
         }
 
         // Vérification de l'existence du quiz en récupérant le type de quiz
-        String quizTypeId = quizTypeRepository.findQuizTypeCodeByQuizIdAndDisabledAtIsNull(request.quizId())
+        String quizTypeCode = quizTypeRepository.findQuizTypeCodeByQuizIdAndDisabledAtIsNull(request.quizId())
                 .orElseThrow(() -> {
                     log.warn("Aucun type de quiz trouvé pour l'ID {}", request.quizId());
                     return new NotFoundException(ErrorCode.QUIZ_NOT_FOUND);
                 });
-        log.debug("Type de quiz récupéré pour l'ID {} : {}", request.quizId(), quizTypeId);
+        log.debug("Type de quiz récupéré pour l'ID {} : {}", request.quizId(), quizTypeCode);
+
+        // Vérification que le type de quiz correspond à celui attendu dans la requête
+        if (!quizTypeCode.equals(request.type().getMainType())) {
+            log.warn("Le type de quiz récupéré ({}) ne correspond pas au type attendu ({}) pour la requête.", quizTypeCode, request.type().getMainType());
+            throw new MisconfiguredException(ErrorCode.QUIZ_TYPE_MISMATCH);
+        }
 
         // Récupération des types de questions associés au type de quiz
-        List<String> questionTypeCodes = questionTypeRepository.findIdsByQuizTypeCode(quizTypeId);
+        List<String> questionTypeCodes = questionTypeRepository.findIdsByQuizTypeCode(quizTypeCode);
 
         // Vérification de la validité du niveau de difficulté
         assertValidDifficultyForQuiz(request, questionTypeCodes);
