@@ -15,6 +15,7 @@ public enum ErrorCode {
 
     QUIZ_NOT_FOUND("QUIZ_NOT_FOUND", "Le quiz est introuvable."),
     QUIZ_ALREADY_EXISTS("QUIZ_ALREADY_EXISTS", "Un quiz avec le même titre existe déjà."),
+    QUIZ_CONTAINS_INVALID_QUESTION_TYPE("QUIZ_CONTAINS_INVALID_QUESTION_TYPE", "Le quiz contient des questions de type non supporté par le nouveau type de quiz."),
     QUIZ_CONTAINS_NOT_ENOUGH_QUESTIONS("QUIZ_CONTAINS_NOT_ENOUGH_QUESTIONS", "Le quiz doit contenir au moins %d questions pour être actif."),
 
     QUESTION_NOT_FOUND("QUESTION_NOT_FOUND", "La question est introuvable."),
@@ -31,11 +32,13 @@ public enum ErrorCode {
     ANSWER_TYPE_NOT_SUPPORTED("ANSWER_TYPE_NOT_SUPPORTED", "Ce type d'enregistrement n'est pas supporté pour cette question."),
 
     DIFFICULTY_NOT_FOUND("DIFFICULTY_NOT_FOUND", "Le niveau de difficulté est introuvable."),
+    MASTERY_LEVEL_NOT_FOUND("MASTERY_LEVEL_NOT_FOUND", "Le niveau de maîtrise est introuvable."),
 
+    TYPE_NOT_SUPPORTED("TYPE_NOT_SUPPORTED", "Ce type n'est pas supporté."),
     CHECK_ANSWER_TYPE_NOT_SUPPORTED("CHECK_ANSWER_NOT_SUPPORTED", "La vérification de la réponse ne prend pas en charge ce type de question."),
 
     QUIZ_MISCONFIGURED("QUIZ_MISCONFIGURED", "Le quiz ne réunit pas les conditions nécessaires pour proposer des niveaux de difficulté."),
-
+    QUIZ_TYPE_MISMATCH("QUIZ_TYPE_MISMATCH", "Le type de quiz ne correspond pas au type de la requête."),
 
 
     ALREADY_EXIST("ALREADY_EXIST", "Une entité avec les mêmes informations existe déjà."),
@@ -46,6 +49,7 @@ public enum ErrorCode {
     MISCONFIGURED("MISCONFIGURED", "L'entité n'est pas correctement configurée pour réaliser l'action demandée."),
 
     VALIDATION_ERROR("VALIDATION_ERROR", "Une ou plusieurs erreurs de validation ont été détectées."),
+    DESERIALIZATION_ERROR("DESERIALIZATION_ERROR", "Une erreur de désérialisation s'est produite lors du traitement de la requête. Veuillez vérifier le format des données envoyées."),
     INTERNAL_ERROR("INTERNAL_ERROR", "Une erreur interne empêche de traiter la requête."),
     UNEXPECTED_ERROR("UNEXPECTED_ERROR", "Une erreur inattendue s'est produite.");
 
