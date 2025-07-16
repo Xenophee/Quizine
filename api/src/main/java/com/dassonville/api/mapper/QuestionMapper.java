@@ -21,7 +21,7 @@ public interface QuestionMapper {
     @Mappings({
             @Mapping(target = "text", expression = "java(normalizeText(dto.text()))"),
             @Mapping(target = "answerExplanation", expression = "java(normalizeText(dto.answerExplanation()))"),
-            @Mapping(target = "questionType", expression = "java(questionTypeId(dto.type().getQuestionType()))"),
+            @Mapping(target = "questionType", expression = "java(questionTypeId(dto.type().getType()))"),
             @Mapping(target = "quizzes", expression = "java(mapQuizIdsToQuizzes(List.of(quizId)))"),
             @Mapping(target = "classicAnswers", source = "answers"),
             @Mapping(target = "createdAt", ignore = true),
@@ -34,7 +34,7 @@ public interface QuestionMapper {
     @Mappings({
             @Mapping(target = "text", expression = "java(normalizeText(dto.text()))"),
             @Mapping(target = "answerExplanation", expression = "java(normalizeText(dto.answerExplanation()))"),
-            @Mapping(target = "questionType", expression = "java(questionTypeId(dto.type().getQuestionType()))"),
+            @Mapping(target = "questionType", expression = "java(questionTypeId(dto.type().getType()))"),
             @Mapping(target = "quizzes", expression = "java(mapQuizIdsToQuizzes(List.of(quizId)))"),
             @Mapping(target = "classicAnswers", ignore = true),
             @Mapping(target = "createdAt", ignore = true),
@@ -80,11 +80,6 @@ public interface QuestionMapper {
             question.getClassicAnswers().forEach(answer -> answer.setQuestion(question));
         }
     }
-
-
-    /*default Quiz mapQuizIdToQuiz(long quizId) {
-        return new Quiz(quizId);
-    }*/
 
     default List<Quiz> mapQuizIdsToQuizzes(List<Long> quizIds) {
 

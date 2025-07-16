@@ -1,13 +1,13 @@
 package com.dassonville.api.mapper;
 
 import com.dassonville.api.constant.GameType;
+import com.dassonville.api.constant.Type;
 import com.dassonville.api.dto.request.QuizUpsertDTO;
 import com.dassonville.api.dto.response.QuizAdminDTO;
 import com.dassonville.api.dto.response.QuizAdminDetailsDTO;
 import com.dassonville.api.dto.response.QuizPublicDTO;
 import com.dassonville.api.dto.response.QuizPublicDetailsDTO;
-import com.dassonville.api.model.Question;
-import com.dassonville.api.model.Quiz;
+import com.dassonville.api.model.*;
 import com.dassonville.api.projection.PublicQuizProjection;
 import com.dassonville.api.repository.QuestionRepository;
 import com.dassonville.api.util.DateUtils;
@@ -17,7 +17,7 @@ import org.mapstruct.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.dassonville.api.constant.AppConstants.MINIMUM_QUIZ_QUESTIONS;
+import static com.dassonville.api.constant.AppConstants.MIN_ACTIVE_QUESTIONS_PER_QUIZ;
 import static com.dassonville.api.constant.AppConstants.NEWNESS_THRESHOLD_DAYS;
 
 
@@ -26,9 +26,9 @@ public interface QuizMapper {
 
     @Mappings({
             @Mapping(target = "title", expression = "java(normalizeText(dto.title()))"),
-            @Mapping(target = "quizType.code", source = "type", qualifiedByName = "mapGameTypeToCode"), // ! Exemple à suivre
+            @Mapping(target = "quizType.code", source = "type", qualifiedByName = "mapGameTypeToCode"),
             @Mapping(target = "masteryLevel.id", source = "masteryLevelId"),
-            @Mapping(target = "category.id", source = "categoryId"),
+            @Mapping(target = "category", source = "categoryId", qualifiedByName = "mapNewCategory"),
             @Mapping(target = "theme.id", source = "themeId"),
             @Mapping(target = "createdAt", ignore = true),
             @Mapping(target = "updatedAt", ignore = true),
@@ -77,8 +77,10 @@ public interface QuizMapper {
 
     @Mappings({
             @Mapping(target = "title", expression = "java(normalizeText(dto.title()))"),
-            @Mapping(target = "category.id", source = "categoryId"),
-            @Mapping(target = "theme.id", source = "themeId"),
+            @Mapping(target = "description", expression = "java(normalizeText(dto.description()))"),
+            @Mapping(target = "category", source = "categoryId", qualifiedByName = "mapNewCategory"),
+            @Mapping(target = "theme", source = "themeId", qualifiedByName = "mapNewThemeForUpdate"),
+            @Mapping(target = "masteryLevel", source = "masteryLevelId", qualifiedByName = "mapNewMasteryLevelForUpdate"),
             @Mapping(target = "createdAt", ignore = true),
             @Mapping(target = "updatedAt", ignore = true),
             @Mapping(target = "disabledAt", ignore = true),
@@ -99,7 +101,7 @@ public interface QuizMapper {
 
     @Named("mapHasEnoughQuestionsForActivation")
     default boolean mapHasEnoughQuestionsForActivation(List<Question> questions) {
-        return questions != null && questions.size() >= MINIMUM_QUIZ_QUESTIONS;
+        return questions != null && questions.size() >= MIN_ACTIVE_QUESTIONS_PER_QUIZ;
     }
 
     @Named("normalizeText")
@@ -108,8 +110,24 @@ public interface QuizMapper {
     }
 
     @Named("mapGameTypeToCode")
-    default String mapGameTypeToCode(GameType type) {
-        return type.getQuizType();
+    default String mapGameTypeToCode(Type type) {
+        return type.getValue();
+    }
+
+    @Named("mapNewThemeForUpdate")
+    default Theme mapNewThemeForUpdate(long themeId) {
+        return new Theme(themeId);
+    }
+
+    @Named("mapNewCategory")
+    default Category mapNewCategory(Long categoryId) {
+        if (categoryId == null) return null;
+        return new Category(categoryId);
+    }
+
+    @Named("mapNewMasteryLevelForUpdate")
+    default MasteryLevel mapNewMasteryLevelForUpdate(long masteryLevelId) {
+        return new MasteryLevel(masteryLevelId);
     }
 
 }

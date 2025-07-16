@@ -29,7 +29,7 @@ public interface CategoryMapper {
 
     @Mappings({
             @Mapping(target = "name", expression = "java(normalizeText(dto.name()))"),
-            @Mapping(target = "description", expression = "java(normalizeText(dto.description()))"),
+            @Mapping(target = "description", expression = "java(normalizeText(dto.description()))")
     })
     void updateModelFromDTO(CategoryUpsertDTO dto, @MappingTarget Category model);
 
