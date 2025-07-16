@@ -31,7 +31,7 @@ VALUES (1, 'Droit privé', 'Étude des relations juridiques entre individus et e
         4,
         CURRENT_TIMESTAMP - INTERVAL '2 months', null, null),
 
-       (8, 'Mythologie & religions', 'Étude des croyances, mythes et pratiques religieuses à travers le monde.',
+       (8, 'Mythologie & Religion', 'Étude des croyances, mythes et pratiques religieuses à travers le monde.',
         4,
         CURRENT_TIMESTAMP, null, CURRENT_TIMESTAMP),
 

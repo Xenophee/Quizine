@@ -1,8 +1,8 @@
 -- Insertion du quiz
-INSERT INTO quizzes (id, title, description, category_id, theme_id, quiz_type_code, mastery_level_id)
+INSERT INTO quizzes (id, title, description, category_id, theme_id, quiz_type_code, mastery_level_id, disabled_at)
 VALUES (8, 'Mythologie égyptienne : dieux, légendes et symboles',
         'Plongez dans l’univers fascinant de la mythologie égyptienne, découvrez les dieux, les légendes et les symboles qui ont façonné cette civilisation millénaire.',
-        8, 4, 'CLASSIC', 3);
+        8, 4, 'CLASSIC', 3, current_timestamp);
 
 -- QUESTION 141
 INSERT INTO questions (id, text, answer_explanation, question_type_code)
