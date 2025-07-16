@@ -1,41 +1,46 @@
 package com.dassonville.api.util;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ValidationErrorUtils {
 
 
     /**
-     * Navigue dans une structure de type Map imbriquée (similaire à du JSON) et crée les éléments manquants si nécessaire.
+     * Navigue ou crée une structure de type {@code Map<String, Object>} dans un arbre d'erreurs,
+     * en fonction d'une clé fournie, qui peut représenter un champ simple ou un champ indexé.
      * <p>
-     * Cette méthode est principalement utilisée pour construire dynamiquement des objets imbriqués
-     * à partir de noms de champs potentiellement indexés (ex. : {@code answers[0].text}).
-     * </p>
+     * Cette méthode est utilisée pour construire dynamiquement une structure d'erreurs
+     * de validation hiérarchique, typiquement pour des DTO complexes avec des listes imbriquées.
      *
-     * <p>
-     * Si le champ spécifié est un tableau (ex. {@code answers[2]}), elle garantit que la liste
-     * contient au moins jusqu'à cet index et retourne la Map correspondante à cet index.
-     * Si le champ est un simple objet (ex. {@code title}), elle crée une sous-map si elle n'existe pas encore.
-     * </p>
+     * <p>Comportement :
+     * <ul>
+     *   <li>Si la clé est de type indexé (ex: {@code "answers[2]"}), elle garantit la présence d'une
+     *       liste associée à {@code "answers"} dans {@code parent}, ainsi qu'une Map à l'index donné.</li>
+     *   <li>Si la clé est simple (ex: {@code "title"}), elle garantit qu'une Map est présente pour cette clé.</li>
+     * </ul>
      *
-     * @param parent la Map racine ou intermédiaire dans laquelle naviguer.
-     * @param key le nom du champ à accéder, pouvant être un champ simple (ex. {@code title})
-     *            ou indexé (ex. {@code answers[0]}).
-     * @return la Map correspondant au champ final, prête à recevoir des valeurs.
+     * <p>Les structures manquantes (listes ou maps) sont créées au besoin.
      *
-     * @throws ClassCastException si la structure existante ne correspond pas aux attentes (par exemple,
-     *         si un champ censé être une Map ou une List a été mal initialisé ailleurs).
+     * @param parent la structure parente dans laquelle naviguer ou insérer les éléments d'erreur
+     * @param key la clé ciblée, soit un champ simple (ex: "title"), soit un champ indexé (ex: "answers[1]")
+     * @return la {@code Map<String, Object>} prête à recevoir des messages d'erreur pour ce champ
      */
     @SuppressWarnings("unchecked")
     public static Map<String, Object> navigateOrCreate(Map<String, Object> parent, String key) {
+        // ── 1. Gestion des chemins avec index (ex: answers[0]) ──────────────
         if (key.matches(".+\\[\\d+]")) {
             String field = key.substring(0, key.indexOf('['));
             int index = Integer.parseInt(key.substring(key.indexOf('[') + 1, key.indexOf(']')));
 
-            List<Map<String, Object>> list = (List<Map<String, Object>>) parent.computeIfAbsent(field, k -> new ArrayList<>());
+            Object existing = parent.get(field);
+            List<Map<String, Object>> list;
+
+            if (existing instanceof List) {
+                list = (List<Map<String, Object>>) existing;
+            } else {
+                list = new ArrayList<>();
+                parent.put(field, list);
+            }
 
             while (list.size() <= index) {
                 list.add(new HashMap<>());
@@ -44,6 +49,16 @@ public class ValidationErrorUtils {
             return list.get(index);
         }
 
-        return (Map<String, Object>) parent.computeIfAbsent(key, k -> new HashMap<>());
+        // ── 2. Gestion des champs simples (ex: "title") ─────────────────────
+        Object existing = parent.get(key);
+
+        if (existing instanceof Map) {
+            return (Map<String, Object>) existing;
+        }
+
+        Map<String, Object> child = new HashMap<>();
+        parent.put(key, child);
+        return child;
     }
+
 }
