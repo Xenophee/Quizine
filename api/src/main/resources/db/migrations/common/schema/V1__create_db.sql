@@ -245,7 +245,7 @@ CREATE TABLE game_rules
     answer_options_count            SMALLINT      NOT NULL CHECK (
         (question_type_code = 'TRUE_FALSE' AND answer_options_count = 0)
             OR
-        (question_type_code <> 'TRUE_FALSE' AND answer_options_count >= 2)
+        (question_type_code <> 'TRUE_FALSE' AND answer_options_count >= 0)
         ),
     points_per_good_answer          SMALLINT      NOT NULL CHECK (points_per_good_answer >= 0),
     points_penalty_per_wrong_answer SMALLINT      NOT NULL CHECK (points_penalty_per_wrong_answer >= 1),
