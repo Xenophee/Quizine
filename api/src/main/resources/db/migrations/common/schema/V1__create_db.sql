@@ -72,7 +72,7 @@ CREATE TABLE categories
 ---------------------------------------------------
 CREATE TABLE quiz_types
 (
-    code        VARCHAR(50) PRIMARY KEY,
+    code        VARCHAR(50) PRIMARY KEY CHECK (code = UPPER(code)),
     name        VARCHAR(50)  NOT NULL UNIQUE,
     description VARCHAR(250) NOT NULL,
     created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -86,7 +86,7 @@ CREATE TABLE quiz_types
 ---------------------------------------------------
 CREATE TABLE question_types
 (
-    code        VARCHAR(50) PRIMARY KEY,
+    code        VARCHAR(50) PRIMARY KEY CHECK (code = UPPER(code)),
     name        VARCHAR(50)  NOT NULL UNIQUE,
     description VARCHAR(250) NOT NULL, -- à destination de l'admin
     instruction VARCHAR(250) NOT NULL, -- affichée à l'utilisateur
@@ -112,9 +112,9 @@ CREATE TABLE quiz_type_questions
 CREATE TABLE mastery_levels
 (
     id          SERIAL PRIMARY KEY,
-    name        VARCHAR(50)  NOT NULL UNIQUE,
+    name        VARCHAR(50)  NOT NULL UNIQUE CHECK (name = UPPER(name)),
     description VARCHAR(200) NOT NULL,
-    rank        INTEGER      NOT NULL UNIQUE,
+    rank        INTEGER      NOT NULL UNIQUE CHECK (rank > 0),
     created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP,
     disabled_at TIMESTAMP
@@ -147,7 +147,7 @@ CREATE TABLE questions
     question_type_code   VARCHAR(50) NOT NULL REFERENCES question_types (code) ON DELETE RESTRICT,
     text                 TEXT        NOT NULL,
     answer_explanation   TEXT        NOT NULL,
-    answer_if_true_false BOOLEAN              DEFAULT NULL, -- Uniquement pour les questions de type Vrai/Faux
+    answer_if_true_false BOOLEAN              DEFAULT NULL CHECK (question_type_code <> 'TRUE_FALSE' AND answer_if_true_false IS NULL OR question_type_code = 'TRUE_FALSE'),
     created_at           TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at           TIMESTAMP,
     disabled_at          TIMESTAMP
@@ -176,7 +176,8 @@ CREATE TABLE classic_answers
     is_correct  BOOLEAN   NOT NULL DEFAULT FALSE,
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP,
-    disabled_at TIMESTAMP
+    disabled_at TIMESTAMP,
+    UNIQUE (question_id, text)
 );
 
 
@@ -218,6 +219,9 @@ CREATE UNIQUE INDEX uniq_difficulty_label -- Assure que chaque label est unique,
     ON difficulty_levels (label)
     WHERE label <> 'SPÉCIAL';
 
+CREATE UNIQUE INDEX uniq_difficulty_reference -- Assure qu'il n'y a qu'un seul niveau de difficulté de référence
+    ON difficulty_levels (is_reference)
+    WHERE is_reference = TRUE;
 
 ---------------------------------------------------
 -- Créer la table d'association entre types de questions et niveaux de difficulté
@@ -238,7 +242,11 @@ CREATE TABLE game_rules
     id                              SERIAL PRIMARY KEY,
     question_type_code              VARCHAR(50)   NOT NULL REFERENCES question_types (code) ON DELETE CASCADE,
     difficulty_level_id             INTEGER       NOT NULL REFERENCES difficulty_levels (id) ON DELETE CASCADE,
-    answer_options_count            SMALLINT      NOT NULL CHECK (answer_options_count >= 0),
+    answer_options_count            SMALLINT      NOT NULL CHECK (
+        (question_type_code = 'TRUE_FALSE' AND answer_options_count = 0)
+            OR
+        (question_type_code <> 'TRUE_FALSE' AND answer_options_count >= 2)
+        ),
     points_per_good_answer          SMALLINT      NOT NULL CHECK (points_per_good_answer >= 0),
     points_penalty_per_wrong_answer SMALLINT      NOT NULL CHECK (points_penalty_per_wrong_answer >= 1),
     timer_seconds                   SMALLINT      NOT NULL CHECK (timer_seconds >= 0),
