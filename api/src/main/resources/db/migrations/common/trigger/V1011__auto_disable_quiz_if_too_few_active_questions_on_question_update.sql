@@ -1,3 +1,7 @@
+---------------------------------------------------
+-- Création du trigger pour désactiver automatiquement un quiz si le nombre de questions actives est inférieur au minimum requis
+---------------------------------------------------
+
 CREATE OR REPLACE FUNCTION auto_disable_quiz_if_too_few_active_questions_on_update()
     RETURNS TRIGGER AS
 $$
@@ -32,6 +36,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+--------------------------------------------------------
+-- Activation du trigger après la mise à jour de la visibilité d'une question
 CREATE TRIGGER trg_auto_disable_quiz_on_question_disable
     AFTER UPDATE ON questions
     FOR EACH ROW

@@ -26,8 +26,7 @@ $$ LANGUAGE plpgsql;
 
 
 --------------------------------------------------------
-
--- Trigger pour nettoyer question_type_difficulty lors de la suppression d'une game_rule
+-- Activation lors de la suppression d'une game_rule
 CREATE TRIGGER trg_cleanup_question_type_difficulty_on_game_rule_delete
     AFTER DELETE
     ON game_rules
