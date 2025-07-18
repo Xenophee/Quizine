@@ -14,7 +14,7 @@ import com.dassonville.api.mapper.QuizMapper;
 import com.dassonville.api.model.Quiz;
 import com.dassonville.api.repository.*;
 import com.dassonville.api.util.TextUtils;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

@@ -12,7 +12,7 @@ import com.dassonville.api.projection.AnswerOptionsRuleProjection;
 import com.dassonville.api.projection.QuestionForPlayProjection;
 import com.dassonville.api.repository.*;
 import com.dassonville.api.service.checker.QuestionAnswerChecker;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
