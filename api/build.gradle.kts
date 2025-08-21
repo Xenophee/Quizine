@@ -3,6 +3,7 @@ plugins {
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
     id("jacoco")
+    id("org.sonarqube") version "6.2.0.5505"
 }
 
 group = "com.dassonville"
@@ -14,11 +15,17 @@ java {
     }
 }
 
-configurations {
-    compileOnly {
-        extendsFrom(configurations.annotationProcessor.get())
+sonar {
+    properties {
+        property("sonar.projectKey", "Xenophee_Quizine")
+        property("sonar.organization", "xenophee")
     }
 }
+
+
+val compileOnlyConfig = configurations.getByName("compileOnly")
+compileOnlyConfig.extendsFrom(configurations.getByName("annotationProcessor"))
+
 
 repositories {
     mavenCentral()
@@ -41,7 +48,7 @@ dependencies {
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
 
     runtimeOnly("org.postgresql:postgresql")
 
